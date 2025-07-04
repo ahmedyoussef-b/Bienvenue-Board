@@ -90,15 +90,12 @@ const Navbar = () => {
                 <SheetContent side="left" className="p-0 w-[280px]">
                     <div className="h-full bg-sidebar text-sidebar-foreground flex flex-col">
                         <SheetHeader className="p-4 border-b border-sidebar-border">
-                            <SheetTitle className="sr-only">Menu Principal</SheetTitle>
-                            <SheetDescription className="sr-only">Navigation principale de l'application et liens utiles.</SheetDescription>
-                            <Link
-                                href={rolePath ? `/${locale}/${rolePath}` : `/${locale}`}
-                                className="flex items-center gap-2 flex-shrink-0"
-                            >
-                                <Image src="/logo.png" alt="logo" width={32} height={32} data-ai-hint="logo company" priority />
-                                <span className="font-bold text-lg text-sidebar-primary-foreground">SchooLama</span>
-                            </Link>
+                            <SheetTitle className="text-xl font-bold text-sidebar-primary-foreground">
+                                <Link href={`/${locale}`}>SchooLama</Link>
+                            </SheetTitle>
+                            <SheetDescription className="text-sm text-sidebar-foreground/80">
+                                Menu Principal
+                            </SheetDescription>
                         </SheetHeader>
                         <div className="flex-grow overflow-y-auto">
                             <Menu />
