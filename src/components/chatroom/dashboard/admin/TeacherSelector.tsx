@@ -69,7 +69,7 @@ export default function TeacherSelector({ teachers }: TeacherSelectorProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3">
                     <img
-                      src={teacher.img || `https://api.dicebear.com/7.x/avataaars/svg?seed=${teacher.name}`}
+                      src={teacher.img || `https://api.dicebear.com/8.x/avataaars/svg?seed=${teacher.name}`}
                       alt={teacher.name}
                       className="w-10 h-10 rounded-full"
                     />

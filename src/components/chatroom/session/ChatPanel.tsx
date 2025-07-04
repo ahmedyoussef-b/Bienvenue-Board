@@ -91,7 +91,7 @@ export default function ChatPanel({ user, isHost }: ChatPanelProps) {
             {messages.map(msg => (
               <div key={msg.id} className={`flex items-start gap-3 ${msg.authorId === user.id ? 'justify-end' : ''}`}>
                 {msg.authorId !== user.id && (
-                  <img src={(msg.author as any).img || `https://api.dicebear.com/7.x/avataaars/svg?seed=${(msg.author as any).name}`} alt={(msg.author as any).name || 'avatar'} className="w-8 h-8 rounded-full" />
+                  <img src={(msg.author as any).img || `https://api.dicebear.com/8.x/avataaars/svg?seed=${(msg.author as any).name}`} alt={(msg.author as any).name || 'avatar'} className="w-8 h-8 rounded-full" />
                 )}
                 <div className={`max-w-[80%] rounded-lg px-3 py-2 ${msg.authorId === user.id ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                   <div className="flex items-center gap-2">
@@ -101,7 +101,7 @@ export default function ChatPanel({ user, isHost }: ChatPanelProps) {
                   {renderMessageContent(msg)}
                 </div>
                  {msg.authorId === user.id && (
-                  <img src={user.img || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`} alt={user.name || 'avatar'} className="w-8 h-8 rounded-full" />
+                  <img src={user.img || `https://api.dicebear.com/8.x/avataaars/svg?seed=${user.name}`} alt={user.name || 'avatar'} className="w-8 h-8 rounded-full" />
                 )}
               </div>
             ))}

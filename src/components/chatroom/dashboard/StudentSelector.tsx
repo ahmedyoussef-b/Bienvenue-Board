@@ -75,7 +75,7 @@ export default function StudentSelector({ classroom }: StudentSelectorProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3">
                     <img
-                      src={student.img || `https://api.dicebear.com/7.x/avataaars/svg?seed=${student.name}`}
+                      src={student.img || `https://api.dicebear.com/8.x/avataaars/svg?seed=${student.name}`}
                       alt={student.name}
                       className="w-10 h-10 rounded-full"
                     />

@@ -42,7 +42,7 @@ export default function LoginForm() {
         name,
         email,
         role,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
+        avatar: `https://api.dicebear.com/8.x/avataaars/svg?seed=${name}`,
       };
 
       dispatch(loginSuccess(user));
