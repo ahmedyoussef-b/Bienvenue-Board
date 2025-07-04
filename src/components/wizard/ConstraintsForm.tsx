@@ -211,3 +211,4 @@ const ConstraintsForm: React.FC = () => {
     </Tabs>
   );
 };
+export default ConstraintsForm;
