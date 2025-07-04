@@ -1,27 +1,25 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
+// The default and only locale is 'fr'
 const defaultLocale = 'fr';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // The logic inside is a safeguard, but the primary filtering is done by the matcher.
+  // 1. Explicitly ignore any path that starts with /api/
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.next();
+  }
+
+  // 2. Check if the default locale is already in the pathname
   if (
-    pathname.startsWith('/api/') ||
-    pathname.startsWith('/_next/') ||
-    pathname.includes('.')
+    pathname.startsWith(`/${defaultLocale}/`) ||
+    pathname === `/${defaultLocale}`
   ) {
     return NextResponse.next();
   }
 
-  const pathnameHasLocale =
-    pathname.startsWith(`/${defaultLocale}/`) || pathname === `/${defaultLocale}`;
-
-  if (pathnameHasLocale) {
-    return NextResponse.next();
-  }
-
-  // Rewrite the path to include the default locale for all other requests.
+  // 3. If not, rewrite the URL to include the default locale
   const url = request.nextUrl.clone();
   url.pathname = `/${defaultLocale}${pathname}`;
   return NextResponse.rewrite(url);
@@ -29,12 +27,13 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   /*
-   * Match all request paths except for the ones starting with:
-   * - api (API routes)
-   * - _next/static (static files)
-   * - _next/image (image optimization files)
-   * - favicon.ico (favicon file)
-   * This is the standard and most reliable way to configure middleware for i18n routing.
+   * This matcher will run the middleware on all paths except for:
+   * - internal Next.js files (_next/static, _next/image)
+   * - favicon.ico
+   * The logic inside the middleware function then handles ignoring /api/ routes.
+   * This separation of concerns is more robust.
    */
-  matcher: '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
 };
