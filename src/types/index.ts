@@ -42,7 +42,8 @@ import type {
     Parent as PrismaParent,
     Assignment as PrismaAssignment,
     Announcement as PrismaAnnouncement,
-    Event as PrismaEvent
+    Event as PrismaEvent,
+    ScheduleDraft as PrismaScheduleDraft
 } from "@prisma/client";
 
 // Re-export specific types if needed elsewhere, but it's better to import directly from @prisma/client on the server.
@@ -62,7 +63,8 @@ export type {
     PrismaParent as Parent,
     PrismaAssignment as Assignment,
     PrismaAnnouncement as Announcement,
-    PrismaEvent as Event
+    PrismaEvent as Event,
+    PrismaScheduleDraft as ScheduleDraft
 };
 
 
