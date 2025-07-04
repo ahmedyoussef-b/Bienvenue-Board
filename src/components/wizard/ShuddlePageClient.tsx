@@ -1,4 +1,3 @@
-
 // src/components/wizard/ShuddlePageClient.tsx
 'use client';
 
@@ -23,6 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
+import { dayLabels, labSubjectKeywords, sectionOptions } from '@/lib/wizard-utils';
 
 // Redux and Type Imports
 import { selectAllClasses, localAddClass, localDeleteClass } from '@/lib/redux/features/classes/classesSlice';
@@ -40,6 +40,19 @@ import type { WizardData, ClassWithGrade, Subject, TeacherWithDetails, Classroom
 import { toast, useToast } from '@/hooks/use-toast';
 import { generateSchedule } from '@/lib/schedule-utils';
 import ScheduleEditor from '../schedule/ScheduleEditor';
+
+export const getValidationIcon = (type: string): React.ReactNode => {
+  switch (type) {
+    case 'success':
+      return <CheckCircle className="text-green-500" size={20} />;
+    case 'warning':
+      return <AlertTriangle className="text-yellow-500" size={20} />;
+    case 'error':
+      return <AlertTriangle className="text-destructive" size={20} />;
+    default:
+      return null;
+  }
+};
 
 const SchoolConfigForm: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -74,7 +87,7 @@ const SchoolConfigForm: React.FC = () => {
 };
 
 const ClassesForm: React.FC<{ data: ClassWithGrade[]; grades: Grade[]; }> = ({ data, grades }) => {
-  const dispatch = useAppDispatch(); const { toast } = useToast(); const [newClass, setNewClass] = useState({ gradeLevel: 0, section: '', capacity: 25 }); const [isAdding, setIsAdding] = useState(false); const [editingId, setEditingId] = useState<number | null>(null); const sectionOptions = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const dispatch = useAppDispatch(); const { toast } = useToast(); const [newClass, setNewClass] = useState({ gradeLevel: 0, section: '', capacity: 25 }); const [isAdding, setIsAdding] = useState(false); const [editingId, setEditingId] = useState<number | null>(null);
   const handleAddClass = () => { if (!newClass.gradeLevel || !newClass.section || !newClass.capacity) return; const selectedGrade = grades.find(g => g.level === newClass.gradeLevel); if (!selectedGrade) { toast({ variant: "destructive", title: "Erreur de configuration", description: "Le niveau sélectionné est invalide." }); return; } const newClassName = `Niveau ${selectedGrade.level} - ${newClass.section}`; const classExists = data.some(cls => cls.name.trim().toLowerCase() === newClassName.trim().toLowerCase()); if (classExists) { toast({ variant: "destructive", title: "Classe existante", description: `La classe "${newClassName}" existe déjà.` }); return; } dispatch(localAddClass({ id: -Date.now(), name: newClassName, abbreviation: `${selectedGrade.level}${newClass.section}`, capacity: newClass.capacity, gradeId: selectedGrade.id, supervisorId: null, grade: selectedGrade, _count: { students: 0, lessons: 0 } })); toast({ title: 'Classe ajoutée (Brouillon)', description: `La classe "${newClassName}" a été ajoutée à votre configuration.` }); setNewClass({ gradeLevel: 0, section: '', capacity: 25 }); };
   const handleDeleteClass = (id: number) => { dispatch(localDeleteClass(id)); toast({ title: 'Classe supprimée (Brouillon)', description: `La classe a été supprimée de votre configuration.` }); }; 
   const handleEditClass = (id: number) => { setEditingId(id); toast({ title: 'Info', description: "La fonction d'édition n'est pas encore implémentée." }); };
@@ -106,7 +119,7 @@ const ClassroomsForm: React.FC<{ data: Classroom[]; }> = ({ data }) => {
 };
 
 const ConstraintsForm: React.FC = () => {
-    const dispatch = useAppDispatch(); const teachers = useAppSelector(selectAllProfesseurs); const subjects = useAppSelector(selectAllMatieres); const salles = useAppSelector(selectAllSalles); const teacherConstraints = useAppSelector(selectTeacherConstraints); const subjectRequirements = useAppSelector(selectSubjectRequirements); const [selectedTeacherId, setSelectedTeacherId] = useState<string>(teachers[0]?.id || ''); const [isTeacherFormOpen, setIsTeacherFormOpen] = useState(false); const [newTeacherConstraint, setNewTeacherConstraint] = useState({ day: '', startTime: '', endTime: '', description: '' }); const dayLabels: Record<Day, string> = { MONDAY: 'Lundi', TUESDAY: 'Mardi', WEDNESDAY: 'Mercredi', THURSDAY: 'Jeudi', FRIDAY: 'Vendredi', SATURDAY: 'Samedi', SUNDAY: 'Dimanche' }; const labSubjectKeywords = ['physique', 'informatique', 'sciences', 'technique'];
+    const dispatch = useAppDispatch(); const teachers = useAppSelector(selectAllProfesseurs); const subjects = useAppSelector(selectAllMatieres); const salles = useAppSelector(selectAllSalles); const teacherConstraints = useAppSelector(selectTeacherConstraints); const subjectRequirements = useAppSelector(selectSubjectRequirements); const [selectedTeacherId, setSelectedTeacherId] = useState<string>(teachers[0]?.id || ''); const [isTeacherFormOpen, setIsTeacherFormOpen] = useState(false); const [newTeacherConstraint, setNewTeacherConstraint] = useState({ day: '', startTime: '', endTime: '', description: '' });
     const filteredTeacherConstraints = useMemo(() => { if (!selectedTeacherId) return []; return teacherConstraints.filter(c => c.teacherId === selectedTeacherId); }, [teacherConstraints, selectedTeacherId]);
     const handleAddTeacherConstraint = () => { if (!selectedTeacherId || !newTeacherConstraint.day || !newTeacherConstraint.startTime || !newTeacherConstraint.endTime) { alert("Veuillez remplir tous les champs obligatoires."); return; } const newEntry: TeacherConstraint = { id: Date.now().toString(), teacherId: selectedTeacherId, day: newTeacherConstraint.day as Day, startTime: newTeacherConstraint.startTime, endTime: newTeacherConstraint.endTime, description: newTeacherConstraint.description }; dispatch(addTeacherConstraint(newEntry)); setIsTeacherFormOpen(false); setNewTeacherConstraint({ day: '', startTime: '', endTime: '', description: '' }); };
     const handleDeleteTeacherConstraint = (id: string) => dispatch(removeTeacherConstraint(id));
@@ -120,7 +133,6 @@ const ValidationStep: React.FC<{ wizardData: WizardData, onGenerationSuccess: ()
     const validateData = useCallback(() => { const results: any[] = []; if (!wizardData.school.name) results.push({ type: 'error', message: "Nom d'établissement manquant" }); if (wizardData.classes.length === 0) results.push({ type: 'error', message: 'Aucune classe configurée' }); if (wizardData.teachers.length === 0) results.push({ type: 'error', message: 'Aucun enseignant configuré' }); if (wizardData.subjects.length === 0) results.push({ type: 'error', message: 'Aucune matière configurée' }); if (results.every(r => r.type !== 'error')) { results.push({ type: 'success', message: 'Configuration valide' }); } return results; }, [wizardData]);
     useEffect(() => { setValidationResults(validateData()); }, [wizardData, validateData]);
     const simulateGeneration = async () => { setIsGenerating(true); setGenerationProgress(0); const steps = ['Analyse...', 'Calcul des créneaux...', 'Assignation...', 'Optimisation...', 'Validation finale...', 'Terminé !']; for (let i = 0; i < steps.length; i++) { await new Promise(resolve => setTimeout(resolve, 500)); setGenerationProgress(((i + 1) / steps.length) * 100); } const finalSchedule = generateSchedule(wizardData); dispatch(setInitialSchedule(finalSchedule)); setIsGenerating(false); setIsGenerated(true); toast({ title: "Génération terminée !", description: "Les emplois du temps ont été générés." }); onGenerationSuccess(); };
-    const getValidationIcon = (type: string) => { switch (type) { case 'success': return <CheckCircle className="text-green-500" size={20} />; case 'warning': return <AlertTriangle className="text-yellow-500" size={20} />; case 'error': return <AlertTriangle className="text-destructive" size={20} />; default: return null; } };
     const canGenerate = validationResults.every(result => result.type !== 'error');
     return <div className="space-y-6"><Card className="p-6"><h3 className="text-lg font-semibold mb-4 flex items-center space-x-2"><CheckCircle className="text-primary" size={20} /><span>Validation de la configuration</span></h3><div className="space-y-3">{validationResults.map((result, index) => (<Alert key={index} className={`border-l-4 ${result.type === 'success' ? 'border-green-500 bg-green-500/10' : result.type === 'warning' ? 'border-yellow-500 bg-yellow-500/10' : 'border-destructive bg-destructive/10'}`}><div className="flex items-start space-x-3">{getValidationIcon(result.type)}<div className="flex-1"><AlertDescription><p className={`font-medium ${result.type === 'success' ? 'text-green-700 dark:text-green-400' : result.type === 'warning' ? 'text-yellow-700 dark:text-yellow-400' : 'text-destructive'}`}>{result.message}</p>{result.details && <p className="text-sm text-muted-foreground mt-1">{result.details}</p>}</AlertDescription></div></div></Alert>))}</div></Card><Card className="p-6"><h3 className="text-lg font-semibold mb-4 flex items-center space-x-2"><Calendar className="text-primary" size={20} /><span>Génération des emplois du temps</span></h3>{isGenerating ? <div className="space-y-4"><Progress value={generationProgress} className="h-3" /><div className="flex items-center justify-center space-x-2 text-muted-foreground"><Clock size={20} className="animate-spin" /><span>Génération en cours... {Math.round(generationProgress)}%</span></div></div> : <div className="space-y-4">{!canGenerate && <Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertDescription>Veuillez corriger les erreurs de configuration avant de lancer la génération.</AlertDescription></Alert>}<div className="flex flex-col sm:flex-row gap-4"><Button onClick={simulateGeneration} disabled={!canGenerate} className="flex-1" size="lg"><Calendar size={20} className="mr-2" />Générer l'emploi du temps</Button></div>{canGenerate && !isGenerated && <div className="p-4 bg-green-500/10 rounded-lg mt-4"><p className="text-sm text-green-600 dark:text-green-400">✅ Configuration validée ! La génération peut être lancée.</p></div>}</div>}</Card></div>;
 };
@@ -146,7 +158,6 @@ const ShuddlePageClient: React.FC = () => {
     const subjectRequirements = useAppSelector(selectSubjectRequirements);
     const teacherAssignments = useAppSelector(selectTeacherAssignments);
     const schoolConfig = useAppSelector(selectSchoolConfig);
-    const lastSaved = useAppSelector((state) => state.scheduleDraft.lastSaved);
     
     useEffect(() => {
         if (scheduleStatus === 'succeeded' && !initialModeSet) {
