@@ -51,7 +51,7 @@ export default function ShuddleInitializer({ initialData }: ShuddleInitializerPr
     useEffect(() => {
         if (draftStatus === 'idle') {
             dispatch(fetchScheduleDraft()).unwrap()
-                .then((draft) => {
+                .then((draft: any) => {
                     console.log("Successfully fetched schedule draft from server. Hydrating store.");
                     dispatch(setSchoolConfig(draft.schoolConfig || defaultSchoolConfig));
                     dispatch(setAllClasses(draft.classes || []));
@@ -66,7 +66,7 @@ export default function ShuddleInitializer({ initialData }: ShuddleInitializerPr
                     dispatch(setAllTeacherAssignments(draft.teacherAssignments || []));
                     setIsInitialized(true);
                 })
-                .catch((error) => {
+                .catch((error: any) => {
                     console.log("No schedule draft found or failed to fetch. Initializing from server props.", error);
                     dispatch(setAllClasses(initialData.classes));
                     dispatch(setAllSubjects(initialData.subjects));
