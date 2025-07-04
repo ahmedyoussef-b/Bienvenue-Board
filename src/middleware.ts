@@ -1,27 +1,35 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 const defaultLocale = 'fr';
+const PUBLIC_FILE = /\.(.*)$/;
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // The middleware matcher below now excludes /api/ routes,
-  // so we don't need to check for them here anymore.
+  // Explicitly skip API routes, Next.js internal routes, and public files.
+  if (
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/_next/') ||
+    PUBLIC_FILE.test(pathname)
+  ) {
+    return NextResponse.next();
+  }
 
-  const pathnameHasLocale = pathname.startsWith(`/${defaultLocale}/`) || pathname === `/${defaultLocale}`;
+  const pathnameHasLocale =
+    pathname.startsWith(`/${defaultLocale}/`) || pathname === `/${defaultLocale}`;
 
   if (pathnameHasLocale) {
     return NextResponse.next();
   }
 
   // Rewrite the URL to include the default locale
-  const newUrl = new URL(`/${defaultLocale}${pathname}`, request.url);
-  return NextResponse.rewrite(newUrl);
+  request.nextUrl.pathname = `/${defaultLocale}${pathname}`;
+  return NextResponse.rewrite(request.nextUrl);
 }
 
 export const config = {
-  // Update the matcher to exclude /api/ routes from being processed by the middleware.
+  // A simpler matcher that covers all paths except the ones explicitly skipped above.
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };
