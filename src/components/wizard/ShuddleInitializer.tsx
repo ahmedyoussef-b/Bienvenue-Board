@@ -23,6 +23,7 @@ import { fetchScheduleDraft } from '@/lib/redux/features/scheduleDraftSlice';
 
 interface ShuddleInitializerProps {
     initialData: {
+        initialData: any;
         classes: ClassWithGrade[];
         subjects: Subject[];
         teachers: TeacherWithDetails[];
@@ -58,7 +59,7 @@ export default function ShuddleInitializer({ initialData }: ShuddleInitializerPr
                 dispatch(setAllTeacherAssignments(draft.teacherAssignments));
                 dispatch(setInitialSchedule(draft.schedule));
             } else {
-                console.log("No schedule draft found or failed to fetch. Initializing from server props.", result.payload);
+                console.log("No schedule draft found or failed to fetch. Initializing from server props.", result.payload); // initialData.initialData is likely a typo
                 dispatch(setSchoolConfig(initialData.initialData?.school || {}));
                 dispatch(setAllClasses(initialData.classes));
                 dispatch(setAllSubjects(initialData.subjects));

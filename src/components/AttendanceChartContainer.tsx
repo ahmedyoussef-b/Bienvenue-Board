@@ -3,6 +3,7 @@ import Image from "next/image";
 import AttendanceChart from "./AttendanceChart";
 import prisma from "@/lib/prisma";
 import type { Attendance } from "@/types/index" // Import Attendance type
+import { attendanceMap, daysOfWeek } from "@/lib/wizard-utils";
 
 // Specific type for the data fetched from Prisma
 type AttendanceData = Pick<Attendance, 'date' | 'present'>;
@@ -42,17 +43,7 @@ const AttendanceChartContainer = async () => {
   });
 
 
-  const daysOfWeek = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
-  const attendanceMap: { [key: string]: { present: number; absent: number } } =
-    {
-      Lun: { present: 0, absent: 0 },
-      Mar: { present: 0, absent: 0 },
-      Mer: { present: 0, absent: 0 },
-      Jeu: { present: 0, absent: 0 },
-      Ven: { present: 0, absent: 0 },
-      Sam: { present: 0, absent: 0 },
-    };
 
   resData.forEach((item) => {
     const itemDate = new Date(item.date);
