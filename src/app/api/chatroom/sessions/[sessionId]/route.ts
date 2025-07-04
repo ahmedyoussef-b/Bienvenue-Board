@@ -39,9 +39,10 @@ export async function GET(request: NextRequest, { params }: { params: { sessionI
       return NextResponse.json({ message: 'Session non trouvée' }, { status: 404 });
     }
 
-    // Security check: Ensure the requesting user is part of the session
+    // Security check: Ensure the requesting user is the host or a participant
+    const isHost = session.hostId === sessionInfo.userId;
     const isParticipant = session.participants.some(p => p.userId === sessionInfo.userId);
-    if (!isParticipant) {
+    if (!isHost && !isParticipant) {
         return NextResponse.json({ message: 'Accès interdit à cette session' }, { status: 403 });
     }
 
