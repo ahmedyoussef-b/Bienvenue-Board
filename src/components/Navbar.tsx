@@ -12,7 +12,7 @@ import { selectUnreadCount } from '@/lib/redux/slices/notificationSlice';
 import type { SafeUser, Role } from "@/types";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu as MenuIcon } from "lucide-react";
 import Menu from "@/components/Menu";
@@ -91,6 +91,7 @@ const Navbar = () => {
                     <div className="h-full bg-sidebar text-sidebar-foreground flex flex-col">
                         <SheetHeader className="p-4 border-b border-sidebar-border">
                             <SheetTitle className="sr-only">Menu Principal</SheetTitle>
+                            <SheetDescription className="sr-only">Navigation principale de l'application et liens utiles.</SheetDescription>
                             <Link
                                 href={rolePath ? `/${locale}/${rolePath}` : `/${locale}`}
                                 className="flex items-center gap-2 flex-shrink-0"
