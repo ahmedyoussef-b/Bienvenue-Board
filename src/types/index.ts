@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 
 // Manually define enums needed on the client.
@@ -43,7 +44,10 @@ import type {
     Assignment as PrismaAssignment,
     Announcement as PrismaAnnouncement,
     Event as PrismaEvent,
-    ScheduleDraft as PrismaScheduleDraft
+    ScheduleDraft as PrismaScheduleDraft,
+    LessonRequirement as PrismaLessonRequirement,
+    SubjectRequirement as PrismaSubjectRequirement,
+    TeacherConstraint as PrismaTeacherConstraint
 } from "@prisma/client";
 
 // Re-export specific types if needed elsewhere, but it's better to import directly from @prisma/client on the server.
@@ -64,7 +68,10 @@ export type {
     PrismaAssignment as Assignment,
     PrismaAnnouncement as Announcement,
     PrismaEvent as Event,
-    PrismaScheduleDraft as ScheduleDraft
+    PrismaScheduleDraft as ScheduleDraft,
+    PrismaLessonRequirement,
+    PrismaSubjectRequirement,
+    PrismaTeacherConstraint,
 };
 
 
@@ -87,10 +94,8 @@ export type UserWithRelations = PrismaUser & {
 export type TeacherWithDetails = PrismaTeacher & {
     user: PrismaUser | null;
     subjects: PrismaSubject[];
-    lessons?: PrismaLesson[];
     _count: {
         subjects: number;
-        lessons?: number;
     };
 };
 
@@ -149,7 +154,7 @@ export interface TeacherConstraint {
 
 export interface SubjectRequirement {
     subjectId: number;
-    requiredRoomId: number | 'any';
+    requiredRoomId: number | null;
     timePreference: 'ANY' | 'AM' | 'PM';
 }
 
