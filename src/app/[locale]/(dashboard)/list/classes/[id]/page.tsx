@@ -17,11 +17,6 @@ import type { Prisma } from "@prisma/client";
 const classWithDetailsArgs = {
     include: {
       grade: true,
-      supervisor: {
-        include: {
-          user: true,
-        },
-      },
       students: {
         include: {
           user: true,
@@ -95,28 +90,6 @@ const SingleClassPage = async ({ params }: { params: { id: string } }) => {
                         <span className="text-muted-foreground">Cours/Semaine</span>
                         <span className="font-semibold">{classData._count.lessons}</span>
                      </div>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Superviseur</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {classData.supervisor ? (
-                         <Link href={`/${locale}/list/teachers/${classData.supervisor.id}`} className="flex items-center space-x-4 p-2 rounded-lg hover:bg-muted transition-colors">
-                            <DynamicAvatar 
-                                imageUrl={classData.supervisor.user?.img || classData.supervisor.img}
-                                seed={classData.supervisor.id}
-                            />
-                            <div>
-                                <p className="font-semibold text-primary">{classData.supervisor.name} {classData.supervisor.surname}</p>
-                                <p className="text-sm text-muted-foreground">{classData.supervisor.user?.email}</p>
-                            </div>
-                        </Link>
-                    ) : (
-                        <p className="text-muted-foreground text-sm">Aucun superviseur assigné.</p>
-                    )}
                 </CardContent>
             </Card>
             

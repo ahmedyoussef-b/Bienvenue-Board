@@ -21,10 +21,9 @@ import Image from "next/image";
 
 interface TeacherFormProps {
   type: 'create' | 'update';
-  initialData?: (Partial<Teacher> & { user?: Partial<Pick<User, 'username' | 'email'>> | null, subjects?: Partial<Pick<Subject, 'id' | 'name'>>[], classes?: Partial<Pick<Class, 'id' | 'name'>>[] }) | null;
+  initialData?: (Partial<Teacher> & { user?: Partial<Pick<User, 'username' | 'email'>> | null, subjects?: Partial<Pick<Subject, 'id' | 'name'>>[] }) | null;
   setOpen: Dispatch<SetStateAction<boolean>>;
   availableSubjects?: Pick<Subject, 'id' | 'name'>[];
-  allClasses?: Pick<Class, 'id' | 'name'>[];
 }
 
 interface CloudinaryUploadWidgetInfo {
@@ -40,7 +39,7 @@ interface CloudinaryUploadWidgetResults {
   info: CloudinaryUploadWidgetInfo | string | { public_id: string }; 
 }
 
-const TeacherForm: React.FC<TeacherFormProps> = ({ type, initialData, setOpen, availableSubjects = [], allClasses = [] }) => {
+const TeacherForm: React.FC<TeacherFormProps> = ({ type, initialData, setOpen, availableSubjects = [] }) => {
   const router = useRouter();
   const { toast } = useToast();
   
@@ -79,7 +78,6 @@ const TeacherForm: React.FC<TeacherFormProps> = ({ type, initialData, setOpen, a
       sex: initialData?.sex || UserSex.MALE,
       birthday: initialData?.birthday ? new Date(initialData.birthday) : undefined,
       subjects: initialData?.subjects?.map((subject) => String(subject.id)) || [],
-      classes: initialData?.classes?.map((cls) => String(cls.id)) || [],
     }
   });
 
@@ -218,23 +216,6 @@ const TeacherForm: React.FC<TeacherFormProps> = ({ type, initialData, setOpen, a
             ))}
           </select>
           {errors.subjects && <p className="mt-1 text-sm text-red-600">{errors.subjects.message}</p>}
-        </div>
-
-        <div className="md:col-span-1">
-          <label htmlFor="classes-select" className="block text-sm font-medium text-gray-700 mb-1">Classes Supervisées</label>
-          <select
-            id="classes-select"
-            multiple
-            {...register("classes")}
-            className="block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 disabled:opacity-50 h-24 p-2 ring-[1.5px] ring-gray-300 text-sm"
-            disabled={isLoading}
-            defaultValue={initialData?.classes?.map((c: any) => String(c.id)) || []}
-          >
-            {allClasses?.map(cls => (
-              <option key={cls.id} value={String(cls.id)}>{cls.name}</option>
-            ))}
-          </select>
-          {errors.classes && <p className="mt-1 text-sm text-red-600">{errors.classes.message as string}</p>}
         </div>
 
          <div className="flex flex-col gap-2 w-full md:col-span-1">

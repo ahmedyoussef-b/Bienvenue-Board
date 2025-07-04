@@ -85,10 +85,8 @@ export type UserWithRelations = PrismaUser & {
 export type TeacherWithDetails = PrismaTeacher & {
     user: PrismaUser | null;
     subjects: PrismaSubject[];
-    classes: PrismaClass[];
     lessons?: PrismaLesson[];
     _count: {
-        classes: number;
         subjects: number;
         lessons?: number;
     };
@@ -208,7 +206,6 @@ export type CreateTeacherPayload = {
   phone?: string;
   address?: string;
   subjects?: string[];
-  classes?: string[];
 };
 
 // Types pour l'authentification

@@ -13,8 +13,7 @@ type GradeWithClassCount = Grade & {
   _count: { classes: number };
 };
 
-type ClassWithDetails = Class & {
-  supervisor: Pick<Teacher, 'name' | 'surname'> | null;
+type ClassWithDetails = Omit<Class, 'supervisorId'> & {
   _count: { students: number };
 };
 
@@ -41,7 +40,6 @@ const ClassesPage = async ({
     const classesInGrade: ClassWithDetails[] = await prisma.class.findMany({
       where: { gradeId: viewGradeId },
       include: {
-        supervisor: { select: { name: true, surname: true } },
         _count: { select: { students: true } },
       },
       orderBy: { name: 'asc' },

@@ -20,7 +20,6 @@ export const classSchema = z.object({
   name: z.string().min(1, { message: "Le nom de la classe est requis !" }),
   capacity: z.coerce.number().min(1, { message: "La capacité est requise !" }),
   gradeLevel: z.coerce.number().min(1, { message: "Le niveau est requis !" }),
-  supervisorId: z.string().optional().nullable().or(z.literal("")), // Allow empty string for no supervisor
 });
 export type ClassSchema = z.infer<typeof classSchema>;
 
@@ -45,7 +44,6 @@ export const teacherSchema = z.object({
   birthday: z.coerce.date().optional().nullable(),
   sex: z.nativeEnum(UserSex).optional().nullable(),
   subjects: z.array(z.string()).optional(),
-  classes: z.array(z.string()).optional(),
 });
 export type TeacherSchema = z.infer<typeof teacherSchema>;
 

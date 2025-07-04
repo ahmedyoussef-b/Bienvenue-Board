@@ -1,16 +1,14 @@
 // src/components/classes/ClassCard.tsx
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, ArrowRight } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import type { Teacher } from '@/types/index';
 
 type ClassWithDetails = {
     id: number;
     name: string;
     capacity: number;
-    supervisor: Pick<Teacher, 'name' | 'surname'> | null;
     _count: { students: number };
 };
 
@@ -34,11 +32,6 @@ const ClassCard: React.FC<ClassCardProps> = ({ classItem, locale }) => {
                              <Users className="h-5 w-5 text-primary" />
                         </div>
                     </div>
-                    {classItem.supervisor && (
-                        <CardDescription className="text-xs pt-1">
-                            Superviseur: {classItem.supervisor.name} {classItem.supervisor.surname}
-                        </CardDescription>
-                    )}
                 </CardHeader>
                 <CardContent className="p-0 flex-grow">
                      <div className="space-y-2">

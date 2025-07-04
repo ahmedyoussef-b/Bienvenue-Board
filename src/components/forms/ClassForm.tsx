@@ -20,7 +20,6 @@ const ClassForm = ({
   data?: any; 
   setOpen: Dispatch<SetStateAction<boolean>>;
   relatedData?: { 
-    teachers: { id: string; name: string; surname: string }[],
     grades: { id: number; level: number }[]
   };
 }) => {
@@ -69,7 +68,6 @@ const ClassForm = ({
     }
   }, [createIsError, updateIsError, createErrorData, updateErrorData, toast]);
 
-  const teachers = relatedData?.teachers || [];
   const grades = relatedData?.grades || [];
 
   return (
@@ -94,26 +92,6 @@ const ClassForm = ({
           error={errors?.capacity}
           inputProps={{disabled: isLoading}}
         />
-        <div className="flex flex-col gap-2 w-full">
-          <label className="text-xs text-gray-500">Superviseur (Optionnel)</label>
-          <select
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full disabled:opacity-50"
-            {...register("supervisorId")}
-            disabled={isLoading}
-          >
-            <option value="">Sélectionner un superviseur</option>
-            {teachers.map((teacher: { id: string; name: string; surname: string }) => (
-              <option value={teacher.id} key={teacher.id}>
-                {teacher.name} {teacher.surname}
-              </option>
-            ))}
-          </select>
-          {errors.supervisorId?.message && (
-            <p className="text-xs text-red-400">
-              {errors.supervisorId.message?.toString()}
-            </p>
-          )}
-        </div>
         <div className="flex flex-col gap-2 w-full">
           <label className="text-xs text-gray-500">Niveau</label>
           <select

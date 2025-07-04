@@ -17,7 +17,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       include: {
         user: true,
         subjects: true,
-        classes: true, // Supervised classes
       },
     });
 
@@ -25,10 +24,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ message: 'Enseignant non trouvé' }, { status: 404 });
     }
 
-    const teacher: TeacherWithDetails = {
+    const teacher: Omit<TeacherWithDetails, 'lessons'> = {
       ...teacherFromDb,
       _count: {
-        classes: teacherFromDb.classes.length,
         subjects: teacherFromDb.subjects.length,
       }
     };
@@ -48,7 +46,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     
     const {
       username, email, password, name, surname, phone, address, img,
-      bloodType, birthday, sex, subjects, classes,
+      bloodType, birthday, sex, subjects,
     } = body;
 
     const teacherToUpdate = await prisma.teacher.findUnique({ where: { id }, select: { userId: true } });
@@ -106,26 +104,20 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
                 set: Array.isArray(subjects) ? subjects.map((subId: string) => ({ id: Number(subId) })) : [],
             };
         }
-        if (classes !== undefined) {
-          teacherData.classes = {
-            set: Array.isArray(classes) ? classes.map((classId: string) => ({ id: Number(classId) })) : [],
-          };
-        }
 
         const result = await tx.teacher.update({
             where: { id },
             data: teacherData,
-            include: { user: true, subjects: true, classes: true },
+            include: { user: true, subjects: true },
         });
         
         return result;
     });
 
     // Manually construct response to match TeacherWithDetails
-    const responseData: TeacherWithDetails = {
+    const responseData: Omit<TeacherWithDetails, 'lessons'> = {
       ...updatedTeacher,
       _count: {
-        classes: updatedTeacher.classes.length,
         subjects: updatedTeacher.subjects.length,
       }
     };
@@ -153,11 +145,6 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     const lessonsCount = await prisma.lesson.count({ where: { teacherId: id } });
     if (lessonsCount > 0) {
       return NextResponse.json({ message: `Impossible de supprimer l'enseignant. Il est assigné à ${lessonsCount} cours.` }, { status: 409 });
-    }
-
-    const supervisedClassesCount = await prisma.class.count({ where: { supervisorId: id } });
-    if (supervisedClassesCount > 0) {
-      return NextResponse.json({ message: `Impossible de supprimer l'enseignant. Il supervise ${supervisedClassesCount} classe(s).` }, { status: 409 });
     }
     
     await prisma.$transaction(async (tx) => {

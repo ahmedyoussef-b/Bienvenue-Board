@@ -16,18 +16,16 @@ export async function GET() {
       include: {
         user: true,
         subjects: true,
-        classes: true, // Supervised classes
       },
       orderBy: {
         name: 'asc'
       }
     });
 
-    const teachers: TeacherWithDetails[] = teachersFromDb.map(t => ({
+    const teachers: Omit<TeacherWithDetails, 'lessons'>[] = teachersFromDb.map(t => ({
       ...t,
       // Manually calculate counts to avoid _count issues
       _count: {
-        classes: t.classes.length,
         subjects: t.subjects.length,
       }
     }));
@@ -53,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     const {
       username, email, password, name, surname, phone, address, img,
-      bloodType, birthday, sex, subjects: subjectIds = [], classes: classIds = []
+      bloodType, birthday, sex, subjects: subjectIds = []
     } = validation.data;
     
     const existingUser = await prisma.user.findFirst({
@@ -68,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password || 'prof123', HASH_ROUNDS);
     
-    let createdTeacherWithDetails: TeacherWithDetails | null = null;
+    let createdTeacherWithDetails: Omit<TeacherWithDetails, 'lessons'> | null = null;
 
     await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
@@ -85,7 +83,6 @@ export async function POST(request: NextRequest) {
 
       // Ensure IDs are numbers before connecting
       const numericSubjectIds = subjectIds.map(id => Number(id)).filter(id => !isNaN(id));
-      const numericClassIds = classIds.map(id => Number(id)).filter(id => !isNaN(id));
 
       const newTeacher = await tx.teacher.create({
         data: {
@@ -101,18 +98,11 @@ export async function POST(request: NextRequest) {
           subjects: {
             connect: numericSubjectIds.map(id => ({ id })),
           },
-          classes: {
-            connect: numericClassIds.map(id => ({ id })),
-          },
         }
       });
       
       const connectedSubjects = await tx.subject.findMany({
           where: { id: { in: numericSubjectIds } }
-      });
-
-      const supervisedClasses = await tx.class.findMany({
-          where: { id: { in: numericClassIds } }
       });
       
       const { password, ...safeUser } = newUser;
@@ -121,10 +111,8 @@ export async function POST(request: NextRequest) {
           ...newTeacher,
           user: safeUser,
           subjects: connectedSubjects,
-          classes: supervisedClasses,
           _count: {
               subjects: connectedSubjects.length,
-              classes: supervisedClasses.length,
           }
       };
     });
