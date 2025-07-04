@@ -1,4 +1,3 @@
-
 // src/app/api/teachers/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
@@ -16,6 +15,7 @@ export async function GET() {
       include: {
         user: true,
         subjects: true,
+        classes: true, // Include classes to count them
       },
       orderBy: {
         name: 'asc'
@@ -24,9 +24,10 @@ export async function GET() {
 
     const teachers: Omit<TeacherWithDetails, 'lessons'>[] = teachersFromDb.map(t => ({
       ...t,
-      // Manually calculate counts to avoid _count issues
+      // Manually add the _count property based on included relations
       _count: {
         subjects: t.subjects.length,
+        classes: t.classes.length, // Count the classes
       }
     }));
 
@@ -66,9 +67,7 @@ export async function POST(request: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password || 'prof123', HASH_ROUNDS);
     
-    let createdTeacherWithDetails: Omit<TeacherWithDetails, 'lessons'> | null = null;
-
-    await prisma.$transaction(async (tx) => {
+    const newTeacherData = await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
         data: {
           username,
@@ -81,7 +80,6 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Ensure IDs are numbers before connecting
       const numericSubjectIds = subjectIds.map(id => Number(id)).filter(id => !isNaN(id));
 
       const newTeacher = await tx.teacher.create({
@@ -107,23 +105,29 @@ export async function POST(request: NextRequest) {
       
       const { password, ...safeUser } = newUser;
 
-      createdTeacherWithDetails = {
+      return {
           ...newTeacher,
           user: safeUser,
           subjects: connectedSubjects,
-          _count: {
-              subjects: connectedSubjects.length,
-          }
       };
     });
 
-    if (!createdTeacherWithDetails) {
+    if (!newTeacherData) {
         throw new Error("La création de l'enseignant a échoué après la transaction.");
     }
 
-    return NextResponse.json(createdTeacherWithDetails, { status: 201 });
+    const responseData: Omit<TeacherWithDetails, 'lessons'> = {
+        ...newTeacherData,
+        _count: {
+            subjects: newTeacherData.subjects.length,
+            classes: 0, // A new teacher is not assigned to any classes yet
+        }
+    };
+
+    return NextResponse.json(responseData, { status: 201 });
 
   } catch (error) {
+    console.error("Erreur lors de la création de l'enseignant :", error);
     if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2003' && error.meta?.field_name) {
             const field = error.meta.field_name as string;

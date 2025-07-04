@@ -7,9 +7,10 @@ import React from 'react';
  * @param {{
  *  seed?: string;
  *  imageUrl?: string | null;
+ *  className?: string;
  * }} props
  */
-const DynamicAvatar = ({ seed = Math.random().toString(36).substring(2), imageUrl = null }) => {
+const DynamicAvatar = ({ seed = Math.random().toString(36).substring(2), imageUrl = null, className = '' }) => {
   // If an image URL is provided, use it. Otherwise, generate a fallback avatar.
   const finalImageUrl = imageUrl || `https://api.dicebear.com/8.x/avataaars/svg?seed=${seed}`;
 
@@ -17,9 +18,9 @@ const DynamicAvatar = ({ seed = Math.random().toString(36).substring(2), imageUr
     <Image
       src={finalImageUrl}
       alt="User avatar"
-      width={100}
-      height={100}
-      className="rounded-full w-full h-full object-cover" // Ensures the image fills the container
+      fill
+      sizes="(max-width: 768px) 50vw, 33vw"
+      className={`object-cover ${className}`} // Ensures the image fills the container and respects parent's border-radius
       priority={false} // Avoid priority on avatars that are not critical
     />
   );
