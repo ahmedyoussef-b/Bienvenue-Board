@@ -5,20 +5,15 @@ const defaultLocale = 'fr';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 1. Explicitly ignore all API routes.
-  if (pathname.startsWith('/api/')) {
-    return NextResponse.next();
-  }
-
-  // 2. Ignore Next.js internal paths and public files with extensions.
+  // The logic inside is a safeguard, but the primary filtering is done by the matcher.
   if (
+    pathname.startsWith('/api/') ||
     pathname.startsWith('/_next/') ||
-    pathname.includes('.') // Catches files like favicon.ico, robots.txt, image.png
+    pathname.includes('.')
   ) {
     return NextResponse.next();
   }
 
-  // 3. Check if the path already has the locale.
   const pathnameHasLocale =
     pathname.startsWith(`/${defaultLocale}/`) || pathname === `/${defaultLocale}`;
 
@@ -26,16 +21,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 4. If none of the above, rewrite the path to include the default locale.
+  // Rewrite the path to include the default locale for all other requests.
   const url = request.nextUrl.clone();
   url.pathname = `/${defaultLocale}${pathname}`;
   return NextResponse.rewrite(url);
 }
 
 export const config = {
-  // Match on all paths and let the function above do the filtering.
-  // This is a more reliable approach than complex negative lookaheads in the matcher.
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api/).*)',
-  ],
+  /*
+   * Match all request paths except for the ones starting with:
+   * - api (API routes)
+   * - _next/static (static files)
+   * - _next/image (image optimization files)
+   * - favicon.ico (favicon file)
+   * This is the standard and most reliable way to configure middleware for i18n routing.
+   */
+  matcher: '/((?!api|_next/static|_next/image|favicon.ico).*)',
 };
