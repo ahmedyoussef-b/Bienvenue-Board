@@ -1,22 +1,22 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 const defaultLocale = 'fr';
+const PUBLIC_FILE = /\.(.*)$/;
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Paths to ignore for localization
-  const ignoredPrefixes = ['/api/', '/_next/', '/static/'];
-  const publicFileRegex = /\.(.*)$/;
-
+  // Skip middleware for API routes, public files, and Next.js specific paths.
   if (
-    ignoredPrefixes.some(prefix => pathname.startsWith(prefix)) ||
-    publicFileRegex.test(pathname)
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/static') ||
+    PUBLIC_FILE.test(pathname)
   ) {
-    return NextResponse.next(); // Pass through without rewriting
+    return NextResponse.next();
   }
 
-  // Check if locale is already present
+  // Redirect root to locale-specific root, and add locale prefix if missing.
   if (
     pathname.startsWith(`/${defaultLocale}/`) ||
     pathname === `/${defaultLocale}`
@@ -24,10 +24,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Rewrite the URL to include the default locale
-  const url = request.nextUrl.clone();
-  url.pathname = `/${defaultLocale}${pathname}`;
-  return NextResponse.rewrite(url);
+  request.nextUrl.pathname = `/${defaultLocale}${pathname}`;
+  return NextResponse.rewrite(request.nextUrl);
 }
 
 // By not exporting a config object, this middleware applies to all paths.
