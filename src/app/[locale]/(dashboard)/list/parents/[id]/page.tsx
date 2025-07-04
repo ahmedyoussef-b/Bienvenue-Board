@@ -9,7 +9,7 @@ import { Users, User, Calendar as CalendarIcon, ArrowLeft, Mail, Phone, Home } f
 import Link from "next/link";
 import TimetableDisplay from "@/components/schedule/TimetableDisplay";
 import DynamicAvatar from "@/components/DynamicAvatar";
-import type { WizardData, ClassWithGrade, TeacherWithDetails, Parent, Student, Subject, Classroom } from '@/types';
+import type { WizardData, ClassWithGrade, TeacherWithDetails, Parent, Student, Subject, Classroom, LessonRequirement, TeacherConstraint, SubjectRequirement, Grade } from '@/types';
 import type { Prisma } from '@prisma/client';
 
 // Define arguments for the prisma query to ensure type safety and reusability
@@ -28,7 +28,7 @@ const parentWithDetailsArgs = {
       orderBy: [{ surname: 'asc' }, { name: 'asc' }] as Prisma.StudentOrderByWithRelationInput[],
     },
   },
-} satisfies Prisma.ParentFindUniqueArgs;
+};
 
 // Infer the type from the query arguments
 type ParentWithDetails = Prisma.ParentGetPayload<typeof parentWithDetailsArgs>;
@@ -61,7 +61,7 @@ const SingleParentPage = async ({ params }: { params: { id: string } }) => {
   } else if (userRole === AppRole.PARENT && parent.userId === currentUserId) {
     canView = true;
   } else if (userRole === AppRole.TEACHER && currentUserId) {
-    const studentIds = parent.students.map(s => s.id);
+    const studentIds = parent.students.map((s: ParentWithDetails['students'][number]) => s.id);
     if (studentIds.length > 0) {
         const teacherClassesCount = await prisma.class.count({
             where: {
@@ -80,9 +80,9 @@ const SingleParentPage = async ({ params }: { params: { id: string } }) => {
   }
   // --- End Access Control ---
 
-  const childrenClassIds = [...new Set(parent.students.map(child => child.classId).filter((id): id is number => id !== null))];
+  const childrenClassIds = [...new Set(parent.students.map((child: ParentWithDetails['students'][number]) => child.classId).filter((id): id is number => id !== null))];
 
-  const [lessons, allSubjects, allTeachers, allClassrooms] = await Promise.all([
+  const [lessons, allSubjects, allTeachers, allClassrooms, allGrades, allLessonRequirements, allTeacherConstraints, allSubjectRequirements] = await Promise.all([
     prisma.lesson.findMany({
       where: {
         classId: { in: childrenClassIds },
@@ -111,9 +111,13 @@ const SingleParentPage = async ({ params }: { params: { id: string } }) => {
         } 
     }),
     prisma.classroom.findMany(),
+    prisma.grade.findMany(),
+    prisma.lessonRequirement.findMany(),
+    prisma.teacherConstraint.findMany(),
+    prisma.subjectRequirement.findMany(),
   ]);
 
-  const childrenClasses = parent.students.map(c => c.class).filter((c): c is ClassWithGrade => !!c);
+  const childrenClasses = parent.students.map((c: ParentWithDetails['students'][number]) => c.class).filter((c): c is ClassWithGrade => !!c);
   const uniqueChildrenClasses = Array.from(new Map(childrenClasses.map(item => [item.id, item])).values());
   
   const wizardData: WizardData = {
@@ -128,6 +132,10 @@ const SingleParentPage = async ({ params }: { params: { id: string } }) => {
     subjects: allSubjects as Subject[],
     teachers: allTeachers as TeacherWithDetails[],
     rooms: allClassrooms as Classroom[],
+    grades: allGrades as Grade[],
+    lessonRequirements: allLessonRequirements as LessonRequirement[],
+    teacherConstraints: allTeacherConstraints as TeacherConstraint[],
+    subjectRequirements: allSubjectRequirements as SubjectRequirement[],
   };
 
 
