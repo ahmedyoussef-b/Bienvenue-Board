@@ -39,7 +39,7 @@ const entityConfig: { [key: string]: { route: string, tag: string } } = {
 
 export const entityApi = createApi({
   reducerPath: 'entityApi',
-  baseQuery: fetchBaseQuery({ baseUrl: '/' }), // Set base URL to root
+  baseQuery: fetchBaseQuery({ baseUrl: '/', credentials: 'include' }), // Set base URL to root
   tagTypes: Object.values(entityConfig).map(e => e.tag),
   endpoints: (builder) => ({
     

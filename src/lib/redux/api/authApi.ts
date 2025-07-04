@@ -27,7 +27,7 @@ export interface LogoutResponse {
 
 export const authApi = createApi({
   reducerPath: 'authApi',
-  baseQuery: fetchBaseQuery({ baseUrl: '/' }),
+  baseQuery: fetchBaseQuery({ baseUrl: '/', credentials: 'include' }),
   tagTypes: ['UserSession'],
   endpoints: (builder) => ({
     login: builder.mutation<AuthResponse, LoginRequest>({
