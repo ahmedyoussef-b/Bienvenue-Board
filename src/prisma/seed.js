@@ -1,4 +1,3 @@
-
 // prisma/seed.js
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -27,8 +26,15 @@ function main() {
         yield prisma.result.deleteMany({});
         yield prisma.assignment.deleteMany({});
         yield prisma.exam.deleteMany({});
+        // Check if models exist before deleting to make seeding more robust
         if (prisma.lessonRequirement) {
             yield prisma.lessonRequirement.deleteMany({});
+        }
+        if (prisma.teacherConstraint) {
+            yield prisma.teacherConstraint.deleteMany({});
+        }
+        if (prisma.subjectRequirement) {
+            yield prisma.subjectRequirement.deleteMany({});
         }
         if (prisma.scheduleDraft) {
             yield prisma.scheduleDraft.deleteMany({});

@@ -5,7 +5,7 @@ import type { ClassWithGrade, Subject, TeacherWithDetails, Classroom, Lesson, Gr
 
 export default async function ShuddlePage() {
     const classesData = await prisma.class.findMany({ 
-        include: { grade: true }, 
+        include: { grade: true, _count: { select: { students: true, lessons: true } } }, 
         orderBy: { name: 'asc' } 
     });
     const subjectsData = await prisma.subject.findMany({ 
@@ -15,9 +15,8 @@ export default async function ShuddlePage() {
         include: { 
             user: true, 
             subjects: true, 
-            classes: true,
             _count: { 
-                select: { classes: true, subjects: true } 
+                select: { subjects: true } 
             } 
         }, 
         orderBy: { name: 'asc' } 
@@ -25,7 +24,6 @@ export default async function ShuddlePage() {
     const classroomsData = await prisma.classroom.findMany({ 
         orderBy: { name: 'asc' } 
     });
-    // Explicitly select fields to avoid asking for non-existent columns like createdAt
     const lessonsData = await prisma.lesson.findMany({
         select: {
             id: true,
@@ -45,12 +43,10 @@ export default async function ShuddlePage() {
         orderBy: { level: 'asc' }
     });
     
-    // Safely fetch constraints, in case the models don't exist due to a failed migration
-    const lessonRequirementsData = (prisma.lessonRequirement && await prisma.lessonRequirement.findMany()) || [];
-    // The properties 'teacherConstraint' and 'subjectRequirement' do not exist on the prisma client.
-    // We will initialize them as empty arrays to fix the build error.
-    const teacherConstraintsData: TeacherConstraint[] = [];
-    const subjectRequirementsData: SubjectRequirement[] = [];
+    // Safely fetch constraints, now that the models are in the schema
+    const lessonRequirementsData = await prisma.lessonRequirement.findMany();
+    const teacherConstraintsData = await prisma.teacherConstraint.findMany();
+    const subjectRequirementsData = await prisma.subjectRequirement.findMany();
 
     // Serialize data to convert Date objects to strings, preventing Redux non-serializable errors.
     const serializableData = JSON.parse(JSON.stringify({
