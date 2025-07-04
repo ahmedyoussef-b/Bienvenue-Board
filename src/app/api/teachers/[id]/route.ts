@@ -17,6 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       include: {
         user: true,
         subjects: true,
+        classes: true,
       },
     });
 
@@ -24,10 +25,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ message: 'Enseignant non trouvé' }, { status: 404 });
     }
 
-    const teacher: Omit<TeacherWithDetails, 'lessons'> = {
+    const teacher: TeacherWithDetails = {
       ...teacherFromDb,
       _count: {
         subjects: teacherFromDb.subjects.length,
+        classes: teacherFromDb.classes.length,
       }
     };
 
@@ -108,17 +110,18 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         const result = await tx.teacher.update({
             where: { id },
             data: teacherData,
-            include: { user: true, subjects: true },
+            include: { user: true, subjects: true, classes: true },
         });
         
         return result;
     });
 
     // Manually construct response to match TeacherWithDetails
-    const responseData: Omit<TeacherWithDetails, 'lessons'> = {
+    const responseData: TeacherWithDetails = {
       ...updatedTeacher,
       _count: {
         subjects: updatedTeacher.subjects.length,
+        classes: updatedTeacher.classes.length,
       }
     };
 

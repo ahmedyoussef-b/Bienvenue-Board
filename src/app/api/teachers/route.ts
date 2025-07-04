@@ -1,3 +1,4 @@
+
 // src/app/api/teachers/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
@@ -22,7 +23,7 @@ export async function GET() {
       }
     });
 
-    const teachers: Omit<TeacherWithDetails, 'lessons'>[] = teachersFromDb.map(t => ({
+    const teachers: TeacherWithDetails[] = teachersFromDb.map(t => ({
       ...t,
       // Manually add the _count property based on included relations
       _count: {
@@ -96,11 +97,10 @@ export async function POST(request: NextRequest) {
           subjects: {
             connect: numericSubjectIds.map(id => ({ id })),
           },
+        },
+        include: {
+            subjects: true
         }
-      });
-      
-      const connectedSubjects = await tx.subject.findMany({
-          where: { id: { in: numericSubjectIds } }
       });
       
       const { password, ...safeUser } = newUser;
@@ -108,7 +108,6 @@ export async function POST(request: NextRequest) {
       return {
           ...newTeacher,
           user: safeUser,
-          subjects: connectedSubjects,
       };
     });
 
@@ -116,11 +115,12 @@ export async function POST(request: NextRequest) {
         throw new Error("La création de l'enseignant a échoué après la transaction.");
     }
 
-    const responseData: Omit<TeacherWithDetails, 'lessons'> = {
+    const responseData: TeacherWithDetails = {
         ...newTeacherData,
+        classes: [], // A new teacher has no classes assigned yet
         _count: {
             subjects: newTeacherData.subjects.length,
-            classes: 0, // A new teacher is not assigned to any classes yet
+            classes: 0, 
         }
     };
 

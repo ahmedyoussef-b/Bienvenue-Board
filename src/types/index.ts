@@ -94,8 +94,10 @@ export type UserWithRelations = PrismaUser & {
 export type TeacherWithDetails = PrismaTeacher & {
     user: PrismaUser | null;
     subjects: PrismaSubject[];
+    classes: PrismaClass[];
     _count: {
         subjects: number;
+        classes: number;
     };
 };
 
