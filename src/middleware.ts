@@ -5,16 +5,13 @@ const defaultLocale = 'fr';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Explicitly do not modify API routes.
-  if (pathname.startsWith('/api/')) {
-    return NextResponse.next();
-  }
+  // The middleware matcher below now excludes /api/ routes,
+  // so we don't need to check for them here anymore.
 
-  // Check if the path contains the locale.
   const pathnameHasLocale = pathname.startsWith(`/${defaultLocale}/`) || pathname === `/${defaultLocale}`;
 
   if (pathnameHasLocale) {
-    return NextResponse.next(); // Continue without modification
+    return NextResponse.next();
   }
 
   // Rewrite the URL to include the default locale
@@ -23,7 +20,8 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // Update the matcher to exclude /api/ routes from being processed by the middleware.
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)',
   ],
 };
