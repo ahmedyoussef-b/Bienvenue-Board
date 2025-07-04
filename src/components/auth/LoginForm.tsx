@@ -76,6 +76,7 @@ export function LoginForm() {
   }, [isSuccess, isError, loginErrorData, toast, router]);
 
   const onSubmit = async (data: LoginFormData) => {
+    console.log("--- 1. 🎬 LoginForm: Submitting login data ---", data);
     await login(data);
   };
 
