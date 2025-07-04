@@ -9,19 +9,18 @@ import type { Dispatch, SetStateAction } from "react";
 import { useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import type { Subject, Teacher } from "@/types/index"; // Import Teacher type
+import type { Subject, Teacher } from "@/types/index";
 
-// Define a more specific type for relatedData teachers
 type RelatedTeacher = Pick<Teacher, 'id' | 'name' | 'surname'>;
 
 const SubjectForm = ({
   type,
-  data, // This data comes from Prisma, potentially with relations
+  data,
   setOpen,
   relatedData,
 }: {
   type: "create" | "update";
-  data?: Subject & { teachers?: Pick<Teacher, 'id'>[] }; // For update, data might include teacher IDs
+  data?: Subject & { teachers?: Pick<Teacher, 'id'>[] };
   setOpen: Dispatch<SetStateAction<boolean>>;
   relatedData?: { teachers: RelatedTeacher[] };
 }) => {
@@ -33,8 +32,8 @@ const SubjectForm = ({
   } = useForm<SubjectSchema>({
     resolver: zodResolver(subjectSchema),
     defaultValues: data 
-      ? { ...data, teachers: data.teachers?.map((t: Pick<Teacher, 'id'>) => t.id.toString()) || [] } 
-      : { teachers: [] },
+      ? { ...data, weeklyHours: data.weeklyHours || 2, coefficient: data.coefficient || 1, teachers: data.teachers?.map((t: Pick<Teacher, 'id'>) => t.id.toString()) || [] } 
+      : { name: "", weeklyHours: 2, coefficient: 1, teachers: [] },
   });
 
   const router = useRouter();
@@ -48,8 +47,7 @@ const SubjectForm = ({
       if (type === "create") {
         await createSubject(formData).unwrap();
       } else if (data?.id) {
-        // Ensure teachers are sent as string array of IDs
-        const payload = { ...formData, teachers: formData.teachers.map(id => String(id)) };
+        const payload = { ...formData, teachers: formData.teachers?.map(id => String(id)) || [] };
         await updateSubject({ ...payload, id: data.id }).unwrap();
       }
     } catch (err) {
@@ -81,8 +79,8 @@ const SubjectForm = ({
       <h1 className="text-xl font-semibold">
         {type === "create" ? "Créer une Nouvelle Matière" : "Mettre à jour la Matière"}
       </h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <InputField
           label="Nom de la Matière"
           name="name"
@@ -90,27 +88,45 @@ const SubjectForm = ({
           error={errors?.name}
           inputProps={{disabled: isLoading}}
         />
-        <div className="flex flex-col gap-2 w-full">
-          <label className="text-xs text-gray-500">Enseignants</label>
-          <select
-            multiple
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full h-24 disabled:opacity-50"
-            {...register("teachers")}
-            disabled={isLoading}
-          >
-            {teachers.map((teacher: RelatedTeacher) => (
-              <option value={teacher.id} key={teacher.id}>
-                {teacher.name} {teacher.surname}
-              </option>
-            ))}
-          </select>
-          {errors.teachers?.message && (
-            <p className="text-xs text-red-400">
-              {errors.teachers.message?.toString()}
-            </p>
-          )}
-        </div>
+        <InputField
+          label="Heures/semaine (défaut)"
+          name="weeklyHours"
+          type="number"
+          register={register}
+          error={errors?.weeklyHours}
+          inputProps={{disabled: isLoading}}
+        />
+        <InputField
+          label="Coefficient (défaut)"
+          name="coefficient"
+          type="number"
+          register={register}
+          error={errors?.coefficient}
+          inputProps={{disabled: isLoading}}
+        />
       </div>
+
+      <div className="flex flex-col gap-2 w-full">
+        <label className="text-xs text-gray-500">Assigner des enseignants (Optionnel)</label>
+        <select
+          multiple
+          className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full h-24 disabled:opacity-50"
+          {...register("teachers")}
+          disabled={isLoading}
+        >
+          {teachers.map((teacher: RelatedTeacher) => (
+            <option value={teacher.id} key={teacher.id}>
+              {teacher.name} {teacher.surname}
+            </option>
+          ))}
+        </select>
+        {errors.teachers?.message && (
+          <p className="text-xs text-red-400">
+            {errors.teachers.message?.toString()}
+          </p>
+        )}
+      </div>
+
       {(createIsError || updateIsError) && (
         <span className="text-red-500 text-sm">
            {(createErrorData as any)?.data?.message || (updateErrorData as any)?.data?.message || "Une erreur s'est produite."}

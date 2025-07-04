@@ -2,12 +2,9 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
+import { subjectSchema } from '@/lib/formValidationSchemas';
 
-const updateSubjectSchema = z.object({
-  name: z.string().min(1).optional(),
-  weeklyHours: z.number().int().positive().optional(),
-  coefficient: z.number().int().positive().optional(),
-});
+const updateSubjectSchema = subjectSchema.partial();
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   const id = parseInt(params.id, 10);
@@ -23,10 +20,17 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     console.log(`📝 PUT /api/subjects/${id}: Request body:`, body);
     const validatedData = updateSubjectSchema.parse(body);
     console.log(`✅ PUT /api/subjects/${id}: Validation successful:`, validatedData);
+    
+    const { teachers: teacherIds, ...subjectData } = validatedData;
 
     const updatedSubject = await prisma.subject.update({
       where: { id },
-      data: validatedData,
+      data: {
+          ...subjectData,
+          teachers: teacherIds !== undefined ? {
+              set: teacherIds.map((id: string) => ({ id })),
+          } : undefined,
+      },
     });
     console.log(`⬅️ PUT /api/subjects/${id}: Successfully updated subject:`, updatedSubject);
     return NextResponse.json(updatedSubject);

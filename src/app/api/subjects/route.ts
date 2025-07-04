@@ -3,12 +3,8 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
+import { subjectSchema } from '@/lib/formValidationSchemas';
 
-const createSubjectSchema = z.object({
-    name: z.string().min(1, 'Le nom est requis'),
-    weeklyHours: z.number().int().positive('Les heures doivent être un nombre positif'),
-    coefficient: z.number().int().positive('Le coefficient doit être un nombre positif').optional(),
-});
 
 export async function GET() {
     console.log('➡️ GET /api/subjects: Received request');
@@ -38,11 +34,18 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
         console.log('📝 POST /api/subjects: Request body:', body);
-        const validatedData = createSubjectSchema.parse(body);
+        const validatedData = subjectSchema.parse(body);
         console.log('✅ POST /api/subjects: Validation successful:', validatedData);
 
+        const { teachers: teacherIds, ...subjectData } = validatedData;
+
         const newSubject = await prisma.subject.create({
-            data: validatedData,
+            data: {
+                ...subjectData,
+                teachers: teacherIds && teacherIds.length > 0 ? {
+                    connect: teacherIds.map((id: string) => ({ id })),
+                } : undefined,
+            },
         });
         console.log('⬅️ POST /api/subjects: Success, created subject:', newSubject);
         return NextResponse.json(newSubject, { status: 201 });

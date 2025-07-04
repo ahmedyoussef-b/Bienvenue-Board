@@ -11,7 +11,9 @@ export type GradeSchema = z.infer<typeof gradeSchema>;
 export const subjectSchema = z.object({
   id: z.coerce.number().optional(),
   name: z.string().min(1, { message: "Le nom de la matière est requis !" }),
-  teachers: z.array(z.string()), //teacher ids
+  weeklyHours: z.coerce.number({invalid_type_error: "Veuillez entrer un nombre"}).min(1, { message: "Les heures hebdomadaires sont requises !" }),
+  coefficient: z.coerce.number({invalid_type_error: "Veuillez entrer un nombre"}).min(1, { message: "Le coefficient est requis !" }).optional(),
+  teachers: z.array(z.string()).optional(),
 });
 export type SubjectSchema = z.infer<typeof subjectSchema>;
 
@@ -42,15 +44,14 @@ export const teacherSchema = z.object({
   img: z.string().nullable().optional(),
   bloodType: z.string().optional().or(z.literal("")).nullable(),
   birthday: z.preprocess((arg) => {
-    // Treat empty string as undefined so optional/nullable validation passes
     if (typeof arg == "string" && arg.trim() === "") return undefined;
-    return arg;
+    if (arg instanceof Date) return arg;
+    return arg ? new Date(arg as string) : undefined;
   }, z.coerce.date().optional().nullable()),
   sex: z.nativeEnum(UserSex).optional().nullable(),
   subjects: z.array(z.string()).optional(),
 }).refine(data => {
-  // For create operations (identified by lack of an ID), password is required.
-  if (!data.id && (!data.password || data.password.trim() === '')) {
+  if (type === "create" && (!data.password || data.password.trim() === '')) {
     return false;
   }
   return true;
