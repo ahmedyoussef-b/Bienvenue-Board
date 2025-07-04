@@ -1,19 +1,22 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 const defaultLocale = 'fr';
-const PUBLIC_FILE = /\.(.*)$/;
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Paths to ignore for localization
+  const ignoredPrefixes = ['/api/', '/_next/', '/static/'];
+  const publicFileRegex = /\.(.*)$/;
+
   if (
-    pathname.startsWith('/api/') ||
-    pathname.startsWith('/_next/') ||
-    PUBLIC_FILE.test(pathname)
+    ignoredPrefixes.some(prefix => pathname.startsWith(prefix)) ||
+    publicFileRegex.test(pathname)
   ) {
-    return NextResponse.next();
+    return NextResponse.next(); // Pass through without rewriting
   }
 
+  // Check if locale is already present
   if (
     pathname.startsWith(`/${defaultLocale}/`) ||
     pathname === `/${defaultLocale}`
@@ -21,13 +24,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Rewrite the URL to include the default locale
   const url = request.nextUrl.clone();
   url.pathname = `/${defaultLocale}${pathname}`;
   return NextResponse.rewrite(url);
 }
 
-export const config = {
-  matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
-};
+// By not exporting a config object, this middleware applies to all paths.
+// The logic inside handles which paths to ignore.
