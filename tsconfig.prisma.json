@@ -20,9 +20,9 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "outDir": "prisma",
-    "rootDir": "prisma"
+    "outDir": "src/prisma",
+    "rootDir": "src/prisma"
   },
-  "include": ["prisma/seed.ts"],
+  "include": ["src/prisma/seed.ts"],
   "exclude": ["node_modules"]
 }

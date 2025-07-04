@@ -32,7 +32,6 @@ export const authApi = createApi({
   endpoints: (builder) => ({
     login: builder.mutation<AuthResponse, LoginRequest>({
       query: (credentials) => {
-        console.log("--- 2. 🚀 authApi: RTK Query preparing login request ---", credentials);
         return {
           url: '/api/auth/login',
           method: 'POST',
