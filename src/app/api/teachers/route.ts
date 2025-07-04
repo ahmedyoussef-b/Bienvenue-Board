@@ -66,7 +66,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message }, { status: 409 });
     }
 
-    const hashedPassword = await bcrypt.hash(password || 'prof123', HASH_ROUNDS);
+    if (!password) {
+      // This should not happen if the schema validation is correct, but it's a safeguard.
+      throw new Error("Le mot de passe est manquant pour la création de l'utilisateur.");
+    }
+    const hashedPassword = await bcrypt.hash(password, HASH_ROUNDS);
     
     const newTeacherData = await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({

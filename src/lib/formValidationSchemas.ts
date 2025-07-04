@@ -48,6 +48,15 @@ export const teacherSchema = z.object({
   }, z.coerce.date().optional().nullable()),
   sex: z.nativeEnum(UserSex).optional().nullable(),
   subjects: z.array(z.string()).optional(),
+}).refine(data => {
+  // For create operations (identified by lack of an ID), password is required.
+  if (!data.id && (!data.password || data.password.trim() === '')) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Le mot de passe est requis pour les nouveaux enseignants.",
+  path: ["password"],
 });
 export type TeacherSchema = z.infer<typeof teacherSchema>;
 
