@@ -41,7 +41,11 @@ export const teacherSchema = z.object({
   address: z.string().optional().or(z.literal("")).nullable(),
   img: z.string().nullable().optional(),
   bloodType: z.string().optional().or(z.literal("")).nullable(),
-  birthday: z.coerce.date().optional().nullable(),
+  birthday: z.preprocess((arg) => {
+    // Treat empty string as undefined so optional/nullable validation passes
+    if (typeof arg == "string" && arg.trim() === "") return undefined;
+    return arg;
+  }, z.coerce.date().optional().nullable()),
   sex: z.nativeEnum(UserSex).optional().nullable(),
   subjects: z.array(z.string()).optional(),
 });
