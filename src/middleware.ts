@@ -1,14 +1,23 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-// The default and only locale is 'fr'
 const defaultLocale = 'fr';
+
+// Regex pour détecter les fichiers publics (ex: favicon.ico, logo.png)
+const PUBLIC_FILE = /\.(.*)$/;
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // The matcher now correctly excludes /api paths, so the logic here only handles language prefixing.
+  // Ignore les routes API, les fichiers statiques Next.js, et les fichiers publics.
+  if (
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/_next/') ||
+    PUBLIC_FILE.test(pathname)
+  ) {
+    return NextResponse.next();
+  }
 
-  // Check if the default locale is already in the pathname
+  // Si la locale est déjà présente, ne rien faire.
   if (
     pathname.startsWith(`/${defaultLocale}/`) ||
     pathname === `/${defaultLocale}`
@@ -16,19 +25,22 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Rewrite the URL to include the default locale
+  // Sinon, réécrire l'URL pour inclure la locale par défaut.
   const url = request.nextUrl.clone();
   url.pathname = `/${defaultLocale}${pathname}`;
   return NextResponse.rewrite(url);
 }
 
+// Le matcher est retiré pour laisser la logique du dessus s'exécuter sur toutes les requêtes.
 export const config = {
-  /*
-   * Match all request paths except for the ones starting with:
-   * - api (API routes)
-   * - _next/static (static files)
-   * - _next/image (image optimization files)
-   * - favicon.ico (favicon file)
-   */
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+    matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 };
