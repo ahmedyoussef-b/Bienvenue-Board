@@ -105,7 +105,7 @@ export default function ShuddlePageClient() {
                 description: "Votre configuration a été enregistrée sur le serveur.",
             });
           })
-          .catch((error) => {
+          .catch((error: any) => {
              toast({
                 variant: "destructive",
                 title: "Échec de la sauvegarde",
