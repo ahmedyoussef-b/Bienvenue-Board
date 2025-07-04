@@ -10,6 +10,28 @@ import Link from "next/link";
 import TimetableDisplay from "@/components/schedule/TimetableDisplay";
 import DynamicAvatar from "@/components/DynamicAvatar";
 import type { WizardData, ClassWithGrade, TeacherWithDetails, Parent, Student, Subject, Classroom } from '@/types';
+import type { Prisma } from '@prisma/client';
+
+// Define arguments for the prisma query to ensure type safety and reusability
+const parentWithDetailsArgs = {
+  include: {
+    user: true,
+    students: {
+      include: {
+        class: {
+          include: {
+            grade: true,
+          },
+        },
+        user: true, // Also include user for students to get their details
+      },
+      orderBy: [{ surname: 'asc' }, { name: 'asc' }] as Prisma.StudentOrderByWithRelationInput[],
+    },
+  },
+} satisfies Prisma.ParentFindUniqueArgs;
+
+// Infer the type from the query arguments
+type ParentWithDetails = Prisma.ParentGetPayload<typeof parentWithDetailsArgs>;
 
 const SingleParentPage = async ({ params }: { params: { id: string } }) => {
   const locale = 'fr'; 
@@ -23,21 +45,9 @@ const SingleParentPage = async ({ params }: { params: { id: string } }) => {
     redirect(`/${locale}/login`);
   }
 
-  const parent = await prisma.parent.findUnique({
+  const parent: ParentWithDetails | null = await prisma.parent.findUnique({
     where: { id },
-    include: {
-      user: true,
-      students: {
-        include: {
-          class: {
-            include: {
-              grade: true
-            }
-          }
-        },
-        orderBy: [{ surname: 'asc' }, { name: 'asc' }],
-      },
-    },
+    ...parentWithDetailsArgs,
   });
 
   if (!parent) {
@@ -57,7 +67,6 @@ const SingleParentPage = async ({ params }: { params: { id: string } }) => {
             where: {
                 students: { some: { id: { in: studentIds } } },
                 OR: [
-                    { supervisorId: currentUserId },
                     { lessons: { some: { teacherId: currentUserId } } }
                 ]
             }
@@ -179,10 +188,10 @@ const SingleParentPage = async ({ params }: { params: { id: string } }) => {
                 </CardHeader>
                 <CardContent className="max-h-96 overflow-y-auto pr-2">
                     <div className="space-y-3">
-                        {parent.students.map(student => (
+                        {parent.students.map((student: ParentWithDetails['students'][number]) => (
                             <Link key={student.id} href={`/${locale}/list/students/${student.id}`} className="flex items-center space-x-3 p-2 rounded-md hover:bg-muted transition-colors">
                                 <DynamicAvatar
-                                  imageUrl={student.img}
+                                  imageUrl={student.user?.img || student.img}
                                   seed={student.id}
                                 />
                                 <div>
@@ -209,7 +218,7 @@ const SingleParentPage = async ({ params }: { params: { id: string } }) => {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow min-h-[700px]">
-                    <TimetableDisplay wizardData={wizardData} scheduleData={lessons} />
+                    <TimetableDisplay wizardData={wizardData} scheduleData={lessons} fullSchedule={[]} viewMode={"teacher"} selectedViewId={""} />
                 </CardContent>
             </Card>
         </div>

@@ -83,7 +83,7 @@ const EventListPage = async ({
         {
           class: {
             OR: [
-                { supervisorId: currentUserId },
+               
                 { lessons: { some: { teacherId: currentUserId } } }
             ]
           }
