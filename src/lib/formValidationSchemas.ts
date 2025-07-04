@@ -85,14 +85,14 @@ export const studentSchema = z.object({
   gradeId: z.coerce.number({invalid_type_error: "Le niveau est requis."}).min(1, { message: "Le niveau est requis !" }),
   classId: z.coerce.number({invalid_type_error: "La classe est requise."}).min(1, { message: "La classe est requise !" }),
   parentId: z.string().min(1, { message: "L'identifiant du parent est requis !" }),
-}).refine(data => { // Add refine for create operations
-  if (!data.id && (!data.password || data.password.trim() === "")) { // If creating (no id) and password is empty
+}).refine(data => {
+  if (!data.id && (!data.password || data.password.trim() === "")) {
     return false;
   }
   return true;
 }, {
   message: "Le mot de passe est requis pour les nouveaux étudiants.",
-  path: ["password"], // Path to the password field
+  path: ["password"],
 });
 export type StudentSchema = z.infer<typeof studentSchema>;
 
@@ -167,6 +167,14 @@ export const parentSchema = z.object({
   phone: z.string().optional().or(z.literal("")),
   address: z.string().min(1, { message: "L'adresse est requise !" }),
   img: z.string().optional().nullable(),
+}).refine(data => {
+  if (!data.id && (!data.password || data.password.trim() === '')) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Le mot de passe est requis pour les nouveaux parents.",
+  path: ["password"],
 });
 export type ParentSchema = z.infer<typeof parentSchema>;
 
