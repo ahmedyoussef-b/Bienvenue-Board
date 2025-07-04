@@ -22,18 +22,25 @@ function main() {
         console.log('--- Début du seeding réaliste ---');
         // 1. Nettoyage de la base de données
         console.log('Nettoyage des anciennes données...');
-        
-        // Chatroom related tables - Deleting in order of dependency to avoid foreign key errors
-        if (prisma.pollAnswer) await prisma.pollAnswer.deleteMany({});
-        if (prisma.quizAnswer) await prisma.quizAnswer.deleteMany({});
-        if (prisma.pollOption) await prisma.pollOption.deleteMany({});
-        if (prisma.quizQuestion) await prisma.quizQuestion.deleteMany({});
-        if (prisma.poll) await prisma.poll.deleteMany({});
-        if (prisma.quiz) await prisma.quiz.deleteMany({});
-        if (prisma.chatroomMessage) await prisma.chatroomMessage.deleteMany({});
-        if (prisma.sessionParticipant) await prisma.sessionParticipant.deleteMany({});
-        if (prisma.chatroomSession) await prisma.chatroomSession.deleteMany({});
-
+        // Chatroom related tables
+        if (prisma.pollAnswer)
+            yield prisma.pollAnswer.deleteMany({});
+        if (prisma.quizAnswer)
+            yield prisma.quizAnswer.deleteMany({});
+        if (prisma.pollOption)
+            yield prisma.pollOption.deleteMany({});
+        if (prisma.quizQuestion)
+            yield prisma.quizQuestion.deleteMany({});
+        if (prisma.poll)
+            yield prisma.poll.deleteMany({});
+        if (prisma.quiz)
+            yield prisma.quiz.deleteMany({});
+        if (prisma.chatroomMessage)
+            yield prisma.chatroomMessage.deleteMany({});
+        if (prisma.sessionParticipant)
+            yield prisma.sessionParticipant.deleteMany({});
+        if (prisma.chatroomSession)
+            yield prisma.chatroomSession.deleteMany({});
         // Existing cleanup logic
         yield prisma.attendance.deleteMany({});
         yield prisma.result.deleteMany({});
@@ -64,28 +71,48 @@ function main() {
         yield prisma.classroom.deleteMany({});
         yield prisma.user.deleteMany({});
         console.log('Anciennes données supprimées.');
-        // 2. Création de l'utilisateur Administrateur
-        console.log('Création de l\'administrateur...');
+        // 2. Création des administrateurs
+        console.log('Création des administrateurs...');
         const hashedPassword = yield bcryptjs_1.default.hash('password123', HASH_ROUNDS);
-        const adminUser = yield prisma.user.create({
+        // Admin 1
+        const admin1User = yield prisma.user.create({
             data: {
-                email: 'admin@example.com',
-                username: 'admin',
+                email: 'admin1@example.com',
+                username: 'admin1',
                 password: hashedPassword,
                 role: client_1.Role.ADMIN,
-                name: 'Admin Principal',
+                name: 'Admin Principal 1',
                 active: true,
             },
         });
         yield prisma.admin.create({
             data: {
-                userId: adminUser.id,
+                userId: admin1User.id,
                 name: 'Admin',
-                surname: 'Principal',
+                surname: 'Principal 1',
                 phone: '0123456789',
             },
         });
-        console.log('Administrateur créé.');
+        // Admin 2
+        const admin2User = yield prisma.user.create({
+            data: {
+                email: 'admin2@example.com',
+                username: 'admin2',
+                password: hashedPassword,
+                role: client_1.Role.ADMIN,
+                name: 'Admin Principal 2',
+                active: true,
+            },
+        });
+        yield prisma.admin.create({
+            data: {
+                userId: admin2User.id,
+                name: 'Admin',
+                surname: 'Principal 2',
+                phone: '0987654321',
+            },
+        });
+        console.log('Administrateurs créés.');
         // 3. Création des Niveaux (Grades)
         console.log('Création des niveaux...');
         const gradesData = [{ level: 7 }, { level: 8 }, { level: 9 }];
@@ -208,11 +235,15 @@ function main() {
         console.log('--- Seeding réaliste terminé avec succès ---');
     });
 }
-main()
-    .catch((e) => {
-    console.error(e);
-    process.exit(1);
-})
-    .finally(() => __awaiter(void 0, void 0, void 0, function* () {
-    yield prisma.$disconnect();
-}));
+(() => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield main();
+    }
+    catch (e) {
+        console.error(e);
+        process.exit(1);
+    }
+    finally {
+        yield prisma.$disconnect();
+    }
+}))();
