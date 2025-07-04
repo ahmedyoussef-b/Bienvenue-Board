@@ -314,6 +314,51 @@ export const startSession = createAsyncThunk<ActiveSession, { classId: string; c
   }
 );
 
+export const startMeeting = createAsyncThunk<ActiveSession, { title: string; participantIds: string[] }, { rejectValue: string, state: { session: SessionState, auth: { user: SafeUser | null } } }>(
+  'session/startMeeting',
+  async ({ title, participantIds }, { rejectWithValue, getState }) => {
+    const state = getState();
+    const host = state.auth.user;
+    const allCandidates = state.session.meetingCandidates;
+
+    if (!host) return rejectWithValue('Host user not found');
+
+    const participants: SessionParticipant[] = allCandidates
+      .filter(p => participantIds.includes(p.id))
+      .map(p => ({ ...p, isInSession: true, hasRaisedHand: false, points: 0, badges: [], isMuted: false, breakoutRoomId: null }));
+
+    // Add host to participants
+    participants.unshift({ id: host.id, name: host.name || host.email, email: host.email, role: 'admin', img: host.img, isOnline: true, isInSession: true, hasRaisedHand: false, points: 0, badges: [], isMuted: false, breakoutRoomId: null });
+
+    const initialSessionPayload: Partial<ActiveSession> = {
+      sessionType: 'meeting',
+      title,
+      participants,
+      hostId: host.id,
+      className: title, // Use title for className as well for consistency
+      classId: '', // No class associated
+      polls: [],
+      quizzes: [],
+    };
+
+    try {
+      const response = await fetch('/api/chatroom/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(initialSessionPayload)
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData.message || 'Failed to start meeting on server');
+      }
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+    }
+  }
+);
+
+
 export const fetchSessionState = createAsyncThunk('session/fetchState', async (sessionId: string, { rejectWithValue }) => {
   try {
     const response = await fetch(`/api/chatroom/sessions/${sessionId}`);
@@ -654,6 +699,12 @@ const sessionSlice = createSlice({
         state.loading = false;
       })
       .addCase(startSession.rejected, (state) => { state.loading = false; })
+      .addCase(startMeeting.pending, (state) => { state.loading = true; })
+      .addCase(startMeeting.fulfilled, (state, action: PayloadAction<ActiveSession>) => {
+        state.activeSession = action.payload;
+        state.loading = false;
+      })
+      .addCase(startMeeting.rejected, (state) => { state.loading = false; })
       .addCase(fetchSessionState.fulfilled, (state, action) => {
         state.activeSession = action.payload;
       })
