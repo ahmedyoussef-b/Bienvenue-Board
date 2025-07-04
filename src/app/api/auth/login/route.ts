@@ -1,6 +1,6 @@
 // src/app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { compare } from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import jwt, { type SignOptions, type Secret } from 'jsonwebtoken';
 import prisma from "@/lib/prisma";
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
@@ -36,7 +36,7 @@ export const POST = async (req: NextRequest) => {
         return NextResponse.json({ message: 'Invalid user record (missing password)' }, { status: 401 });
     }
 
-    const passwordMatch = await compare(password, user.password);
+    const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
