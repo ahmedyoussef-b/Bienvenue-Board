@@ -1,4 +1,3 @@
-
 // prisma/seed.ts
 import { PrismaClient, Role, UserSex, Day } from '@prisma/client';
 import bcrypt from 'bcryptjs';
@@ -11,13 +10,30 @@ async function main() {
 
   // 1. Nettoyage de la base de données
   console.log('Nettoyage des anciennes données...');
+  // Chatroom related tables - Deleting in order of dependency to avoid foreign key errors
+  if (prisma.pollAnswer) await prisma.pollAnswer.deleteMany({});
+  if (prisma.quizAnswer) await prisma.quizAnswer.deleteMany({});
+  if (prisma.pollOption) await prisma.pollOption.deleteMany({});
+  if (prisma.quizQuestion) await prisma.quizQuestion.deleteMany({});
+  if (prisma.poll) await prisma.poll.deleteMany({});
+  if (prisma.quiz) await prisma.quiz.deleteMany({});
+  if (prisma.chatroomMessage) await prisma.chatroomMessage.deleteMany({});
+  if (prisma.sessionParticipant) await prisma.sessionParticipant.deleteMany({});
+  if (prisma.chatroomSession) await prisma.chatroomSession.deleteMany({});
+
+  // Existing cleanup logic
   await prisma.attendance.deleteMany({});
   await prisma.result.deleteMany({});
   await prisma.assignment.deleteMany({});
   await prisma.exam.deleteMany({});
-  // Check if LessonRequirement model exists before deleting
   if (prisma.lessonRequirement) {
     await prisma.lessonRequirement.deleteMany({});
+  }
+  if (prisma.teacherConstraint) {
+    await prisma.teacherConstraint.deleteMany({});
+  }
+  if (prisma.subjectRequirement) {
+    await prisma.subjectRequirement.deleteMany({});
   }
   if (prisma.scheduleDraft) {
     await prisma.scheduleDraft.deleteMany({});
@@ -160,6 +176,7 @@ async function main() {
           userId: studentUser.id,
           name: `EtudiantPrénom ${studentCounter + 1}`,
           surname: `EtudiantNom ${studentCounter + 1}`,
+          address: `${studentCounter + 1} Rue de l'Exemple`,
           birthday: new Date('2010-01-01'),
           sex: i % 2 === 0 ? UserSex.FEMALE : UserSex.MALE,
           bloodType: 'O+',

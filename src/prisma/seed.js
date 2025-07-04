@@ -1,4 +1,3 @@
-
 // prisma/seed.js
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -65,14 +64,13 @@ function main() {
         yield prisma.classroom.deleteMany({});
         yield prisma.user.deleteMany({});
         console.log('Anciennes données supprimées.');
-        // 2. Création des utilisateurs Administrateurs
-        console.log('Création des administrateurs...');
+        // 2. Création de l'utilisateur Administrateur
+        console.log('Création de l\'administrateur...');
         const hashedPassword = yield bcryptjs_1.default.hash('password123', HASH_ROUNDS);
-        // Admin 1
-        const adminUser1 = yield prisma.user.create({
+        const adminUser = yield prisma.user.create({
             data: {
-                email: 'admin1@example.com',
-                username: 'admin1',
+                email: 'admin@example.com',
+                username: 'admin',
                 password: hashedPassword,
                 role: client_1.Role.ADMIN,
                 name: 'Admin Principal',
@@ -81,33 +79,13 @@ function main() {
         });
         yield prisma.admin.create({
             data: {
-                userId: adminUser1.id,
+                userId: adminUser.id,
                 name: 'Admin',
                 surname: 'Principal',
                 phone: '0123456789',
             },
         });
-
-        // Admin 2
-        const adminUser2 = yield prisma.user.create({
-            data: {
-                email: 'admin2@example.com',
-                username: 'admin2',
-                password: hashedPassword,
-                role: client_1.Role.ADMIN,
-                name: 'Admin Adjoint',
-                active: true,
-            },
-        });
-        yield prisma.admin.create({
-            data: {
-                userId: adminUser2.id,
-                name: 'Admin',
-                surname: 'Adjoint',
-                phone: '0987654321',
-            },
-        });
-        console.log('2 administrateurs créés.');
+        console.log('Administrateur créé.');
         // 3. Création des Niveaux (Grades)
         console.log('Création des niveaux...');
         const gradesData = [{ level: 7 }, { level: 8 }, { level: 9 }];
@@ -209,7 +187,6 @@ function main() {
             }
         }
         console.log(`${parents.length} parents et ${studentCounter} étudiants créés.`);
-        
         // 9. Ajout de données exemples pour Annonces et Événements
         console.log("Ajout d'annonces et d'événements exemples...");
         yield prisma.announcement.create({
@@ -228,7 +205,6 @@ function main() {
             }
         });
         console.log("Données exemples ajoutées.");
-        
         console.log('--- Seeding réaliste terminé avec succès ---');
     });
 }
@@ -240,6 +216,3 @@ main()
     .finally(() => __awaiter(void 0, void 0, void 0, function* () {
     yield prisma.$disconnect();
 }));
-
-
-    
