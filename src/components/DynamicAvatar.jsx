@@ -1,6 +1,7 @@
 // components/DynamicAvatar.jsx
 import Image from 'next/image';
 import React from 'react';
+import { cn } from "@/lib/utils";
 
 /**
  * A component to display a user's avatar, falling back to a generated one.
