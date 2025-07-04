@@ -35,7 +35,6 @@ import { selectTeacherConstraints, addTeacherConstraint, removeTeacherConstraint
 import { selectSubjectRequirements, setSubjectRequirement, setSubjectTimePreference } from '@/lib/redux/features/subjectRequirementsSlice';
 import { selectTeacherAssignments, updateTeacherAssignment, clearAllAssignments } from '@/lib/redux/features/teacherAssignmentsSlice';
 import { selectSchoolConfig, updateSchoolConfig } from '@/lib/redux/features/schoolConfigSlice';
-import { saveScheduleDraft } from '@/lib/redux/features/scheduleDraftSlice';
 import type { WizardData, ClassWithGrade, Subject, TeacherWithDetails, Classroom, Lesson, Grade, LessonRequirement, TeacherConstraint, SubjectRequirement, CreateClassPayload, CreateSubjectPayload, CreateClassroomPayload, Day } from '@/types';
 import { toast, useToast } from '@/hooks/use-toast';
 import { generateSchedule } from '@/lib/schedule-utils';
@@ -174,24 +173,6 @@ const ShuddlePageClient: React.FC = () => {
     const handlePrevious = () => currentStep > 0 && setCurrentStep(currentStep - 1);
     const handleStepClick = (stepIndex: number) => setCurrentStep(stepIndex);
 
-    const handleSaveToServer = () => {
-        dispatch(saveScheduleDraft())
-          .unwrap()
-          .then(() => {
-            toast({
-                title: "Progression sauvegardée sur le serveur",
-                description: "Votre configuration a été enregistrée.",
-            });
-          })
-          .catch((error: any) => {
-             toast({
-                variant: "destructive",
-                title: "Échec de la sauvegarde",
-                description: error,
-            });
-          });
-    };
-
     const handleGenerationSuccess = () => setMode('edit');
 
     const steps = [
@@ -258,9 +239,6 @@ const ShuddlePageClient: React.FC = () => {
                             <div className="flex-grow mb-8">{renderStepContent()}</div>
                             <div className="flex justify-between items-center mt-auto">
                                 <Button variant="outline" onClick={handlePrevious} disabled={currentStep === 0}><ChevronLeft size={16} className="mr-2" /> Précédent</Button>
-                                 <Button onClick={handleSaveToServer} variant="secondary" disabled={saveStatus === 'loading'}>
-                                    {saveStatus === 'loading' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sauvegarde...</> : <><Save className="mr-2 h-4 w-4" /> Sauvegarder</>}
-                                 </Button>
                                 <Button onClick={handleNext} disabled={currentStep === steps.length - 1}>Suivant <ChevronRight size={16} className="ml-2" /></Button>
                             </div>
                         </div>
