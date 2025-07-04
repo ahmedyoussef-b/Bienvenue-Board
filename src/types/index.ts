@@ -125,6 +125,10 @@ export type AnnouncementWithClass = PrismaAnnouncement & {
 
 export type ClassWithGrade = PrismaClass & {
   grade: PrismaGrade;
+  _count: {
+    students: number;
+    lessons: number;
+    };
 };
 
 // Types pour les payloads d'API et le wizard
@@ -179,19 +183,19 @@ export interface WizardData {
 export type CreateSubjectPayload = {
   name: string;
   weeklyHours: number;
-  coefficient?: number;
+  coefficient: number | null;
 };
 
 export type CreateClassPayload = {
   name: string;
-  abbreviation?: string;
+  abbreviation: string | null;
   capacity: number;
   gradeLevel: number;
 };
 
 export type CreateClassroomPayload = {
   name: string;
-  abbreviation?: string;
+  abbreviation: string | null;
   capacity: number;
   building?: string;
 };
