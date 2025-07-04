@@ -20,14 +20,14 @@ const initialState: DraftState = {
     lastSaved: null,
 };
 
-export const fetchScheduleDraft = createAsyncThunk<ScheduleDraft, void, { rejectValue: string }>(
+export const fetchScheduleDraft = createAsyncThunk<ScheduleDraft | null, void, { rejectValue: string }>(
     'scheduleDraft/fetch',
     async (_, { rejectWithValue }) => {
         try {
             const response = await fetch('/api/schedule-draft');
             if (!response.ok) {
                 if (response.status === 404) {
-                    return rejectWithValue('No draft found');
+                    return null; // A 404 is an expected "empty" state, not a failure.
                 }
                 const errorData = await response.json();
                 return rejectWithValue(errorData.message ?? 'Failed to fetch draft');
@@ -87,9 +87,13 @@ const scheduleDraftSlice = createSlice({
             .addCase(fetchScheduleDraft.pending, (state) => {
                 state.status = 'loading';
             })
-            .addCase(fetchScheduleDraft.fulfilled, (state, action: PayloadAction<ScheduleDraft>) => {
+            .addCase(fetchScheduleDraft.fulfilled, (state, action: PayloadAction<ScheduleDraft | null>) => {
                 state.status = 'succeeded';
-                state.lastSaved = action.payload.updatedAt;
+                if (action.payload) { // Check if a draft was actually returned
+                    state.lastSaved = action.payload.updatedAt;
+                } else {
+                    state.lastSaved = null; // No draft found
+                }
             })
             .addCase(fetchScheduleDraft.rejected, (state, action) => {
                 state.status = 'failed';

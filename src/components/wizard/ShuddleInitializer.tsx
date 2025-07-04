@@ -41,34 +41,49 @@ export default function ShuddleInitializer({ initialData }: ShuddleInitializerPr
 
     useEffect(() => {
         const initialize = async () => {
-            const result = await dispatch(fetchScheduleDraft());
+            const resultAction = await dispatch(fetchScheduleDraft());
 
-            if (fetchScheduleDraft.fulfilled.match(result)) {
-                const draft = result.payload;
-                console.log("Initializing scheduler from saved draft.");
-                dispatch(setSchoolConfig(draft.schoolConfig));
-                dispatch(setAllClasses(draft.classes));
-                dispatch(setAllSubjects(draft.subjects));
-                dispatch(setAllTeachers(draft.teachers));
-                dispatch(setAllClassrooms(draft.classrooms));
-                dispatch(setAllGrades(draft.grades));
-                dispatch(setAllLessonRequirements(draft.lessonRequirements));
-                dispatch(setAllTeacherConstraints(draft.teacherConstraints));
-                dispatch(setAllSubjectRequirements(draft.subjectRequirements));
-                dispatch(setAllTeacherAssignments(draft.teacherAssignments));
-                dispatch(setInitialSchedule(draft.schedule));
+            if (fetchScheduleDraft.fulfilled.match(resultAction)) {
+                const draft = resultAction.payload;
+
+                if (draft) {
+                    console.log("Initializing scheduler from saved draft.");
+                    dispatch(setSchoolConfig(draft.schoolConfig));
+                    dispatch(setAllClasses(draft.classes));
+                    dispatch(setAllSubjects(draft.subjects));
+                    dispatch(setAllTeachers(draft.teachers));
+                    dispatch(setAllClassrooms(draft.classrooms));
+                    dispatch(setAllGrades(draft.grades));
+                    dispatch(setAllLessonRequirements(draft.lessonRequirements));
+                    dispatch(setAllTeacherConstraints(draft.teacherConstraints));
+                    dispatch(setAllSubjectRequirements(draft.subjectRequirements));
+                    dispatch(setAllTeacherAssignments(draft.teacherAssignments));
+                    dispatch(setInitialSchedule(draft.schedule));
+                } else {
+                    console.log("No schedule draft found. Initializing from server props.");
+                    dispatch(setAllClasses(initialData.classes));
+                    dispatch(setAllSubjects(initialData.subjects));
+                    dispatch(setAllTeachers(initialData.teachers));
+                    dispatch(setAllClassrooms(initialData.classrooms));
+                    dispatch(setInitialSchedule(initialData.lessons));
+                    dispatch(setAllGrades(initialData.grades));
+                    dispatch(setAllLessonRequirements(initialData.lessonRequirements));
+                    dispatch(setAllTeacherConstraints(initialData.teacherConstraints));
+                    dispatch(setAllSubjectRequirements(initialData.subjectRequirements));
+                    dispatch(setAllTeacherAssignments([])); // No assignments in initial DB data
+                }
             } else {
-                console.log("No schedule draft found or failed to fetch. Initializing from server props.", result.payload);
-                dispatch(setAllClasses(initialData.classes));
-                dispatch(setAllSubjects(initialData.subjects));
-                dispatch(setAllTeachers(initialData.teachers));
-                dispatch(setAllClassrooms(initialData.classrooms));
-                dispatch(setInitialSchedule(initialData.lessons));
-                dispatch(setAllGrades(initialData.grades));
-                dispatch(setAllLessonRequirements(initialData.lessonRequirements));
-                dispatch(setAllTeacherConstraints(initialData.teacherConstraints));
-                dispatch(setAllSubjectRequirements(initialData.subjectRequirements));
-                dispatch(setAllTeacherAssignments([])); // No assignments in initial DB data
+                 console.error("Failed to fetch schedule draft, initializing from server props as a fallback.", resultAction.payload);
+                 dispatch(setAllClasses(initialData.classes));
+                 dispatch(setAllSubjects(initialData.subjects));
+                 dispatch(setAllTeachers(initialData.teachers));
+                 dispatch(setAllClassrooms(initialData.classrooms));
+                 dispatch(setInitialSchedule(initialData.lessons));
+                 dispatch(setAllGrades(initialData.grades));
+                 dispatch(setAllLessonRequirements(initialData.lessonRequirements));
+                 dispatch(setAllTeacherConstraints(initialData.teacherConstraints));
+                 dispatch(setAllSubjectRequirements(initialData.subjectRequirements));
+                 dispatch(setAllTeacherAssignments([])); 
             }
             setIsInitialized(true);
         };
