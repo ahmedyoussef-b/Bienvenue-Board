@@ -51,7 +51,7 @@ export const teacherSchema = z.object({
   sex: z.nativeEnum(UserSex).optional().nullable(),
   subjects: z.array(z.string()).optional(),
 }).refine(data => {
-  if (type === "create" && (!data.password || data.password.trim() === '')) {
+  if (!data.id && (!data.password || data.password.trim() === '')) {
     return false;
   }
   return true;
