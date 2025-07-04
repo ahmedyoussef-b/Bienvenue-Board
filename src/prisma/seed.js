@@ -1,4 +1,3 @@
-
 // prisma/seed.js
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -197,6 +196,7 @@ function main() {
             }
         }
         console.log(`${parents.length} parents et ${studentCounter} étudiants créés.`);
+        
         // 9. Ajout de données exemples pour Annonces et Événements
         console.log("Ajout d'annonces et d'événements exemples...");
         yield prisma.announcement.create({
@@ -215,6 +215,55 @@ function main() {
             }
         });
         console.log("Données exemples ajoutées.");
+        
+        // 10. Création des Leçons (Emploi du temps de base)
+        console.log("Création de l'emploi du temps de base (Leçons)...");
+        const teachersWithData = yield prisma.teacher.findMany({
+            include: { subjects: true }
+        });
+        let lessonCounter = 0;
+        for (const cls of allSystemClasses) {
+            const mathSubject = subjectMap.get('MATHEMATIQUE');
+            const frenchSubject = subjectMap.get('FRANCAIS');
+        
+            if (mathSubject) {
+                const mathTeachers = teachersWithData.filter(t => t.subjects.some(s => s.id === mathSubject.id));
+                if (mathTeachers.length > 0) {
+                    yield prisma.lesson.create({
+                        data: {
+                            name: `${mathSubject.name} - ${cls.name}`,
+                            day: 'MONDAY',
+                            startTime: new Date('1970-01-01T08:00:00Z'),
+                            endTime: new Date('1970-01-01T09:00:00Z'),
+                            subjectId: mathSubject.id,
+                            classId: cls.id,
+                            teacherId: mathTeachers[lessonCounter % mathTeachers.length].id,
+                        }
+                    });
+                    lessonCounter++;
+                }
+            }
+        
+            if (frenchSubject) {
+                const frenchTeachers = teachersWithData.filter(t => t.subjects.some(s => s.id === frenchSubject.id));
+                if (frenchTeachers.length > 0) {
+                    yield prisma.lesson.create({
+                        data: {
+                            name: `${frenchSubject.name} - ${cls.name}`,
+                            day: 'TUESDAY',
+                            startTime: new Date('1970-01-01T10:00:00Z'),
+                            endTime: new Date('1970-01-01T11:00:00Z'),
+                            subjectId: frenchSubject.id,
+                            classId: cls.id,
+                            teacherId: frenchTeachers[lessonCounter % frenchTeachers.length].id,
+                        }
+                    });
+                    lessonCounter++;
+                }
+            }
+        }
+        console.log(`${lessonCounter} leçons de base créées.`);
+
         console.log('--- Seeding réaliste terminé avec succès ---');
     });
 }
