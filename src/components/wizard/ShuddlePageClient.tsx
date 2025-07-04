@@ -28,15 +28,15 @@ import { saveScheduleDraft, selectSaveStatus, selectLastSaved } from '@/lib/redu
 import type { WizardData } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
-// Dynamic imports for wizard steps with explicit default export handling
-const SchoolConfigForm = dynamic(() => import('./SchoolConfigForm').then(mod => mod.default), { loading: () => <p>Chargement...</p> });
-const ClassesForm = dynamic(() => import('./ClassesForm').then(mod => mod.default), { loading: () => <p>Chargement...</p> });
-const SubjectsForm = dynamic(() => import('./SubjectsForm').then(mod => mod.default), { loading: () => <p>Chargement...</p> });
-const TeachersForm = dynamic(() => import('./TeachersForm').then(mod => mod.default), { loading: () => <p>Chargement...</p> });
-const ClassroomsForm = dynamic(() => import('./ClassroomsForm').then(mod => mod.default), { loading: () => <p>Chargement...</p> });
-const ConstraintsForm = dynamic(() => import('./ConstraintsForm').then(mod => mod.default), { loading: () => <p>Chargement...</p> });
-const ValidationStep = dynamic(() => import('./ValidationStep').then(mod => mod.default), { loading: () => <p>Chargement...</p> });
-const ScheduleEditor = dynamic(() => import('../schedule/ScheduleEditor').then(mod => mod.default), { loading: () => <p>Chargement...</p> });
+// Dynamic imports for wizard steps
+const SchoolConfigForm = dynamic(() => import('./SchoolConfigForm'), { loading: () => <p>Chargement...</p> });
+const ClassesForm = dynamic(() => import('./ClassesForm'), { loading: () => <p>Chargement...</p> });
+const SubjectsForm = dynamic(() => import('./SubjectsForm'), { loading: () => <p>Chargement...</p> });
+const TeachersForm = dynamic(() => import('./TeachersForm'), { loading: () => <p>Chargement...</p> });
+const ClassroomsForm = dynamic(() => import('./ClassroomsForm'), { loading: () => <p>Chargement...</p> });
+const ConstraintsForm = dynamic(() => import('./ConstraintsForm'), { loading: () => <p>Chargement...</p> });
+const ValidationStep = dynamic(() => import('./ValidationStep'), { loading: () => <p>Chargement...</p> });
+const ScheduleEditor = dynamic(() => import('../schedule/ScheduleEditor'), { loading: () => <p>Chargement...</p> });
 
 const steps = [
   { id: 'school', title: 'Établissement', icon: School, description: 'Paramètres généraux' },
