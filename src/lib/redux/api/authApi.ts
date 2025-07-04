@@ -27,20 +27,23 @@ export interface LogoutResponse {
 
 export const authApi = createApi({
   reducerPath: 'authApi',
-  baseQuery: fetchBaseQuery({ baseUrl: '/' }), // Set base URL to root
+  baseQuery: fetchBaseQuery({ baseUrl: '/' }),
   tagTypes: ['UserSession'],
   endpoints: (builder) => ({
     login: builder.mutation<AuthResponse, LoginRequest>({
-      query: (credentials) => ({
-        url: 'api/auth/login', // Use full path from root
-        method: 'POST',
-        body: credentials,
-      }),
+      query: (credentials) => {
+        console.log('--- 2. authApi: RTK Query preparing login request ---', credentials);
+        return {
+          url: '/api/auth/login',
+          method: 'POST',
+          body: credentials,
+        };
+      },
       invalidatesTags: ['UserSession'],
     }),
     register: builder.mutation<AuthResponse, RegisterRequest>({
       query: (userInfo) => ({
-        url: 'api/auth/register', // Use full path from root
+        url: '/api/auth/register',
         method: 'POST',
         body: userInfo,
       }),
@@ -48,13 +51,13 @@ export const authApi = createApi({
     }),
     logout: builder.mutation<LogoutResponse, void>({
       query: () => ({
-        url: 'api/auth/logout', // Use full path from root
+        url: '/api/auth/logout',
         method: 'POST',
       }),
       invalidatesTags: ['UserSession'],
     }),
     checkSession: builder.query<SessionResponse, void>({
-      query: () => 'api/auth/session', // Use full path from root
+      query: () => '/api/auth/session',
       providesTags: ['UserSession'],
     }),
   }),

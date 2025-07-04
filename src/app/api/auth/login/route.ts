@@ -12,6 +12,7 @@ const EFFECTIVE_JWT_EXPIRATION_TIME = (jwtExpirationEnv && jwtExpirationEnv.trim
 const SESSION_COOKIE_NAME = 'appSessionToken';
 
 export const POST = async (req: NextRequest) => {
+  console.log('--- 4. API Route: /api/auth/login reached ---');
   if (!JWT_SECRET_KEY) {
     console.error('API Login: JWT_SECRET_KEY is not defined.');
     return NextResponse.json({ message: 'Internal configuration error: Missing JWT secret.' }, { status: 500 });

@@ -7,13 +7,15 @@ const PUBLIC_FILE = /\.(.*)$/;
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  console.log(`--- 3. Middleware: Intercepted request for path: ${pathname} ---`);
 
-  // Ignore les routes API, les fichiers statiques Next.js, et les fichiers publics.
+  // Ignore routes for API, Next.js internal files, and public assets
   if (
     pathname.startsWith('/api/') ||
     pathname.startsWith('/_next/') ||
     PUBLIC_FILE.test(pathname)
   ) {
+    console.log(`--- 3a. Middleware: Skipping rewrite for path: ${pathname} ---`);
     return NextResponse.next();
   }
 
@@ -28,12 +30,12 @@ export function middleware(request: NextRequest) {
   // Sinon, réécrire l'URL pour inclure la locale par défaut.
   const url = request.nextUrl.clone();
   url.pathname = `/${defaultLocale}${pathname}`;
+  console.log(`--- 3b. Middleware: Rewriting path to: ${url.pathname} ---`);
   return NextResponse.rewrite(url);
 }
 
-// Le matcher est retiré pour laisser la logique du dessus s'exécuter sur toutes les requêtes.
 export const config = {
-    matcher: [
+  matcher: [
     /*
      * Match all request paths except for the ones starting with:
      * - api (API routes)
