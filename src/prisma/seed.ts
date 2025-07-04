@@ -19,6 +19,9 @@ async function main() {
   if (prisma.lessonRequirement) {
     await prisma.lessonRequirement.deleteMany({});
   }
+  if (prisma.scheduleDraft) {
+    await prisma.scheduleDraft.deleteMany({});
+  }
   await prisma.announcement.deleteMany({});
   await prisma.event.deleteMany({});
   await prisma.lesson.deleteMany({});

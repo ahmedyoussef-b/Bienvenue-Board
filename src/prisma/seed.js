@@ -30,6 +30,9 @@ function main() {
         if (prisma.lessonRequirement) {
             yield prisma.lessonRequirement.deleteMany({});
         }
+        if (prisma.scheduleDraft) {
+            yield prisma.scheduleDraft.deleteMany({});
+        }
         yield prisma.announcement.deleteMany({});
         yield prisma.event.deleteMany({});
         yield prisma.lesson.deleteMany({});
