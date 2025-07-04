@@ -32,7 +32,7 @@ export const authApi = createApi({
   endpoints: (builder) => ({
     login: builder.mutation<AuthResponse, LoginRequest>({
       query: (credentials) => ({
-        url: 'api/auth/login', // Full path
+        url: '/api/auth/login', // Full path
         method: 'POST',
         body: credentials,
       }),
@@ -40,7 +40,7 @@ export const authApi = createApi({
     }),
     register: builder.mutation<AuthResponse, RegisterRequest>({
       query: (userInfo) => ({
-        url: 'api/auth/register', // Full path
+        url: '/api/auth/register', // Full path
         method: 'POST',
         body: userInfo,
       }),
@@ -48,13 +48,13 @@ export const authApi = createApi({
     }),
     logout: builder.mutation<LogoutResponse, void>({
       query: () => ({
-        url: 'api/auth/logout', // Full path
+        url: '/api/auth/logout', // Full path
         method: 'POST',
       }),
       invalidatesTags: ['UserSession'],
     }),
     checkSession: builder.query<SessionResponse, void>({
-      query: () => 'api/auth/session', // Full path
+      query: () => '/api/auth/session', // Full path
       providesTags: ['UserSession'],
     }),
   }),
