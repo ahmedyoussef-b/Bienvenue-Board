@@ -1,4 +1,3 @@
-
 // src/components/forms/ParentForm.tsx
 "use client";
 
@@ -140,7 +139,11 @@ const ParentForm: React.FC<ParentFormProps> = ({ type, initialData, setOpen }) =
               </button>
             )}
           </CldUploadWidget>
-          {imgPreview && <Image src={imgPreview} alt="Preview" width={80} height={80} className="rounded mt-2 object-cover"/>}
+          {imgPreview && (
+            <div className="relative w-20 h-20 mt-2">
+                <Image src={imgPreview} alt="Preview" fill sizes="80px" className="rounded object-cover"/>
+            </div>
+          )}
           {errors.img && <p className="text-xs text-red-400">{errors.img.message}</p>}
         </div>
       </fieldset>
