@@ -19,18 +19,15 @@ const Announcements = async () => {
   if (userRole && currentUserId && userRole !== Role.ADMIN) {
     const roleConditions: Prisma.AnnouncementWhereInput = {};
     if (userRole === Role.TEACHER) {
-      roleConditions.class = { 
-        OR: [
-            { supervisorId: currentUserId },
-            { lessons: { some: { teacherId: currentUserId } } }
-        ]
-      };
+      // A teacher sees announcements for classes they teach in.
+      roleConditions.class = { lessons: { some: { teacherId: currentUserId } } };
     } else if (userRole === Role.STUDENT) {
       roleConditions.class = { students: { some: { id: currentUserId } } };
     } else if (userRole === Role.PARENT) {
       roleConditions.class = { students: { some: { parentId: currentUserId } } };
     }
     
+    // All roles should see announcements for everyone (classId is null) OR announcements for their specific classes.
     queryOptions.where = {
         OR: [
           { classId: null }, 

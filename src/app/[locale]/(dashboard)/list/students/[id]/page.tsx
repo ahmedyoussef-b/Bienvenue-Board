@@ -45,13 +45,11 @@ const SingleStudentPage = async ({
   if (userRole === Role.ADMIN) {
     canView = true;
   } else if (userRole === Role.TEACHER && currentUserId) {
+    // Check if the teacher teaches this student's class
     const teacherClasses = await prisma.class.findMany({
       where: {
-        OR: [
-          { supervisorId: currentUserId },
-          { lessons: { some: { teacherId: currentUserId } } }
-        ],
-        students: { some: { id: student.id } }
+        id: student.classId,
+        lessons: { some: { teacherId: currentUserId } }
       },
       select: { id: true }
     });

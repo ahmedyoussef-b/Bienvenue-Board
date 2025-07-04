@@ -73,17 +73,11 @@ const AnnouncementListPage = async ({
   }
 
   if (userRole && currentUserId) {
-    if (userRole === Role.TEACHER) { 
+    if (userRole === Role.TEACHER) {
+      // Teachers see announcements for classes they teach, or announcements for everyone.
       query.OR = [
-        { classId: null }, 
-        { 
-          class: {
-            OR: [
-                { supervisorId: currentUserId },
-                { lessons: { some: { teacherId: currentUserId } } }
-            ]
-          }
-        }
+        { classId: null },
+        { class: { lessons: { some: { teacherId: currentUserId } } } }
       ];
     } else if (userRole === Role.STUDENT) { 
       query.OR = [

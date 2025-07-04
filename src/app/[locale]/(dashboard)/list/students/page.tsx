@@ -68,11 +68,9 @@ const StudentListPage = async ({
   
   if (userRole === AppRole.TEACHER && currentUserId && !teacherIdParam) { // Ensure this doesn't override specific teacherId filter
     const existingClassQuery: Prisma.ClassWhereInput | undefined = query.class;
+    // A teacher sees students in classes where they teach a lesson.
     const teacherSpecificClassCondition: Prisma.ClassWhereInput = {
-      OR: [
-        { supervisorId: currentUserId }, 
-        { lessons: { some: { teacherId: currentUserId } } } 
-      ]
+      lessons: { some: { teacherId: currentUserId } }
     };
     
     if (existingClassQuery) {
