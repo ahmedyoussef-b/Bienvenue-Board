@@ -1,0 +1,3 @@
+
+PRISMA_CLI_QUERY_ENGINE_TYPE=binary npx prisma generate
+  PRISMA_QUERY_ENGINE_BINARY=1 npx prisma migrate dev

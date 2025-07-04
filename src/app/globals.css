@@ -2,79 +2,104 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer base {
   :root {
-    --background: 0 0% 96.1%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 261 52% 50%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 92.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 0 0% 92.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 256 44% 84%;
-    --accent-foreground: 261 52% 20%;
-    --destructive: 0 84.2% 60.2%;
+    /* Light Mode - Unchanged from original */
+    --background: 30 50% 97%; 
+    --foreground: 30 30% 10%; 
+    --card: 30 40% 99%; 
+    --card-foreground: 30 30% 10%;
+    --popover: 30 40% 99%;
+    --popover-foreground: 30 30% 10%;
+    --primary: 30 93% 51%; 
+    --primary-foreground: 0 0% 100%; 
+    --secondary: 38 100% 53%; 
+    --secondary-foreground: 0 0% 100%; 
+    --muted: 30 30% 90%; 
+    --muted-foreground: 30 20% 40%; 
+    --accent: 45 100% 58%; 
+    --accent-foreground: 30 50% 10%; 
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 261 52% 50%;
+    --border: 30 30% 85%; 
+    --input: 30 30% 92%; 
+    --ring: 30 93% 51%; 
+    
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Sidebar Light Mode - Unchanged */
+    --sidebar-background: 30 15% 12%; 
+    --sidebar-foreground: 30 30% 85%; 
+    --sidebar-primary: 45 100% 58%; 
+    --sidebar-primary-foreground: 30 50% 10%; 
+    --sidebar-accent: 30 93% 51%; 
+    --sidebar-accent-foreground: 0 0% 100%; 
+    --sidebar-border: 30 10% 20%;
+    --sidebar-ring: 45 100% 58%;
+    
+    /* Neumorphic Shadow Variables - Light */
+    --shadow-light: hsl(30 50% 100%);
+    --shadow-dark: hsl(30 30% 88%);
   }
+
   .dark {
-    --background: 261 15% 10%;
-    --foreground: 261 15% 90%;
-    --card: 261 15% 12%;
-    --card-foreground: 261 15% 90%;
-    --popover: 261 15% 12%;
-    --popover-foreground: 261 15% 90%;
-    --primary: 261 70% 75%;
-    --primary-foreground: 261 50% 15%;
-    --secondary: 261 15% 20%;
-    --secondary-foreground: 261 15% 90%;
-    --muted: 261 15% 20%;
-    --muted-foreground: 261 15% 60%;
-    --accent: 261 30% 30%;
-    --accent-foreground: 261 15% 90%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 261 15% 20%;
-    --input: 261 15% 20%;
-    --ring: 261 70% 75%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* New "Midnight Blue" Dark Theme */
+    --background: 222 84% 5%;      /* Deep dark blue */
+    --foreground: 210 40% 98%;      /* Off-white */
+    --card: 222 84% 9%;          /* Slightly lighter dark blue */
+    --card-foreground: 210 40% 98%;
+    --popover: 222 84% 9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;          /* White for high contrast */
+    --primary-foreground: 222 84% 5%; /* Background color for text on primary */
+    --secondary: 217 91% 60%;        /* Vibrant blue for accents */
+    --secondary-foreground: 210 40% 98%;
+    --muted: 215 28% 17%;         /* Muted dark blue */
+    --muted-foreground: 215 20% 65%; /* Lighter gray for muted text */
+    --accent: 217 91% 60%;           /* Same as secondary for hovers */
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 31%;        /* Dark red */
+    --destructive-foreground: 210 40% 98%;
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 217 91% 60%;
+
+    --chart-1: 217 91% 60%;
+    --chart-2: 210 40% 98%;
+    --chart-3: 0 63% 31%;
+    --chart-4: 27 87% 67%;
+    --chart-5: 173 58% 39%;
+
+    /* Sidebar Dark Mode - Aligned with the new theme */
+    --sidebar-background: 222 84% 8%; /* Slightly different from main background for separation */
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 210 40% 98%;
+    --sidebar-primary-foreground: 222 84% 5%;
+    --sidebar-accent: 217 91% 60%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 215 28% 15%;
+    --sidebar-ring: 217 91% 60%;
+    
+    /* Neumorphic Shadow Variables - Dark */
+    --shadow-light: hsl(222 84% 9%);
+    --shadow-dark: hsl(222 84% 2%);
+  }
+
+  /* Style for calendar event days */
+  .event-day:not(.react-calendar__tile--active) {
+    @apply bg-accent/20 rounded-md;
+  }
+  .event-day:not(.react-calendar__tile--active):enabled:hover,
+  .event-day:not(.react-calendar__tile--active):enabled:focus {
+    @apply bg-accent/40;
+  }
+  .react-calendar__tile--active.event-day {
+     @apply bg-accent text-accent-foreground;
   }
 }
 
@@ -83,6 +108,152 @@ body {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-body;
+  }
+}
+
+@layer components {
+  .glow-on-hover {
+    border: none;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    z-index: 0;
+    border-radius: 10px;
+  }
+
+  .glow-on-hover:before {
+    content: '';
+    background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    background-size: 400%;
+    z-index: -1;
+    filter: blur(5px);
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    animation: glowing 20s linear infinite;
+    opacity: 0;
+    transition: opacity .3s ease-in-out;
+    border-radius: 10px;
+  }
+
+  .glow-on-hover:active:after {
+    background: transparent;
+  }
+
+  .glow-on-hover:hover:before {
+    opacity: 1;
+  }
+
+  .glow-on-hover:after {
+    z-index: -1;
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: hsl(var(--sidebar-background));
+    left: 0;
+    top: 0;
+    border-radius: 10px;
+  }
+
+  /* Book Card Style */
+  .book {
+    position: relative;
+    border-radius: 10px;
+    width: 220px;
+    height: 300px;
+    background-color: hsl(var(--card));
+    box-shadow: 1px 1px 12px hsl(var(--foreground) / 0.1);
+    transform-style: preserve-3d;
+    perspective: 2000px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: hsl(var(--card-foreground));
+    padding: 1rem;
+    transition: background-color 0.3s ease;
+  }
+
+  .book .cover {
+    top: 0;
+    left: 0;
+    position: absolute;
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.5s;
+    transform-origin: 0;
+    box-shadow: 1px 1px 12px hsl(var(--foreground) / 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    gap: 0.5rem;
+    z-index: 10;
+  }
+
+  .book:hover .cover {
+    transition: all 0.5s;
+    transform: rotateY(-110deg);
+  }
+
+  /* Carousel Styles */
+  .scene {
+    width: 256px; /* Corresponds to w-64 */
+    height: 320px; /* Corresponds to h-80 */
+    position: relative;
+    perspective: 1000px;
+    margin: auto;
+  }
+
+  .carousel {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    transform-style: preserve-3d;
+    animation: rotate 25s infinite linear; /* Adjusted timing for 5 items */
+  }
+
+  .scene:hover .carousel {
+    animation-play-state: paused;
+  }
+
+  .carousel__cell {
+    position: absolute;
+    width: 256px; /* w-64 */
+    height: 320px; /* h-80 */
+  }
+  
+  /* Arrange 5 cards in a circle */
+  .carousel__cell:nth-child(1) { transform: rotateY(  0deg) translateZ(288px); }
+  .carousel__cell:nth-child(2) { transform: rotateY( 72deg) translateZ(288px); }
+  .carousel__cell:nth-child(3) { transform: rotateY(144deg) translateZ(288px); }
+  .carousel__cell:nth-child(4) { transform: rotateY(216deg) translateZ(288px); }
+  .carousel__cell:nth-child(5) { transform: rotateY(288deg) translateZ(288px); }
+}
+
+@keyframes glowing {
+    0% { background-position: 0 0; }
+    50% { background-position: 400% 0; }
+    100% { background-position: 0 0; }
+}
+
+@keyframes rotate {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(-360deg); }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
   }
 }

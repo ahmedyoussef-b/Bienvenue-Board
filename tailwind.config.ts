@@ -8,17 +8,11 @@ export default {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
-    container: {
-      center: true,
-      padding: '2rem',
-      screens: {
-        '2xl': '1400px',
-      },
-    },
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['"Space Grotesk"', 'sans-serif'],
+        inter: ['var(--font-inter)', 'sans-serif'], 
+        body: ['var(--font-inter)', 'sans-serif'], 
+        headline: ['var(--font-literata)', 'serif'],
         code: ['monospace'],
       },
       colors: {
@@ -95,10 +89,15 @@ export default {
             height: '0',
           },
         },
+        'subtle-pulse': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '.8' },
+        }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'subtle-pulse': 'subtle-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
     },
   },
