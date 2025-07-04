@@ -27,12 +27,12 @@ export interface LogoutResponse {
 
 export const authApi = createApi({
   reducerPath: 'authApi',
-  baseQuery: fetchBaseQuery({ baseUrl: '/api/auth' }), // Set base URL for auth
+  baseQuery: fetchBaseQuery({ baseUrl: '/' }), // Set base URL to root
   tagTypes: ['UserSession'],
   endpoints: (builder) => ({
     login: builder.mutation<AuthResponse, LoginRequest>({
       query: (credentials) => ({
-        url: 'login', // Relative to baseUrl
+        url: 'api/auth/login', // Use full path from root
         method: 'POST',
         body: credentials,
       }),
@@ -40,7 +40,7 @@ export const authApi = createApi({
     }),
     register: builder.mutation<AuthResponse, RegisterRequest>({
       query: (userInfo) => ({
-        url: 'register', // Relative to baseUrl
+        url: 'api/auth/register', // Use full path from root
         method: 'POST',
         body: userInfo,
       }),
@@ -48,13 +48,13 @@ export const authApi = createApi({
     }),
     logout: builder.mutation<LogoutResponse, void>({
       query: () => ({
-        url: 'logout', // Relative to baseUrl
+        url: 'api/auth/logout', // Use full path from root
         method: 'POST',
       }),
       invalidatesTags: ['UserSession'],
     }),
     checkSession: builder.query<SessionResponse, void>({
-      query: () => 'session', // Relative to baseUrl
+      query: () => 'api/auth/session', // Use full path from root
       providesTags: ['UserSession'],
     }),
   }),

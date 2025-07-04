@@ -39,18 +39,18 @@ const entityConfig: { [key: string]: { route: string, tag: string } } = {
 
 export const entityApi = createApi({
   reducerPath: 'entityApi',
-  baseQuery: fetchBaseQuery({ baseUrl: '/api' }), // Set base URL for all other entities
+  baseQuery: fetchBaseQuery({ baseUrl: '/' }), // Set base URL to root
   tagTypes: Object.values(entityConfig).map(e => e.tag),
   endpoints: (builder) => ({
     
     // Grades
     getGrades: builder.query<Grade[], void>({
-      query: () => `/${entityConfig.grade.route}`, 
+      query: () => `api/${entityConfig.grade.route}`, 
       providesTags: (result) => result ? [...result.map(({ id }) => ({ type: entityConfig.grade.tag, id } as const)), { type: entityConfig.grade.tag, id: 'LIST' }] : [{ type: entityConfig.grade.tag, id: 'LIST' }],
     }),
     createGrade: builder.mutation<Grade, GradeSchema>({
       query: (body) => ({
-        url: `/${entityConfig.grade.route}`, 
+        url: `api/${entityConfig.grade.route}`, 
         method: 'POST',
         body,
       }),
@@ -58,7 +58,7 @@ export const entityApi = createApi({
     }),
     updateGrade: builder.mutation<Grade, GradeSchema & { id: number }>({
       query: ({ id, ...body }) => ({
-        url: `/${entityConfig.grade.route}/${id}`, 
+        url: `api/${entityConfig.grade.route}/${id}`, 
         method: 'PUT',
         body,
       }),
@@ -66,7 +66,7 @@ export const entityApi = createApi({
     }),
     deleteGrade: builder.mutation<{ success: boolean; id: number }, number>({
       query: (id) => ({
-        url: `/${entityConfig.grade.route}/${id}`, 
+        url: `api/${entityConfig.grade.route}/${id}`, 
         method: 'DELETE',
       }),
       invalidatesTags: (result, error, id) => [{ type: entityConfig.grade.tag, id }, { type: entityConfig.grade.tag, id: 'LIST' }],
@@ -74,12 +74,12 @@ export const entityApi = createApi({
 
     // Subjects
     getSubjects: builder.query<Subject[], void>({
-      query: () => `/${entityConfig.subject.route}`, 
+      query: () => `api/${entityConfig.subject.route}`, 
       providesTags: (result) => result ? [...result.map(({ id }) => ({ type: entityConfig.subject.tag, id } as const)), { type: entityConfig.subject.tag, id: 'LIST' }] : [{ type: entityConfig.subject.tag, id: 'LIST' }],
     }),
     createSubject: builder.mutation<Subject, SubjectSchema>({
       query: (body) => ({
-        url: `/${entityConfig.subject.route}`, 
+        url: `api/${entityConfig.subject.route}`, 
         method: 'POST',
         body,
       }),
@@ -87,7 +87,7 @@ export const entityApi = createApi({
     }),
     updateSubject: builder.mutation<Subject, SubjectSchema & { id: number }>({
       query: ({ id, ...body }) => ({
-        url: `/${entityConfig.subject.route}/${id}`, 
+        url: `api/${entityConfig.subject.route}/${id}`, 
         method: 'PUT',
         body,
       }),
@@ -95,7 +95,7 @@ export const entityApi = createApi({
     }),
     deleteSubject: builder.mutation<{ success: boolean; id: number }, number>({
       query: (id) => ({
-        url: `/${entityConfig.subject.route}/${id}`, 
+        url: `api/${entityConfig.subject.route}/${id}`, 
         method: 'DELETE',
       }),
       invalidatesTags: (result, error, id) => [{ type: entityConfig.subject.tag, id }, { type: entityConfig.subject.tag, id: 'LIST' }],
@@ -103,12 +103,12 @@ export const entityApi = createApi({
 
     // Classes
     getClasses: builder.query<Class[], void>({
-      query: () => `/${entityConfig.class.route}`, 
+      query: () => `api/${entityConfig.class.route}`, 
       providesTags: (result) => result ? [...result.map(({ id }) => ({ type: entityConfig.class.tag, id } as const)), { type: entityConfig.class.tag, id: 'LIST' }] : [{ type: entityConfig.class.tag, id: 'LIST' }],
     }),
     createClass: builder.mutation<Class, ClassSchema>({
       query: (body) => ({
-        url: `/${entityConfig.class.route}`, 
+        url: `api/${entityConfig.class.route}`, 
         method: 'POST',
         body,
       }),
@@ -116,7 +116,7 @@ export const entityApi = createApi({
     }),
     updateClass: builder.mutation<Class, ClassSchema & { id: number }>({
       query: ({ id, ...body }) => ({
-        url: `/${entityConfig.class.route}/${id}`, 
+        url: `api/${entityConfig.class.route}/${id}`, 
         method: 'PUT',
         body,
       }),
@@ -124,7 +124,7 @@ export const entityApi = createApi({
     }),
     deleteClass: builder.mutation<{ success: boolean; id: number }, number>({
       query: (id) => ({
-        url: `/${entityConfig.class.route}/${id}`, 
+        url: `api/${entityConfig.class.route}/${id}`, 
         method: 'DELETE',
       }),
       invalidatesTags: (result, error, id) => [{ type: entityConfig.class.tag, id }, { type: entityConfig.class.tag, id: 'LIST' }],
@@ -132,12 +132,12 @@ export const entityApi = createApi({
 
     // Teachers
     getTeachers: builder.query<Teacher[], void>({
-        query: () => `/${entityConfig.teacher.route}`, 
+        query: () => `api/${entityConfig.teacher.route}`, 
         providesTags: (result) => result ? [...result.map(({ id }) => ({ type: entityConfig.teacher.tag, id } as const)), { type: entityConfig.teacher.tag, id: 'LIST' }] : [{ type: entityConfig.teacher.tag, id: 'LIST' }],
     }),
     createTeacher: builder.mutation<Teacher, TeacherSchema>({
       query: (body) => ({
-        url: `/${entityConfig.teacher.route}`, 
+        url: `api/${entityConfig.teacher.route}`, 
         method: 'POST',
         body,
       }),
@@ -145,7 +145,7 @@ export const entityApi = createApi({
     }),
     updateTeacher: builder.mutation<Teacher, TeacherSchema & { id: string }>({
       query: ({ id, ...body }) => ({
-        url: `/${entityConfig.teacher.route}/${id}`, 
+        url: `api/${entityConfig.teacher.route}/${id}`, 
         method: 'PUT',
         body,
       }),
@@ -153,7 +153,7 @@ export const entityApi = createApi({
     }),
     deleteTeacher: builder.mutation<{ success: boolean; id: string }, string>({
       query: (id) => ({
-        url: `/${entityConfig.teacher.route}/${id}`, 
+        url: `api/${entityConfig.teacher.route}/${id}`, 
         method: 'DELETE',
       }),
       invalidatesTags: (result, error, id) => [{ type: entityConfig.teacher.tag, id }, { type: entityConfig.teacher.tag, id: 'LIST' }],
@@ -161,12 +161,12 @@ export const entityApi = createApi({
 
     // Students
     getStudents: builder.query<Student[], void>({
-        query: () => `/${entityConfig.student.route}`, 
+        query: () => `api/${entityConfig.student.route}`, 
         providesTags: (result) => result ? [...result.map(({ id }) => ({ type: entityConfig.student.tag, id } as const)), { type: entityConfig.student.tag, id: 'LIST' }] : [{ type: entityConfig.student.tag, id: 'LIST' }],
     }),
     createStudent: builder.mutation<Student, StudentSchema>({
       query: (body) => ({
-        url: `/${entityConfig.student.route}`, 
+        url: `api/${entityConfig.student.route}`, 
         method: 'POST',
         body,
       }),
@@ -174,7 +174,7 @@ export const entityApi = createApi({
     }),
     updateStudent: builder.mutation<Student, StudentSchema & { id: string }>({
       query: ({ id, ...body }) => ({
-        url: `/${entityConfig.student.route}/${id}`, 
+        url: `api/${entityConfig.student.route}/${id}`, 
         method: 'PUT',
         body,
       }),
@@ -182,7 +182,7 @@ export const entityApi = createApi({
     }),
     deleteStudent: builder.mutation<{ success: boolean; id: string }, string>({
       query: (id) => ({
-        url: `/${entityConfig.student.route}/${id}`, 
+        url: `api/${entityConfig.student.route}/${id}`, 
         method: 'DELETE',
       }),
       invalidatesTags: (result, error, id) => [{ type: entityConfig.student.tag, id }, { type: entityConfig.student.tag, id: 'LIST' }],
@@ -190,12 +190,12 @@ export const entityApi = createApi({
 
     // Exams
     getExams: builder.query<Exam[], void>({
-        query: () => `/${entityConfig.exam.route}`, 
+        query: () => `api/${entityConfig.exam.route}`, 
         providesTags: (result) => result ? [...result.map(({ id }) => ({ type: entityConfig.exam.tag, id } as const)), { type: entityConfig.exam.tag, id: 'LIST' }] : [{ type: entityConfig.exam.tag, id: 'LIST' }],
     }),
     createExam: builder.mutation<Exam, ExamSchema>({
       query: (body) => ({
-        url: `/${entityConfig.exam.route}`, 
+        url: `api/${entityConfig.exam.route}`, 
         method: 'POST',
         body,
       }),
@@ -203,7 +203,7 @@ export const entityApi = createApi({
     }),
     updateExam: builder.mutation<Exam, ExamSchema & { id: number }>({
       query: ({ id, ...body }) => ({
-        url: `/${entityConfig.exam.route}/${id}`, 
+        url: `api/${entityConfig.exam.route}/${id}`, 
         method: 'PUT',
         body,
       }),
@@ -211,7 +211,7 @@ export const entityApi = createApi({
     }),
     deleteExam: builder.mutation<{ success: boolean; id: number }, number>({
       query: (id) => ({
-        url: `/${entityConfig.exam.route}/${id}`, 
+        url: `api/${entityConfig.exam.route}/${id}`, 
         method: 'DELETE',
       }),
       invalidatesTags: (result, error, id) => [{ type: entityConfig.exam.tag, id }, { type: entityConfig.exam.tag, id: 'LIST' }],
@@ -219,12 +219,12 @@ export const entityApi = createApi({
 
     // Assignments
     getAssignments: builder.query<Assignment[], void>({
-        query: () => `/${entityConfig.assignment.route}`, 
+        query: () => `api/${entityConfig.assignment.route}`, 
         providesTags: (result) => result ? [...result.map(({ id }) => ({ type: entityConfig.assignment.tag, id } as const)), { type: entityConfig.assignment.tag, id: 'LIST' }] : [{ type: entityConfig.assignment.tag, id: 'LIST' }],
     }),
     createAssignment: builder.mutation<Assignment, AssignmentSchema>({
       query: (body) => ({
-        url: `/${entityConfig.assignment.route}`, 
+        url: `api/${entityConfig.assignment.route}`, 
         method: 'POST',
         body,
       }),
@@ -232,7 +232,7 @@ export const entityApi = createApi({
     }),
     updateAssignment: builder.mutation<Assignment, AssignmentSchema & { id: number }>({
       query: ({ id, ...body }) => ({
-        url: `/${entityConfig.assignment.route}/${id}`, 
+        url: `api/${entityConfig.assignment.route}/${id}`, 
         method: 'PUT',
         body,
       }),
@@ -240,7 +240,7 @@ export const entityApi = createApi({
     }),
     deleteAssignment: builder.mutation<{ success: boolean; id: number }, number>({
       query: (id) => ({
-        url: `/${entityConfig.assignment.route}/${id}`, 
+        url: `api/${entityConfig.assignment.route}/${id}`, 
         method: 'DELETE',
       }),
       invalidatesTags: (result, error, id) => [{ type: entityConfig.assignment.tag, id }, { type: entityConfig.assignment.tag, id: 'LIST' }],
@@ -248,12 +248,12 @@ export const entityApi = createApi({
 
     // Events
     getEvents: builder.query<Event[], void>({
-        query: () => `/${entityConfig.event.route}`, 
+        query: () => `api/${entityConfig.event.route}`, 
         providesTags: (result) => result ? [...result.map(({ id }) => ({ type: entityConfig.event.tag, id } as const)), { type: entityConfig.event.tag, id: 'LIST' }] : [{ type: entityConfig.event.tag, id: 'LIST' }],
     }),
     createEvent: builder.mutation<Event, EventSchema>({
       query: (body) => ({
-        url: `/${entityConfig.event.route}`, 
+        url: `api/${entityConfig.event.route}`, 
         method: 'POST',
         body,
       }),
@@ -261,7 +261,7 @@ export const entityApi = createApi({
     }),
     updateEvent: builder.mutation<Event, EventSchema & { id: number }>({
       query: ({ id, ...body }) => ({
-        url: `/${entityConfig.event.route}/${id}`, 
+        url: `api/${entityConfig.event.route}/${id}`, 
         method: 'PUT',
         body,
       }),
@@ -269,7 +269,7 @@ export const entityApi = createApi({
     }),
     deleteEvent: builder.mutation<{ success: boolean; id: number }, number>({
       query: (id) => ({
-        url: `/${entityConfig.event.route}/${id}`, 
+        url: `api/${entityConfig.event.route}/${id}`, 
         method: 'DELETE',
       }),
       invalidatesTags: (result, error, id) => [{ type: entityConfig.event.tag, id }, { type: entityConfig.event.tag, id: 'LIST' }],
@@ -277,12 +277,12 @@ export const entityApi = createApi({
 
     // Announcements
     getAnnouncements: builder.query<Announcement[], void>({
-        query: () => `/${entityConfig.announcement.route}`, 
+        query: () => `api/${entityConfig.announcement.route}`, 
         providesTags: (result) => result ? [...result.map(({ id }) => ({ type: entityConfig.announcement.tag, id } as const)), { type: entityConfig.announcement.tag, id: 'LIST' }] : [{ type: entityConfig.announcement.tag, id: 'LIST' }],
     }),
     createAnnouncement: builder.mutation<Announcement, AnnouncementSchema>({
       query: (body) => ({
-        url: `/${entityConfig.announcement.route}`, 
+        url: `api/${entityConfig.announcement.route}`, 
         method: 'POST',
         body,
       }),
@@ -290,7 +290,7 @@ export const entityApi = createApi({
     }),
     updateAnnouncement: builder.mutation<Announcement, AnnouncementSchema & { id: number }>({
       query: ({ id, ...body }) => ({
-        url: `/${entityConfig.announcement.route}/${id}`, 
+        url: `api/${entityConfig.announcement.route}/${id}`, 
         method: 'PUT',
         body,
       }),
@@ -298,7 +298,7 @@ export const entityApi = createApi({
     }),
     deleteAnnouncement: builder.mutation<{ success: boolean; id: number }, number>({
       query: (id) => ({
-        url: `/${entityConfig.announcement.route}/${id}`, 
+        url: `api/${entityConfig.announcement.route}/${id}`, 
         method: 'DELETE',
       }),
       invalidatesTags: (result, error, id) => [{ type: entityConfig.announcement.tag, id }, { type: entityConfig.announcement.tag, id: 'LIST' }],
@@ -306,12 +306,12 @@ export const entityApi = createApi({
     
     // Parents
     getParents: builder.query<Parent[], void>({
-        query: () => `/${entityConfig.parent.route}`, 
+        query: () => `api/${entityConfig.parent.route}`, 
         providesTags: (result) => result ? [...result.map(({ id }) => ({ type: entityConfig.parent.tag, id } as const)), { type: entityConfig.parent.tag, id: 'LIST' }] : [{ type: entityConfig.parent.tag, id: 'LIST' }],
     }),
     createParent: builder.mutation<Parent, ParentSchema>({
       query: (body) => ({
-        url: `/${entityConfig.parent.route}`, 
+        url: `api/${entityConfig.parent.route}`, 
         method: 'POST',
         body,
       }),
@@ -319,7 +319,7 @@ export const entityApi = createApi({
     }),
     updateParent: builder.mutation<Parent, ParentSchema & { id: string }>({
       query: ({ id, ...body }) => ({
-        url: `/${entityConfig.parent.route}/${id}`, 
+        url: `api/${entityConfig.parent.route}/${id}`, 
         method: 'PUT',
         body,
       }),
@@ -327,7 +327,7 @@ export const entityApi = createApi({
     }),
     deleteParent: builder.mutation<{ success: boolean; id: string }, string>({
       query: (id) => ({
-        url: `/${entityConfig.parent.route}/${id}`, 
+        url: `api/${entityConfig.parent.route}/${id}`, 
         method: 'DELETE',
       }),
       invalidatesTags: (result, error, id) => [{ type: entityConfig.parent.tag, id }, { type: entityConfig.parent.tag, id: 'LIST' }],
@@ -335,12 +335,12 @@ export const entityApi = createApi({
 
     // Lessons
     getLessons: builder.query<Lesson[], void>({
-        query: () => `/${entityConfig.lesson.route}`, 
+        query: () => `api/${entityConfig.lesson.route}`, 
         providesTags: (result) => result ? [...result.map(({ id }) => ({ type: entityConfig.lesson.tag, id } as const)), { type: entityConfig.lesson.tag, id: 'LIST' }] : [{ type: entityConfig.lesson.tag, id: 'LIST' }],
     }),
     createLesson: builder.mutation<Lesson, LessonSchema>({
       query: (body) => ({
-        url: `/${entityConfig.lesson.route}`, 
+        url: `api/${entityConfig.lesson.route}`, 
         method: 'POST',
         body,
       }),
@@ -348,7 +348,7 @@ export const entityApi = createApi({
     }),
     updateLesson: builder.mutation<Lesson, LessonSchema & { id: number }>({
       query: ({ id, ...body }) => ({
-        url: `/${entityConfig.lesson.route}/${id}`, 
+        url: `api/${entityConfig.lesson.route}/${id}`, 
         method: 'PUT',
         body,
       }),
@@ -356,7 +356,7 @@ export const entityApi = createApi({
     }),
     deleteLesson: builder.mutation<{ success: boolean; id: number }, number>({
       query: (id) => ({
-        url: `/${entityConfig.lesson.route}/${id}`, 
+        url: `api/${entityConfig.lesson.route}/${id}`, 
         method: 'DELETE',
       }),
       invalidatesTags: (result, error, id) => [{ type: entityConfig.lesson.tag, id }, { type: entityConfig.lesson.tag, id: 'LIST' }],
@@ -364,12 +364,12 @@ export const entityApi = createApi({
 
     // Results
     getResults: builder.query<Result[], void>({
-        query: () => `/${entityConfig.result.route}`, 
+        query: () => `api/${entityConfig.result.route}`, 
         providesTags: (result) => result ? [...result.map(({ id }) => ({ type: entityConfig.result.tag, id } as const)), { type: entityConfig.result.tag, id: 'LIST' }] : [{ type: entityConfig.result.tag, id: 'LIST' }],
     }),
     createResult: builder.mutation<Result, ResultSchema>({
       query: (body) => ({
-        url: `/${entityConfig.result.route}`, 
+        url: `api/${entityConfig.result.route}`, 
         method: 'POST',
         body,
       }),
@@ -377,7 +377,7 @@ export const entityApi = createApi({
     }),
     updateResult: builder.mutation<Result, ResultSchema & { id: number }>({
       query: ({ id, ...body }) => ({
-        url: `/${entityConfig.result.route}/${id}`, 
+        url: `api/${entityConfig.result.route}/${id}`, 
         method: 'PUT',
         body,
       }),
@@ -385,7 +385,7 @@ export const entityApi = createApi({
     }),
     deleteResult: builder.mutation<{ success: boolean; id: number }, number>({
       query: (id) => ({
-        url: `/${entityConfig.result.route}/${id}`, 
+        url: `api/${entityConfig.result.route}/${id}`, 
         method: 'DELETE',
       }),
       invalidatesTags: (result, error, id) => [{ type: entityConfig.result.tag, id }, { type: entityConfig.result.tag, id: 'LIST' }],
@@ -393,12 +393,12 @@ export const entityApi = createApi({
     
     // Attendances
     getAttendances: builder.query<Attendance[], void>({
-        query: () => `/${entityConfig.attendance.route}`, 
+        query: () => `api/${entityConfig.attendance.route}`, 
         providesTags: (result) => result ? [...result.map(({ id }) => ({ type: entityConfig.attendance.tag, id } as const)), { type: entityConfig.attendance.tag, id: 'LIST' }] : [{ type: entityConfig.attendance.tag, id: 'LIST' }],
     }),
     createAttendance: builder.mutation<Attendance, AttendanceSchema>({
       query: (body) => ({
-        url: `/${entityConfig.attendance.route}`, 
+        url: `api/${entityConfig.attendance.route}`, 
         method: 'POST',
         body,
       }),
@@ -406,7 +406,7 @@ export const entityApi = createApi({
     }),
     updateAttendance: builder.mutation<Attendance, AttendanceSchema & { id: number }>({
       query: ({ id, ...body }) => ({
-        url: `/${entityConfig.attendance.route}/${id}`, 
+        url: `api/${entityConfig.attendance.route}/${id}`, 
         method: 'PUT',
         body,
       }),
@@ -414,7 +414,7 @@ export const entityApi = createApi({
     }),
     deleteAttendance: builder.mutation<{ success: boolean; id: number }, number>({
       query: (id) => ({
-        url: `/${entityConfig.attendance.route}/${id}`, 
+        url: `api/${entityConfig.attendance.route}/${id}`, 
         method: 'DELETE',
       }),
       invalidatesTags: (result, error, id) => [{ type: entityConfig.attendance.tag, id }, { type: entityConfig.attendance.tag, id: 'LIST' }],
