@@ -19,7 +19,7 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'api.dicebear.com',
         port: '',
-        pathname: '/8.x/**',
+        pathname: '/8.x/avataaars/svg',
       },
       {
         protocol: 'https',
