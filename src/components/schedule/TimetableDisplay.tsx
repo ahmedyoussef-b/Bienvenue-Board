@@ -268,7 +268,7 @@ interface TimetableDisplayProps {
   onDeleteLesson?: (lessonId: number) => void;
   onAddLesson?: (subject: Subject, day: Day, timeSlot: string) => void;
   viewMode: 'class' | 'teacher';
-  selectedViewId: string;
+  selectedViewId: string | number;
 }
 
 const TimetableDisplay: React.FC<TimetableDisplayProps> = ({ 
@@ -294,7 +294,7 @@ const TimetableDisplay: React.FC<TimetableDisplayProps> = ({
     
     return calculateAvailableSlots(
         subject,
-        selectedViewId,
+        String(selectedViewId),
         fullSchedule,
         wizardData
     );
@@ -336,9 +336,9 @@ const TimetableDisplay: React.FC<TimetableDisplayProps> = ({
   const exportToPDF = () => { window.print(); };
 
   return (
-    <div className="space-y-6 mt-4">
+    <div className="space-y-6 mt-4 print-container">
        {!isEditable && (
-        <Card className="p-6 print-hidden">
+        <Card className="p-6 print:hidden">
             <div className="flex justify-between items-center">
             <div>
                 <h2 className="text-2xl font-bold text-foreground mb-2">
@@ -393,7 +393,7 @@ const TimetableDisplay: React.FC<TimetableDisplayProps> = ({
                                       day={dayEnum}
                                       timeSlot={time}
                                       viewMode={viewMode}
-                                      selectedViewId={selectedViewId}
+                                      selectedViewId={String(selectedViewId)}
                                       wizardData={wizardData}
                                       fullSchedule={fullSchedule}
                                       onAddLesson={onAddLesson}

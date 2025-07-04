@@ -21,12 +21,13 @@ const SingleTeacherPage = async ({
 
   const session = await getServerSession();
   const userRole = session?.role as Role | undefined;
-  const currentUserId = session?.userId;
 
   if (!session) redirect(`/${locale}/login`);
 
-  if (userRole !== Role.ADMIN && (userRole !== Role.TEACHER || currentUserId !== id)) {
-    redirect(session ? `/${locale}/${session.role.toLowerCase()}` : `/${locale}/login`);
+  // Allow admins and any teacher to view this page.
+  // Redirect other roles to their respective dashboards.
+  if (userRole !== Role.ADMIN && userRole !== Role.TEACHER) {
+    redirect(`/${locale}/${userRole?.toLowerCase() || 'login'}`);
   }
 
   const teacher: Omit<TeacherWithDetails, 'lessons'> & { lessons?: Lesson[] } | null =
@@ -103,7 +104,7 @@ const SingleTeacherPage = async ({
         </div>
         <div className="mt-4 bg-white rounded-md p-4 h-auto">
           <h1 className="text-xl font-semibold mb-4">{`Horaire de ${teacher.name} ${teacher.surname}`}</h1>
-          <TimetableDisplay wizardData={wizardData} scheduleData={lessons} />
+          <TimetableDisplay wizardData={wizardData} scheduleData={lessons} fullSchedule={lessons} viewMode="teacher" selectedViewId={id} />
         </div>
       </div>
       <div className="w-full xl:w-1/3 flex flex-col gap-4">
