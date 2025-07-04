@@ -36,7 +36,7 @@ const AdminPage = async ({
       
       <div className="flex flex-col lg:flex-row gap-6">
         <AdminStatsGrid />
-        <AdminSidebar date={searchParams.date} />
+        <AdminSidebar searchParams={searchParams} />
       </div>
     </div>
   );
