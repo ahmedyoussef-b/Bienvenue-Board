@@ -1,6 +1,6 @@
 // src/app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
+import bcryptjs from 'bcryptjs';
 import jwt, { type SignOptions, type Secret } from 'jsonwebtoken';
 import prisma from "@/lib/prisma";
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
@@ -12,7 +12,6 @@ const EFFECTIVE_JWT_EXPIRATION_TIME = (jwtExpirationEnv && jwtExpirationEnv.trim
 const SESSION_COOKIE_NAME = 'appSessionToken';
 
 export const POST = async (req: NextRequest) => {
-  console.log('--- 4. API Route: /api/auth/login reached ---');
   if (!JWT_SECRET_KEY) {
     console.error('API Login: JWT_SECRET_KEY is not defined.');
     return NextResponse.json({ message: 'Internal configuration error: Missing JWT secret.' }, { status: 500 });
@@ -37,7 +36,7 @@ export const POST = async (req: NextRequest) => {
         return NextResponse.json({ message: 'Invalid user record (missing password)' }, { status: 401 });
     }
 
-    const passwordMatch = await bcrypt.compare(password, user.password);
+    const passwordMatch = await bcryptjs.compare(password, user.password);
 
     if (!passwordMatch) {
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
