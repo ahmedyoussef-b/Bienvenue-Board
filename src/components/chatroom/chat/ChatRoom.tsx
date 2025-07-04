@@ -143,7 +143,7 @@ export default function ChatRoom({ roomType, title, description, allowedRoles }:
                   >
                     {message.userId !== user.id && (
                       <img
-                        src={message.userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${message.userName}`}
+                        src={message.userAvatar || `https://api.dicebear.com/8.x/avataaars/svg?seed=${message.userName}`}
                         alt={message.userName}
                         className="w-8 h-8 rounded-full flex-shrink-0"
                       />
@@ -182,7 +182,7 @@ export default function ChatRoom({ roomType, title, description, allowedRoles }:
 
                     {message.userId === user.id && (
                       <img
-                        src={user.img || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
+                        src={user.img || `https://api.dicebear.com/8.x/avataaars/svg?seed=${user.name}`}
                         alt={user.name || ''}
                         className="w-8 h-8 rounded-full flex-shrink-0"
                       />

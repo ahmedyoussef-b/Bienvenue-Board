@@ -3,7 +3,7 @@ import Image from 'next/image';
 
 const DynamicAvatar = ({ seed = Math.random().toString(36).substring(2), imageUrl = null }) => {
   // Si une URL d'image est fournie, l'utiliser. Sinon, générer un avatar de secours.
-  const finalImageUrl = imageUrl || `https://api.dicebear.com/7.x/identicon/png?seed=${seed}`;
+  const finalImageUrl = imageUrl || `https://api.dicebear.com/8.x/avataaars/svg?seed=${seed}`;
 
   return (
     <Image

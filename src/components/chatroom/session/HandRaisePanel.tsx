@@ -94,7 +94,7 @@ export default function HandRaisePanel({ isTeacher = false }: HandRaisePanelProp
                   <div className="flex items-center gap-3">
                     <div className="relative">
                       <img
-                        src={student?.img || `https://api.dicebear.com/7.x/avataaars/svg?seed=${student?.name}`}
+                        src={student?.img || `https://api.dicebear.com/8.x/avataaars/svg?seed=${student?.name}`}
                         alt={student?.name}
                         className="w-8 h-8 rounded-full"
                       />

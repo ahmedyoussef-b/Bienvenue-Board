@@ -158,7 +158,7 @@ const Navbar = () => {
                     </div>
                     <div className="relative h-10 w-10">
                         <Image
-                            src={currentUser.img || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.email}`}
+                            src={currentUser.img || `https://api.dicebear.com/8.x/avataaars/svg?seed=${currentUser.email}`}
                             alt="Photo de profil"
                             fill
                             sizes="40px"
