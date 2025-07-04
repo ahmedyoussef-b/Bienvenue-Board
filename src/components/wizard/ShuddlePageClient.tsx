@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, ChevronRight, School, Users, BookOpen, Calendar, MapPin, CheckCircle, Puzzle, Loader2, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import dynamic from 'next/dynamic';
 import { useAppDispatch, useAppSelector } from '@/hooks/redux-hooks';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -28,15 +27,15 @@ import { saveScheduleDraft, selectSaveStatus, selectLastSaved } from '@/lib/redu
 import type { WizardData } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
-// Dynamic imports for wizard steps
-const SchoolConfigForm = dynamic(() => import('./SchoolConfigForm'), { loading: () => <p>Chargement...</p> });
-const ClassesForm = dynamic(() => import('./ClassesForm'), { loading: () => <p>Chargement...</p> });
-const SubjectsForm = dynamic(() => import('./SubjectsForm'), { loading: () => <p>Chargement...</p> });
-const TeachersForm = dynamic(() => import('./TeachersForm'), { loading: () => <p>Chargement...</p> });
-const ClassroomsForm = dynamic(() => import('./ClassroomsForm'), { loading: () => <p>Chargement...</p> });
-const ConstraintsForm = dynamic(() => import('./ConstraintsForm'), { loading: () => <p>Chargement...</p> });
-const ValidationStep = dynamic(() => import('./ValidationStep'), { loading: () => <p>Chargement...</p> });
-const ScheduleEditor = dynamic(() => import('../schedule/ScheduleEditor'), { loading: () => <p>Chargement...</p> });
+// Static imports to fix dynamic loading issues
+import SchoolConfigForm from './SchoolConfigForm';
+import ClassesForm from './ClassesForm';
+import SubjectsForm from './SubjectsForm';
+import TeachersForm from './TeachersForm';
+import ClassroomsForm from './ClassroomsForm';
+import ConstraintsForm from './ConstraintsForm';
+import ValidationStep from './ValidationStep';
+import ScheduleEditor from '../schedule/ScheduleEditor';
 
 
 const steps = [
