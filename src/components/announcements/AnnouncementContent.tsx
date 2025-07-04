@@ -40,15 +40,13 @@ const AnnouncementContent: React.FC<AnnouncementContentProps> = ({ announcement 
 
         if (fileType === 'image') {
           return (
-            <Link href={file.url} target="_blank" rel="noopener noreferrer" className="block w-full max-w-md relative">
+            <Link href={file.url} target="_blank" rel="noopener noreferrer" className="block w-full max-w-md relative aspect-video bg-muted/20 rounded-lg overflow-hidden group-hover:opacity-90 transition-opacity">
               <Image 
                 src={file.url} 
                 alt={announcement.title} 
-                width={800}
-                height={1100}
+                fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw" 
-                style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
-                className="rounded-md hover:opacity-80 transition-opacity" 
+                className="object-contain"
               />
             </Link>
           );
@@ -67,15 +65,13 @@ const AnnouncementContent: React.FC<AnnouncementContentProps> = ({ announcement 
         const fileType = fileInfo.fileType === 'raw' ? 'pdf' : fileInfo.fileType;
         if (fileType === 'image') {
           return (
-            <Link href={fileInfo.fileUrl} target="_blank" rel="noopener noreferrer" className="block w-full max-w-md relative">
+            <Link href={fileInfo.fileUrl} target="_blank" rel="noopener noreferrer" className="block w-full max-w-md relative aspect-video bg-muted/20 rounded-lg overflow-hidden group-hover:opacity-90 transition-opacity">
               <Image 
                 src={fileInfo.fileUrl} 
                 alt={announcement.title} 
-                width={800}
-                height={1100}
+                fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw" 
-                style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
-                className="rounded-md hover:opacity-80 transition-opacity" 
+                className="object-contain"
               />
             </Link>
           );

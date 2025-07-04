@@ -64,7 +64,7 @@ const Announcements = async () => {
               
               if (fileInfo.files && Array.isArray(fileInfo.files) && fileInfo.files.length > 0) {
                 if (fileInfo.files.length > 1) {
-                  // Gallery view - VERTICAL stack, main container will scroll
+                  // --- Gallery View (Vertical Stack) ---
                   content = (
                     <div className="mt-2 space-y-2">
                         {fileInfo.files.map((file: any, idx: number) => (
@@ -82,20 +82,18 @@ const Announcements = async () => {
                     </div>
                   );
                 } else {
-                  // Single file view
+                  // --- Single File View (from new format) ---
                   const file = fileInfo.files[0];
                   const fileType = file.type === 'raw' ? 'pdf' : file.type;
                   if (fileType === 'image') {
                     content = (
-                      <Link href={file.url} target="_blank" rel="noopener noreferrer" className="mt-2 block w-full relative overflow-hidden rounded-md group-hover:opacity-90 transition-opacity">
+                      <Link href={file.url} target="_blank" rel="noopener noreferrer" className="mt-2 block w-full relative aspect-video overflow-hidden rounded-md group-hover:opacity-90 transition-opacity bg-muted/50">
                         <Image 
                           src={file.url} 
                           alt={announcement.title} 
-                          width={800}
-                          height={1100}
+                          fill
                           sizes="(max-width: 768px) 100vw, 50vw" 
-                          style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
-                          className="rounded-md" 
+                          className="object-contain"
                         />
                       </Link>
                     );
@@ -109,18 +107,17 @@ const Announcements = async () => {
                   }
                 }
               } else if (fileInfo.fileUrl && fileInfo.fileType) {
+                  // --- Legacy Single File View ---
                   const fileType = fileInfo.fileType === 'raw' ? 'pdf' : fileInfo.fileType;
                   if (fileType === 'image') {
                     content = (
-                      <Link href={fileInfo.fileUrl} target="_blank" rel="noopener noreferrer" className="mt-2 block w-full relative overflow-hidden rounded-md group-hover:opacity-90 transition-opacity">
+                      <Link href={fileInfo.fileUrl} target="_blank" rel="noopener noreferrer" className="mt-2 block w-full relative aspect-video overflow-hidden rounded-md group-hover:opacity-90 transition-opacity bg-muted/50">
                         <Image 
                           src={fileInfo.fileUrl} 
                           alt={announcement.title} 
-                          width={800}
-                          height={1100}
+                          fill
                           sizes="(max-width: 768px) 100vw, 50vw" 
-                          style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
-                          className="rounded-md" 
+                          className="object-contain" 
                         />
                       </Link>
                     );
