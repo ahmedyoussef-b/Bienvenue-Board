@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -208,5 +210,3 @@ const SubjectsForm: React.FC<SubjectsFormProps> = ({ data: subjects, classes }) 
     </div>
   );
 };
-
-export default SubjectsForm;

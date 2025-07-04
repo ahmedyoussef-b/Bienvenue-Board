@@ -1,4 +1,6 @@
 // src/components/wizard/ClassesForm.tsx
+'use client';
+
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -244,5 +246,3 @@ const ClassesForm: React.FC<ClassesFormProps> = ({ data, grades }) => {
     </div>
   );
 };
-
-export default ClassesForm;

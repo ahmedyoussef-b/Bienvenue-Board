@@ -1,4 +1,6 @@
 // src/components/wizard/ConstraintsForm.tsx
+'use client';
+
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -209,5 +211,3 @@ const ConstraintsForm: React.FC = () => {
     </Tabs>
   );
 };
-
-export default ConstraintsForm;

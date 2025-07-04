@@ -142,5 +142,3 @@ const TeachersForm: React.FC = () => {
     </div>
   );
 };
-
-export default TeachersForm;
