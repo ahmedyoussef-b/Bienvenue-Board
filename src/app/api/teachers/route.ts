@@ -43,19 +43,24 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  console.log("➡️ POST /api/teachers: Received request.");
   try {
     const body = await request.json();
+    console.log("📝 POST /api/teachers: Request body:", JSON.stringify(body, null, 2));
 
     const validation = teacherSchema.safeParse(body);
     if (!validation.success) {
+      console.error("❌ POST /api/teachers: Validation error:", validation.error.flatten().fieldErrors);
       return NextResponse.json({ message: "Données d'entrée invalides", errors: validation.error.flatten().fieldErrors }, { status: 400 });
     }
-
+    
+    console.log("✅ POST /api/teachers: Validation successful.");
     const {
       username, email, password, name, surname, phone, address, img,
       bloodType, birthday, sex, subjects: subjectIds = []
     } = validation.data;
     
+    console.log("🧐 POST /api/teachers: Checking for existing user...");
     const existingUser = await prisma.user.findFirst({
       where: { OR: [{ email }, { username }] },
     });
@@ -63,16 +68,22 @@ export async function POST(request: NextRequest) {
       let message = "Un utilisateur existe déjà.";
       if (existingUser.email === email) message = "Un utilisateur existe déjà avec cet email.";
       if (existingUser.username === username) message = "Ce nom d'utilisateur est déjà pris.";
+      console.warn(`⚠️ POST /api/teachers: Conflict found - ${message}`);
       return NextResponse.json({ message }, { status: 409 });
     }
+    console.log("👍 POST /api/teachers: No existing user found.");
 
     if (!password) {
-      // This should not happen if the schema validation is correct, but it's a safeguard.
+      console.error("❌ POST /api/teachers: Password is required but was not provided in validated data.");
       throw new Error("Le mot de passe est manquant pour la création de l'utilisateur.");
     }
+    console.log("🔐 POST /api/teachers: Hashing password...");
     const hashedPassword = await bcrypt.hash(password, HASH_ROUNDS);
+    console.log("✅ POST /api/teachers: Password hashed.");
     
+    console.log("🔄 POST /api/teachers: Starting database transaction...");
     const newTeacherData = await prisma.$transaction(async (tx) => {
+      console.log("  -> Transaction: Creating user...");
       const newUser = await tx.user.create({
         data: {
           username,
@@ -84,9 +95,12 @@ export async function POST(request: NextRequest) {
           img: img || null,
         },
       });
+      console.log(`  -> Transaction: User created with ID: ${newUser.id}`);
 
       const numericSubjectIds = subjectIds.map(id => Number(id)).filter(id => !isNaN(id));
+      console.log(`  -> Transaction: Connecting subjects with IDs: ${numericSubjectIds.join(', ')}`);
 
+      console.log("  -> Transaction: Creating teacher...");
       const newTeacher = await tx.teacher.create({
         data: {
           userId: newUser.id,
@@ -106,6 +120,7 @@ export async function POST(request: NextRequest) {
             subjects: true
         }
       });
+      console.log(`  -> Transaction: Teacher created with ID: ${newTeacher.id}`);
       
       const { password, ...safeUser } = newUser;
 
@@ -116,8 +131,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!newTeacherData) {
+        console.error("❌ POST /api/teachers: Transaction completed but returned no data.");
         throw new Error("La création de l'enseignant a échoué après la transaction.");
     }
+    console.log("✅ POST /api/teachers: Transaction successful.");
 
     const responseData: TeacherWithDetails = {
         ...newTeacherData,
@@ -127,11 +144,12 @@ export async function POST(request: NextRequest) {
             classes: 0, 
         }
     };
-
+    
+    console.log("⬅️ POST /api/teachers: Sending successful response.");
     return NextResponse.json(responseData, { status: 201 });
 
   } catch (error) {
-    console.error("Erreur lors de la création de l'enseignant :", error);
+    console.error("❌ POST /api/teachers: An error occurred in the handler:", error);
     if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2003' && error.meta?.field_name) {
             const field = error.meta.field_name as string;
