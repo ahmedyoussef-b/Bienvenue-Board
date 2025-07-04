@@ -32,17 +32,16 @@ import type {
     Admin as PrismaAdmin,
     Teacher as PrismaTeacher,
     Student as PrismaStudent,
-    Parent as PrismaParent,
-    Announcement as PrismaAnnouncement,
-    Session as PrismaSession,
-    RefreshToken as PrismaRefreshToken,
+    Attendance as PrismaAttendance,
     Class as PrismaClass,
     Subject as PrismaSubject,
     Classroom as PrismaClassroom,
     Grade as PrismaGrade,
     Lesson as PrismaLesson,
     Exam as PrismaExam,
+    Parent as PrismaParent,
     Assignment as PrismaAssignment,
+    Announcement as PrismaAnnouncement,
     Event as PrismaEvent
 } from "@prisma/client";
 
@@ -53,17 +52,16 @@ export type {
     PrismaAdmin as Admin,
     PrismaTeacher as Teacher,
     PrismaStudent as Student,
-    PrismaParent as Parent,
-    PrismaAnnouncement as Announcement,
-    PrismaSession as Session,
-    PrismaRefreshToken as RefreshToken,
+    PrismaAttendance as Attendance,
     PrismaClass as Class,
     PrismaSubject as Subject,
     PrismaClassroom as Classroom,
     PrismaGrade as Grade,
     PrismaLesson as Lesson,
     PrismaExam as Exam,
+    PrismaParent as Parent,
     PrismaAssignment as Assignment,
+    PrismaAnnouncement as Announcement,
     PrismaEvent as Event
 };
 
@@ -82,8 +80,6 @@ export type UserWithRelations = PrismaUser & {
     teacher: PrismaTeacher | null;
     student: PrismaStudent | null;
     parent: PrismaParent | null;
-    sessions: PrismaSession[];
-    refreshTokens: PrismaRefreshToken[];
 };
 
 export type TeacherWithDetails = PrismaTeacher & {
@@ -214,8 +210,6 @@ export type CreateTeacherPayload = {
 // Types pour l'authentification
 export interface AuthResponse {
   user: SafeUser;
-  session: PrismaSession;
-  refreshToken: PrismaRefreshToken;
 }
 
 export interface LoginCredentials {

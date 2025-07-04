@@ -5,13 +5,19 @@ import { Calendar, momentLocalizer, View, Views, type NavigateAction, type Messa
 import moment from "moment";
 import "moment/locale/fr"; 
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type FC } from "react";
 // useCurrentLocale et useI18n ne sont plus nécessaires ici
 
 const localizer = momentLocalizer(moment);
 
-const CustomToolbar: React.FC<ToolbarProps> = (toolbarProps) => {
-  const { label, onView, views, view: currentView } = toolbarProps;
+// Define the expected Event type
+interface CalendarEvent {
+  title: string;
+  start: Date;
+  end: Date;
+}
+
+const CustomToolbar: FC<ToolbarProps<CalendarEvent, object>> = ({ label, onView, views, view: currentView }) => {
 
   // Textes directement en français
   const weekText = "Semaine";
