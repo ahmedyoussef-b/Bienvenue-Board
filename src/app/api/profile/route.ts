@@ -14,6 +14,11 @@ export async function PUT(request: NextRequest) {
   }
 
   try {
+    const currentUser = await prisma.user.findUnique({ where: { id: session.userId } });
+    if (!currentUser) {
+      return NextResponse.json({ message: "Utilisateur de la session non trouvé." }, { status: 404 });
+    }
+
     const body = await request.json();
     const validation = profileUpdateSchema.safeParse(body);
 
@@ -26,22 +31,30 @@ export async function PUT(request: NextRequest) {
     await prisma.$transaction(async (tx) => {
       // 1. Update User model
       const userData: Prisma.UserUpdateInput = {};
-      if (email) {
-        const existing = await tx.user.findFirst({ where: { email, NOT: { id: session.userId } } });
+      
+      // Only check for uniqueness if the email is actually changing
+      if (email && email !== currentUser.email) {
+        const existing = await tx.user.findUnique({ where: { email } });
         if (existing) throw new Error("Cet e-mail est déjà utilisé par un autre compte.");
         userData.email = email;
       }
-      if (username) {
-        const existing = await tx.user.findFirst({ where: { username, NOT: { id: session.userId } } });
+
+      // Only check for uniqueness if the username is actually changing
+      if (username && username !== currentUser.username) {
+        const existing = await tx.user.findUnique({ where: { username } });
         if (existing) throw new Error("Ce nom d'utilisateur est déjà pris.");
         userData.username = username;
       }
+      
       if (password && password.trim() !== '') {
         userData.password = await bcrypt.hash(password, 10);
       }
+      
+      // Update User.name only if profile name/surname are provided (not for students from this form)
       if (name && surname) {
         userData.name = `${name} ${surname}`;
       }
+      
       if (img !== undefined) {
           userData.img = img;
       }
@@ -61,24 +74,19 @@ export async function PUT(request: NextRequest) {
       if (address !== undefined) profileData.address = address;
       if (img !== undefined) profileData.img = img;
       
-      const studentSpecificData: any = {};
-      // Student doesn't have name/surname, but can have other fields updated
-      if (phone !== undefined) studentSpecificData.phone = phone;
-      if (address !== undefined) studentSpecificData.address = address;
-      if (img !== undefined) studentSpecificData.img = img;
-
-
       if (Object.keys(profileData).length > 0) {
           switch (session.role) {
             case Role.ADMIN:
-              await tx.admin.update({ where: { userId: session.userId }, data: profileData });
+              await tx.admin.update({ where: { userId: session.userId }, data: { name: profileData.name, surname: profileData.surname, phone: profileData.phone } });
               break;
             case Role.TEACHER:
               await tx.teacher.update({ where: { userId: session.userId }, data: profileData });
               break;
             case Role.STUDENT:
-              if (Object.keys(studentSpecificData).length > 0) {
-                  await tx.student.update({ where: { userId: session.userId }, data: studentSpecificData });
+              // Student model doesn't have name/surname, they are on User model, but phone/address are here
+              const { name: _n, surname: _s, ...studentData } = profileData;
+              if (Object.keys(studentData).length > 0) {
+                await tx.student.update({ where: { userId: session.userId }, data: studentData });
               }
               break;
             case Role.PARENT:
@@ -93,7 +101,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     console.error('[API PUT /profile] Erreur:', error);
     if (error instanceof Error) {
-        return NextResponse.json({ message: error.message }, { status: 409 }); // Use 409 for conflicts like existing email
+        return NextResponse.json({ message: error.message }, { status: 409 });
     }
     return NextResponse.json({ message: 'Erreur interne du serveur' }, { status: 500 });
   }
