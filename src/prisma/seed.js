@@ -1,3 +1,4 @@
+
 // prisma/seed.js
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -22,11 +23,23 @@ function main() {
         console.log('--- Début du seeding réaliste ---');
         // 1. Nettoyage de la base de données
         console.log('Nettoyage des anciennes données...');
+        
+        // Chatroom related tables - Deleting in order of dependency to avoid foreign key errors
+        if (prisma.pollAnswer) await prisma.pollAnswer.deleteMany({});
+        if (prisma.quizAnswer) await prisma.quizAnswer.deleteMany({});
+        if (prisma.pollOption) await prisma.pollOption.deleteMany({});
+        if (prisma.quizQuestion) await prisma.quizQuestion.deleteMany({});
+        if (prisma.poll) await prisma.poll.deleteMany({});
+        if (prisma.quiz) await prisma.quiz.deleteMany({});
+        if (prisma.chatroomMessage) await prisma.chatroomMessage.deleteMany({});
+        if (prisma.sessionParticipant) await prisma.sessionParticipant.deleteMany({});
+        if (prisma.chatroomSession) await prisma.chatroomSession.deleteMany({});
+
+        // Existing cleanup logic
         yield prisma.attendance.deleteMany({});
         yield prisma.result.deleteMany({});
         yield prisma.assignment.deleteMany({});
         yield prisma.exam.deleteMany({});
-        // Check if models exist before deleting to make seeding more robust
         if (prisma.lessonRequirement) {
             yield prisma.lessonRequirement.deleteMany({});
         }
@@ -227,3 +240,6 @@ main()
     .finally(() => __awaiter(void 0, void 0, void 0, function* () {
     yield prisma.$disconnect();
 }));
+
+
+    
