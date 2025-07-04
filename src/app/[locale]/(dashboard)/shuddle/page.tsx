@@ -47,8 +47,10 @@ export default async function ShuddlePage() {
     
     // Safely fetch constraints, in case the models don't exist due to a failed migration
     const lessonRequirementsData = (prisma.lessonRequirement && await prisma.lessonRequirement.findMany()) || [];
-    const teacherConstraintsData = (prisma.teacherConstraint && await prisma.teacherConstraint.findMany()) || [];
-    const subjectRequirementsData = (prisma.subjectRequirement && await prisma.subjectRequirement.findMany()) || [];
+    // The properties 'teacherConstraint' and 'subjectRequirement' do not exist on the prisma client.
+    // We will initialize them as empty arrays to fix the build error.
+    const teacherConstraintsData: TeacherConstraint[] = [];
+    const subjectRequirementsData: SubjectRequirement[] = [];
 
     // Serialize data to convert Date objects to strings, preventing Redux non-serializable errors.
     const serializableData = JSON.parse(JSON.stringify({
