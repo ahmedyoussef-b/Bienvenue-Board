@@ -21,6 +21,13 @@ const dayLabels: Record<Day, string> = { MONDAY: 'Lundi', TUESDAY: 'Mardi', WEDN
 
 const formatTimeSimple = (date: string | Date): string => `${new Date(date).getUTCHours().toString().padStart(2, '0')}:00`;
 
+const subjectColors = ['bg-primary/20', 'bg-secondary/20', 'bg-accent/20', 'bg-chart-1/20', 'bg-chart-2/20', 'bg-chart-3/20', 'bg-chart-4/20', 'bg-chart-5/20'];
+const getSubjectColorClass = (subjectId: number, subjects: Subject[]): string => {
+    if (!subjects || !Array.isArray(subjects)) return 'bg-muted';
+    const index = subjects.findIndex((s: Subject) => s.id === subjectId);
+    return subjectColors[index % subjectColors.length] || 'bg-muted';
+};
+
 // --- Internal Components ---
 
 const RoomSelectorPopover: React.FC<{
@@ -128,17 +135,9 @@ const DraggableLesson = ({ lesson, wizardData, onDelete, isEditable, fullSchedul
       if (!Array.isArray(rooms)) return 'N/A';
       return rooms.find(r => r.id === id)?.abbreviation || rooms.find(r => r.id === id)?.name || 'N/A';
     }
-
-    const subjectColors = ['bg-primary/10 border-primary/20', 'bg-secondary/10 border-secondary/20', 'bg-accent/10 border-accent/20', 'bg-chart-1/20 border-chart-1/30', 'bg-chart-2/20 border-chart-2/30', 'bg-chart-3/20 border-chart-3/30', 'bg-chart-4/20 border-chart-4/30', 'bg-chart-5/20 border-chart-5/30'];
-    const getSubjectColor = (subjectId: number) => {
-      const subjects = wizardData?.subjects ?? [];
-      if (!Array.isArray(subjects)) return 'bg-muted';
-      const index = subjects.findIndex((s: Subject) => s.id === subjectId);
-      return subjectColors[index % subjectColors.length] || 'bg-muted';
-    };
     
     return (
-        <div ref={setNodeRef} style={style} {...listeners} {...attributes} className={cn(`absolute inset-1 p-2 rounded-md border text-xs flex flex-col justify-center transition-colors group cursor-grab`, getSubjectColor(lesson.subjectId), isOver && 'ring-2 ring-primary', isDragging && 'opacity-50 shadow-lg')}>
+        <div ref={setNodeRef} style={style} {...listeners} {...attributes} className={cn(`absolute inset-1 p-2 rounded-md border text-xs flex flex-col justify-center transition-colors group cursor-grab`, getSubjectColorClass(lesson.subjectId, wizardData.subjects), isOver && 'ring-2 ring-primary', isDragging && 'opacity-50 shadow-lg')}>
              {isEditable && (
                 <>
                     <button
@@ -170,8 +169,8 @@ const InteractiveEmptyCell: React.FC<{
   viewMode: 'class' | 'teacher';
   selectedViewId: string;
   setHoveredSubjectId: (id: number | null) => void;
-  highlightedSlots: Set<string>;
-}> = ({ day, timeSlot, wizardData, fullSchedule, onAddLesson, isDropDisabled = false, viewMode, selectedViewId, setHoveredSubjectId, highlightedSlots }) => {
+  highlightClass?: string;
+}> = ({ day, timeSlot, wizardData, fullSchedule, onAddLesson, isDropDisabled = false, viewMode, selectedViewId, setHoveredSubjectId, highlightClass }) => {
     const { setNodeRef } = useDroppable({
         id: `empty-${day}-${timeSlot}`,
         data: { day, time: timeSlot },
@@ -211,17 +210,17 @@ const InteractiveEmptyCell: React.FC<{
 
 
     return (
-        <div ref={setNodeRef} className={cn("h-24 w-full rounded-md transition-colors relative group p-1", highlightedSlots.has(`${day}-${timeSlot}`) && "bg-green-500/20 animate-subtle-pulse")}>
+        <div ref={setNodeRef} className={cn("h-24 w-full rounded-md transition-colors relative group p-1", highlightClass && `${highlightClass} animate-subtle-pulse`)}>
             <div className="absolute bottom-1 right-1 flex gap-1 opacity-20 group-hover:opacity-100 transition-opacity">
                  {viewMode === 'class' && (
                      <Popover>
                         <PopoverTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-7 w-7"><BookOpen size={14} /></Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-64">
+                        <PopoverContent className="w-64" onMouseLeave={() => setHoveredSubjectId(null)}>
                             <h4 className="font-medium text-sm mb-2">Matières possibles</h4>
                             <ScrollArea className="max-h-48">
-                                <div className="space-y-1" onMouseLeave={() => setHoveredSubjectId(null)}>
+                                <div className="space-y-1">
                                     {availableSubjects.length > 0 ? availableSubjects.map(subject => (
                                         <Button 
                                             key={subject.id} 
@@ -287,18 +286,29 @@ const TimetableDisplay: React.FC<TimetableDisplayProps> = ({
   
   const [hoveredSubjectId, setHoveredSubjectId] = useState<number | null>(null);
 
-  const highlightedSlots = useMemo(() => {
-    if (!hoveredSubjectId || viewMode !== 'class') return new Set<string>();
-    const subject = wizardData.subjects.find(s => s.id === hoveredSubjectId);
-    if (!subject) return new Set<string>();
+  const highlightedSlotsMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (!hoveredSubjectId || viewMode !== 'class') return map;
     
-    return calculateAvailableSlots(
+    const subject = wizardData.subjects.find(s => s.id === hoveredSubjectId);
+    if (!subject) return map;
+    
+    const availableSlotsSet = calculateAvailableSlots(
         subject,
         String(selectedViewId),
         fullSchedule,
         wizardData
     );
+    
+    const colorClass = getSubjectColorClass(hoveredSubjectId, wizardData.subjects);
+
+    availableSlotsSet.forEach(slotKey => {
+        map.set(slotKey, colorClass);
+    });
+
+    return map;
   }, [hoveredSubjectId, wizardData, fullSchedule, selectedViewId, viewMode]);
+
 
   const { scheduleGrid, spannedSlots } = useMemo(() => {
     if (!Array.isArray(scheduleData) || !wizardData || !wizardData.school) return { scheduleGrid: {}, spannedSlots: new Set() };
@@ -379,6 +389,7 @@ const TimetableDisplay: React.FC<TimetableDisplayProps> = ({
                       }
 
                       const cellData = scheduleGrid[cellId];
+                      const highlightClass = highlightedSlotsMap.get(cellId);
                       
                       if (cellData) {
                           return (
@@ -399,7 +410,7 @@ const TimetableDisplay: React.FC<TimetableDisplayProps> = ({
                                       onAddLesson={onAddLesson}
                                       isDropDisabled={!isEditable}
                                       setHoveredSubjectId={setHoveredSubjectId}
-                                      highlightedSlots={highlightedSlots}
+                                      highlightClass={highlightClass}
                                   />
                               </TableCell>
                           );
