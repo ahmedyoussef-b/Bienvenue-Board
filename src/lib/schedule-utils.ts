@@ -4,7 +4,10 @@ import { type Lesson as PrismaLesson } from '@prisma/client';
 
 type SchedulableLesson = Omit<PrismaLesson, 'id' | 'createdAt' | 'updatedAt'>;
 
-const formatTimeSimple = (date: string | Date): string => `${new Date(date).getUTCHours().toString().padStart(2, '0')}:00`;
+const formatTimeSimple = (date: string | Date): string => {
+    const d = new Date(date);
+    return `${d.getUTCHours().toString().padStart(2, '0')}:${d.getUTCMinutes().toString().padStart(2, '0')}`;
+};
 
 export const generateTimeSlots = (startTime: string, endTime: string, sessionDuration: number): string[] => {
     const slots: string[] = [];
