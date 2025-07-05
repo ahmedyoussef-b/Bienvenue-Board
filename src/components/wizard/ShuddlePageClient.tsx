@@ -40,6 +40,8 @@ import type { WizardData, ClassWithGrade, Subject, TeacherWithDetails, Classroom
 import { toast, useToast } from '@/hooks/use-toast';
 import { generateSchedule } from '@/lib/schedule-utils';
 import ScheduleEditor from '../schedule/ScheduleEditor';
+import { fetchScheduleDraft, saveScheduleDraft, selectDraftStatus, selectLastSaved, selectSaveStatus } from '@/lib/redux/features/scheduleDraftSlice';
+
 
 export const getValidationIcon = (type: string): React.ReactNode => {
   switch (type) {
@@ -159,6 +161,12 @@ const ShuddlePageClient: React.FC = () => {
     const teacherAssignments = useAppSelector(selectTeacherAssignments);
     const schoolConfig = useAppSelector(selectSchoolConfig);
     
+    // Save/Load Draft Selectors
+    const saveStatus = useAppSelector(selectSaveStatus);
+    const lastSaved = useAppSelector(selectLastSaved);
+
+    const { toast } = useToast();
+    
     useEffect(() => {
         if (scheduleStatus === 'succeeded' && !initialModeSet) {
             if (schedule && schedule.length > 0) {
@@ -187,6 +195,21 @@ const ShuddlePageClient: React.FC = () => {
     const handlePrevious = () => currentStep > 0 && setCurrentStep(currentStep - 1);
     const handleStepClick = (stepIndex: number) => setCurrentStep(stepIndex);
     const handleGenerationSuccess = () => setMode('edit');
+    const handleSaveDraft = useCallback(async () => {
+        const resultAction = await dispatch(saveScheduleDraft());
+        if (saveScheduleDraft.fulfilled.match(resultAction)) {
+            toast({
+                title: "Brouillon sauvegardé !",
+                description: `Votre progression a été enregistrée à ${format(new Date(), 'HH:mm:ss')}.`,
+            });
+        } else {
+            toast({
+                variant: 'destructive',
+                title: "Échec de la sauvegarde",
+                description: resultAction.payload as string ?? "Une erreur inconnue est survenue.",
+            });
+        }
+    }, [dispatch, toast]);
 
     const steps = [
         { id: 'school', title: 'Établissement', icon: School, description: 'Paramètres généraux', component: <SchoolConfigForm /> },
@@ -251,8 +274,17 @@ const ShuddlePageClient: React.FC = () => {
                             </div>
                             <div className="flex-grow mb-8">{renderStepContent()}</div>
                             <div className="flex justify-between items-center mt-auto">
-                                <Button variant="outline" onClick={handlePrevious} disabled={currentStep === 0}><ChevronLeft size={16} className="mr-2" /> Précédent</Button>
-                                <Button onClick={handleNext} disabled={currentStep === steps.length - 1}>Suivant <ChevronRight size={16} className="ml-2" /></Button>
+                                <div className="flex items-center gap-4">
+                                  <Button variant="outline" onClick={handleSaveDraft} disabled={saveStatus === 'loading'}>
+                                    {saveStatus === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
+                                    Sauvegarder le brouillon
+                                  </Button>
+                                  {lastSaved && <p className="text-xs text-muted-foreground">Dernière sauvegarde: {format(new Date(lastSaved), 'dd/MM/yyyy HH:mm:ss', {locale: fr})}</p>}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button variant="outline" onClick={handlePrevious} disabled={currentStep === 0}><ChevronLeft size={16} className="mr-2" /> Précédent</Button>
+                                  <Button onClick={handleNext} disabled={currentStep === steps.length - 1}>Suivant <ChevronRight size={16} className="ml-2" /></Button>
+                                </div>
                             </div>
                         </div>
                     </Card>
