@@ -41,15 +41,17 @@ const RoomSelectorPopover: React.FC<{
     const [isOpen, setIsOpen] = useState(false);
 
     const availableRooms = useMemo(() => {
-        if (!wizardData?.rooms || !Array.isArray(fullSchedule)) return [];
+        if (!wizardData?.rooms || !Array.isArray(fullSchedule) || !lesson) return [];
 
         const occupiedRoomIds = new Set(
             fullSchedule
+                // Exclude the current lesson from the conflict check
+                .filter(l => l.id !== lesson.id)
                 .filter(l => l.day === day && formatTimeSimple(l.startTime) === timeSlot && l.classroomId != null)
                 .map(l => l.classroomId!)
         );
         return wizardData.rooms.filter(room => !occupiedRoomIds.has(room.id));
-    }, [day, timeSlot, fullSchedule, wizardData?.rooms]);
+    }, [day, timeSlot, fullSchedule, wizardData?.rooms, lesson]);
     
     const handleRoomChange = (newRoomId: number | null) => {
         if (!lesson) return;
