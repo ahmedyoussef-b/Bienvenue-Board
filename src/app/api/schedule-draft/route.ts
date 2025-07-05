@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     
     if (!prisma.scheduleDraft) {
         console.warn('[API/schedule-draft GET] ScheduleDraft model not found on Prisma client.');
-        return NextResponse.json({ message: 'Service de brouillon non disponible (modèle non trouvé).' }, { status: 503 });
+        return NextResponse.json(null, { status: 200 });
     }
 
     try {
@@ -22,17 +22,13 @@ export async function GET(request: NextRequest) {
             where: { userId: session.userId },
         });
 
-        if (!draft) {
-            return NextResponse.json({ message: 'Aucun brouillon trouvé' }, { status: 404 });
-        }
-
+        // If draft is null, client receives null body with 200 OK.
+        // If draft is found, client receives draft object with 200 OK.
         return NextResponse.json(draft, { status: 200 });
+
     } catch (error) {
         console.error('[API/schedule-draft GET] Error:', error);
-        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021') {
-            return NextResponse.json({ message: 'Service de brouillon non disponible (table non trouvée).' }, { status: 503 });
-        }
-        return NextResponse.json({ message: 'Erreur lors de la récupération du brouillon.' }, { status: 500 });
+        return NextResponse.json({ message: 'Erreur interne du serveur lors de la récupération du brouillon.' }, { status: 500 });
     }
 }
 

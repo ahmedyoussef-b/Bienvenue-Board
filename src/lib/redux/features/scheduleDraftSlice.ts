@@ -26,13 +26,12 @@ export const fetchScheduleDraft = createAsyncThunk<ScheduleDraft | null, void, {
         try {
             const response = await fetch('/api/schedule-draft');
             if (!response.ok) {
-                if (response.status === 404) {
-                    return null; // A 404 is an expected "empty" state, not a failure.
-                }
                 const errorData = await response.json();
-                return rejectWithValue(errorData.message ?? 'Failed to fetch draft');
+                return rejectWithValue(errorData.message ?? 'Échec de la récupération du brouillon');
             }
-            return await response.json();
+            // The response body will be the draft object or null.
+            const data = await response.json();
+            return data;
         } catch (error) {
             return rejectWithValue(error instanceof Error ? error.message : 'An unknown network error occurred');
         }
