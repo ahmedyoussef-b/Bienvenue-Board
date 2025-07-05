@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from '@/hooks/redux-hooks';
 import { addLesson, removeLesson, saveSchedule, selectSchedule, selectScheduleStatus, updateLessonSlot } from '@/lib/redux/features/schedule/scheduleSlice';
 import { useToast } from '@/hooks/use-toast';
 import type { WizardData, Lesson, Subject, Day } from '@/types';
-import TimetableDisplay from './TimetableDisplay';
+import TimetableDisplay from '../schedule/TimetableDisplay';
 import { Button } from '../ui/button';
 import { ArrowLeft, Loader2, Save, Users, User } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -21,19 +21,7 @@ const formatTimeSimple = (date: string | Date): string => `${new Date(date).getU
 export default function ScheduleEditor({ wizardData, onBackToWizard }: { wizardData: WizardData, onBackToWizard: () => void }) {
     const dispatch = useAppDispatch();
     const { toast } = useToast();
-    const sensors = useSensors(
-        useSensor(MouseSensor, {
-            activationConstraint: {
-                distance: 10,
-            },
-        }),
-        useSensor(TouchSensor, {
-            activationConstraint: {
-                delay: 250,
-                tolerance: 5,
-            },
-        })
-    );
+    const sensors = useSensors(useSensor(MouseSensor), useSensor(TouchSensor));
 
     const schedule = useAppSelector(selectSchedule);
     const scheduleStatus = useAppSelector(selectScheduleStatus);
@@ -49,7 +37,7 @@ export default function ScheduleEditor({ wizardData, onBackToWizard }: { wizardD
     }, [schedule, viewMode, selectedClassId, selectedTeacherId]);
 
     const handlePlaceLesson = useCallback((subject: Subject, day: Day, time: string) => {
-        const { school, teachers, rooms, classes, teacherConstraints = [], subjectRequirements = [] } = wizardData;
+        const { school, teachers, rooms, classes, teacherConstraints = [], subjectRequirements = [], teacherAssignments = [] } = wizardData;
 
         if (viewMode !== 'class' || !selectedClassId) {
              toast({ variant: "destructive", title: "Action impossible", description: "Veuillez sélectionner une classe avant d'ajouter un cours." });
@@ -57,11 +45,18 @@ export default function ScheduleEditor({ wizardData, onBackToWizard }: { wizardD
         }
 
         const [hour, minute] = time.split(':').map(Number);
+        const classIdNum = parseInt(selectedClassId, 10);
+        
+        // Find teachers assigned to this specific class
+        const teachersForThisClass = teachers.filter(t => 
+            teacherAssignments.some(a => a.teacherId === t.id && a.classIds.includes(classIdNum))
+        );
 
-        const availableTeacher = teachers.find(teacher => {
+        // Find a teacher from this group who is competent and available
+        const availableTeacher = teachersForThisClass.find(teacher => {
             const canTeach = teacher.subjects.some(s => s.id === subject.id);
             if (!canTeach) return false;
-            
+
             const isTeacherBusy = schedule.some(l => l.teacherId === teacher.id && l.day === day && formatTimeSimple(l.startTime) === time);
             if (isTeacherBusy) return false;
             
@@ -72,8 +67,9 @@ export default function ScheduleEditor({ wizardData, onBackToWizard }: { wizardD
             return !constraint;
         });
 
+
         if (!availableTeacher) {
-            toast({ variant: "destructive", title: "Aucun enseignant disponible", description: `Aucun enseignant pour "${subject.name}" n'est libre sur ce créneau.` });
+            toast({ variant: "destructive", title: "Aucun enseignant assigné disponible", description: `Aucun enseignant assigné à cette classe pour "${subject.name}" n'est libre sur ce créneau.` });
             return;
         }
         
@@ -85,18 +81,18 @@ export default function ScheduleEditor({ wizardData, onBackToWizard }: { wizardD
         }
         const availableRoom = potentialRooms.length > 0 ? potentialRooms[0] : null;
         
-        if (subjectReq?.requiredRoomId && subjectReq.requiredRoomId !== 'any' && !availableRoom) {
+        if (rooms.length > 0 && subjectReq?.requiredRoomId && subjectReq.requiredRoomId !== 'any' && potentialRooms.length === 0) {
             toast({ variant: "destructive", title: "Salle requise occupée", description: `La salle requise pour "${subject.name}" est occupée.` });
             return;
         }
 
         const newLesson: SchedulableLesson = {
-            name: `${subject.name} - ${classes.find(c => c.id === parseInt(selectedClassId, 10))?.name}`,
+            name: `${subject.name} - ${classes.find(c => c.id === classIdNum)?.name}`,
             day: day,
             startTime: new Date(Date.UTC(2000, 0, 1, hour, minute)).toISOString(),
             endTime: new Date(Date.UTC(2000, 0, 1, hour, minute + school.sessionDuration)).toISOString(),
             subjectId: subject.id,
-            classId: parseInt(selectedClassId, 10),
+            classId: classIdNum,
             teacherId: availableTeacher.id,
             classroomId: availableRoom ? availableRoom.id : null,
         };
@@ -108,37 +104,15 @@ export default function ScheduleEditor({ wizardData, onBackToWizard }: { wizardD
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
-
-        if (!over) return;
+        if (!over || !active.id.toString().startsWith('lesson-')) return;
         
-        if (active.id.toString().startsWith('lesson-') && over.id.toString().startsWith('empty-')) {
+        if (over.id.toString().startsWith('empty-')) {
             const lessonId = parseInt(active.id.toString().replace('lesson-', ''));
             const [, newDay, newTime] = over.id.toString().split('-');
-
-            const lessonToMove = schedule.find(l => l.id === lessonId);
-            if (!lessonToMove) return;
-
-            const teacherIsBusy = schedule.some(
-                l => l.id !== lessonId && l.teacherId === lessonToMove.teacherId && l.day === newDay && formatTimeSimple(l.startTime).startsWith(newTime)
-            );
-            if (teacherIsBusy) {
-                toast({ variant: "destructive", title: "Conflit d'horaire", description: `L'enseignant(e) est déjà occupé(e) sur ce créneau.` });
-                return;
-            }
-
-            const classIsBusy = schedule.some(
-                l => l.id !== lessonId && l.classId === lessonToMove.classId && l.day === newDay && formatTimeSimple(l.startTime).startsWith(newTime)
-            );
-            if (classIsBusy) {
-                toast({ variant: "destructive", title: "Conflit d'horaire", description: `La classe a déjà un cours sur ce créneau.` });
-                return;
-            }
-
             dispatch(updateLessonSlot({ lessonId, newDay: newDay as Day, newTime }));
-            toast({ title: "Cours déplacé", description: `Le cours a été déplacé avec succès.` });
+            toast({ title: "Cours déplacé" });
         }
     };
-
 
     const handleDeleteLesson = (lessonId: number) => dispatch(removeLesson(lessonId));
     const handleSaveChanges = () => dispatch(saveSchedule(schedule as SchedulableLesson[]));
