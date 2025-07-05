@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { useAppDispatch, useAppSelector } from '@/hooks/redux-hooks';
+import { useAppDispatch } from '@/hooks/redux-hooks';
 import { Users, BookOpen, User, RotateCcw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -65,10 +65,12 @@ const TeachersForm: React.FC<TeachersFormProps> = ({ wizardData }) => {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
             <Users className="text-primary" size={24} />
-            <h3 className="text-lg font-semibold">Assigner les Professeurs aux Classes par Matière</h3>
-            <p className="text-sm text-muted-foreground">
-              Définissez quel professeur enseigne quelle matière dans quelles classes.
-            </p>
+            <div>
+                <h3 className="text-lg font-semibold">Assigner les Professeurs aux Classes par Matière</h3>
+                <p className="text-sm text-muted-foreground">
+                Définissez quel professeur enseigne quelle matière dans quelles classes.
+                </p>
+            </div>
           </div>
           
           <div className="flex items-center gap-2 self-end md:self-center">
@@ -146,7 +148,7 @@ const TeachersForm: React.FC<TeachersFormProps> = ({ wizardData }) => {
                                       htmlFor={`check-${teacher.id}-${subject.id}-${cls.id}`}
                                       className={cn(
                                         "text-sm font-normal",
-                                        isAssignedToOther && "text-muted-foreground line-through"
+                                        isAssignedToOther && "text-muted-foreground line-through cursor-not-allowed"
                                       )}
                                     >
                                       {cls.name}

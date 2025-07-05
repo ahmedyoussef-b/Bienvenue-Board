@@ -89,7 +89,7 @@ export const calculateAvailableSlots = (
         
         const subjectReq = subjectRequirements.find(r => r.subjectId === selectedSubject.id);
         const amSlots = timeSlots.filter(slot => parseInt(slot.split(':')[0]) < 12);
-        const pmSlots = timeSlots.filter(slot => parseInt(slot.split(':')[0]) >= 12);
+        const pmSlots = timeSlots.filter(slot => parseInt(slot.split(':')[0]) >= 14);
         let applicableTimeSlots = timeSlots;
         if (subjectReq?.timePreference === 'AM') applicableTimeSlots = amSlots;
         if (subjectReq?.timePreference === 'PM') applicableTimeSlots = pmSlots;
@@ -107,7 +107,7 @@ export const calculateAvailableSlots = (
             
             let isRoomUnavailable = false;
             const requiredRoomId = subjectReq?.requiredRoomId;
-            if (requiredRoomId && requiredRoomId !== 'any') {
+            if (requiredRoomId && requiredRoomId !== null) {
                 isRoomUnavailable = schedule.some(l => l.classroomId === requiredRoomId && l.day === day && formatTimeSimple(l.startTime) === time);
             }
 
@@ -153,39 +153,54 @@ export const mergeConsecutiveLessons = (lessons: PrismaLesson[], wizardData: Wiz
 };
 
 export const generateSchedule = (wizardData: WizardData): SchedulableLesson[] => {
-    const newSchedule: SchedulableLesson[] = [];
     const { school, classes, subjects, teachers, rooms, lessonRequirements, teacherConstraints = [], subjectRequirements = [], teacherAssignments = [] } = wizardData;
+    const newSchedule: SchedulableLesson[] = [];
 
     if (!school.schoolDays || school.schoolDays.length === 0) return [];
 
     const schoolDays = school.schoolDays.map(d => d.toUpperCase() as Day);
     const allTimeSlots = generateTimeSlots(school.startTime, school.endTime, school.sessionDuration);
-    const amSlots = allTimeSlots.filter(slot => parseInt(slot.split(':')[0]) < 12);
-    const pmSlots = allTimeSlots.filter(slot => parseInt(slot.split(':')[0]) >= 12);
 
-
-    const occupancy: { [key: string]: boolean } = {};
-
-    const lessonSlotsToFill: { classItem: typeof classes[0], subject: typeof subjects[0] }[] = [];
+    // 1. Create a list of all lesson "units" to be scheduled
+    const lessonSlotsToFill: { classItem: typeof classes[0], subject: typeof subjects[0], score: number }[] = [];
     classes.forEach(classItem => {
         subjects.forEach(subject => {
             const requirement = lessonRequirements.find(r => r.classId === classItem.id && r.subjectId === subject.id);
             const hoursToSchedule = requirement ? requirement.hours : (subject.weeklyHours || 0);
-            for (let i = 0; i < hoursToSchedule; i++) {
-                lessonSlotsToFill.push({ classItem, subject });
+            
+            if (hoursToSchedule > 0) {
+                // Calculate a "difficulty" score for this subject/class combination
+                let score = 0;
+                const subjectReq = subjectRequirements.find(r => r.subjectId === subject.id);
+                if (subjectReq?.requiredRoomId) score += 100; // High priority for specific room needs
+                if (subjectReq?.timePreference !== 'ANY') score += 50; // Priority for time preference
+
+                const assignment = teacherAssignments.find(a => a.subjectId === subject.id && a.classIds.includes(classItem.id));
+                if (!assignment) score += 200; // Very high priority if no teacher is assigned yet (less choice)
+
+                for (let i = 0; i < hoursToSchedule; i++) {
+                    lessonSlotsToFill.push({ classItem, subject, score });
+                }
             }
         });
     });
 
-    lessonSlotsToFill.sort(() => Math.random() - 0.5);
+    // 2. Sort lessons by difficulty score, highest first
+    lessonSlotsToFill.sort((a, b) => b.score - a.score);
 
+    const occupancy: { [key: string]: boolean } = {};
+
+    // 3. Place each lesson
     lessonSlotsToFill.forEach(slot => {
         const { classItem, subject } = slot;
         let placed = false;
+
         const shuffledDays = [...schoolDays].sort(() => Math.random() - 0.5);
 
         for (const day of shuffledDays) {
             const subjectReq = subjectRequirements.find(r => r.subjectId === subject.id);
+            const amSlots = allTimeSlots.filter(slot => parseInt(slot.split(':')[0]) < 12);
+            const pmSlots = allTimeSlots.filter(slot => parseInt(slot.split(':')[0]) >= 14);
             let applicableTimeSlots = allTimeSlots;
             if (subjectReq?.timePreference === 'AM') applicableTimeSlots = amSlots;
             if (subjectReq?.timePreference === 'PM') applicableTimeSlots = pmSlots;
@@ -193,36 +208,14 @@ export const generateSchedule = (wizardData: WizardData): SchedulableLesson[] =>
             const shuffledTimes = [...applicableTimeSlots].sort(() => Math.random() - 0.5);
 
             for (const time of shuffledTimes) {
+                // Check if class is already busy
                 if (occupancy[`class-${classItem.id}-${day}-${time}`]) continue;
-
-                // New constraint: A subject cannot be split on the same day.
-                const lessonsTodayForThisSubject = newSchedule.filter(
-                    l => l.classId === classItem.id && l.subjectId === subject.id && l.day === day
-                );
-
-                if (lessonsTodayForThisSubject.length > 0) {
-                    // If scheduled, check for consecutiveness.
-                    const lastLesson = lessonsTodayForThisSubject.sort(
-                        (a, b) => new Date(b.endTime).getTime() - new Date(a.endTime).getTime()
-                    )[0];
-
-                    const lastEndTime = new Date(lastLesson.endTime);
-                    const [h, m] = time.split(':').map(Number);
-                    const newStartTime = new Date(Date.UTC(2000, 0, 1, h, m));
-
-                    // If the new start time doesn't match the last end time, it's not consecutive.
-                    if (lastEndTime.getTime() !== newStartTime.getTime()) {
-                        continue;
-                    }
-                }
                 
+                // Find an available teacher
                 const assignment = teacherAssignments.find(a => a.subjectId === subject.id && a.classIds.includes(classItem.id));
-                let potentialTeachers: TeacherWithDetails[];
-                if (assignment) {
-                    potentialTeachers = teachers.filter(t => t.id === assignment.teacherId);
-                } else {
-                    potentialTeachers = teachers.filter(t => t.subjects.some(s => s.id === subject.id));
-                }
+                const potentialTeachers = assignment 
+                    ? teachers.filter(t => t.id === assignment.teacherId)
+                    : teachers.filter(t => t.subjects.some(s => s.id === subject.id));
 
                 const availableTeacher = potentialTeachers.find(t => {
                     if (occupancy[`teacher-${t.id}-${day}-${time}`]) return false;
@@ -231,15 +224,20 @@ export const generateSchedule = (wizardData: WizardData): SchedulableLesson[] =>
                     const lessonEndTimeStr = `${String(lessonEndTime.getUTCHours()).padStart(2, '0')}:${String(lessonEndTime.getUTCMinutes()).padStart(2, '0')}`;
                     return !findConflictingConstraint(t.id, day, time, lessonEndTimeStr, teacherConstraints);
                 });
+                
                 if (!availableTeacher) continue;
 
+                // Find an available room
+                const requiredRoomId = subjectReq?.requiredRoomId;
                 let potentialRooms = rooms.filter(r => !occupancy[`room-${r.id}-${day}-${time}`] && r.capacity >= classItem.capacity);
-                if (subjectReq?.requiredRoomId && subjectReq.requiredRoomId !== 'any') {
-                    potentialRooms = potentialRooms.filter(r => r.id === subjectReq.requiredRoomId);
+                if (requiredRoomId && requiredRoomId !== null) {
+                    potentialRooms = potentialRooms.filter(r => r.id === requiredRoomId);
                 }
                 const availableRoom = potentialRooms.length > 0 ? potentialRooms[0] : null;
-                if (rooms.length > 0 && subjectReq?.requiredRoomId && subjectReq.requiredRoomId !== 'any' && potentialRooms.length === 0) continue;
 
+                if (requiredRoomId && !availableRoom) continue; // Specific room required but not available
+                
+                // If all checks pass, place the lesson
                 const [hour, minute] = time.split(':').map(Number);
                 newSchedule.push({
                     name: `${subject.name} - ${classItem.name}`,
@@ -252,14 +250,15 @@ export const generateSchedule = (wizardData: WizardData): SchedulableLesson[] =>
                     classroomId: availableRoom ? availableRoom.id : null,
                 });
 
+                // Update occupancy maps
                 occupancy[`teacher-${availableTeacher.id}-${day}-${time}`] = true;
                 occupancy[`class-${classItem.id}-${day}-${time}`] = true;
                 if (availableRoom) occupancy[`room-${availableRoom.id}-${day}-${time}`] = true;
 
                 placed = true;
-                break;
+                break; // Go to next lesson slot
             }
-            if (placed) break;
+            if (placed) break; // Go to next lesson slot
         }
     });
 

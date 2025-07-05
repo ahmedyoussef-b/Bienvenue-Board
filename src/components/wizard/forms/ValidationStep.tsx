@@ -7,7 +7,7 @@ import { CheckCircle, Calendar, AlertTriangle, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { setInitialSchedule } from '@/lib/redux/features/schedule/scheduleSlice';
 import { generateSchedule } from '@/lib/schedule-utils';
 import { useToast } from '@/hooks/use-toast';
@@ -16,6 +16,12 @@ import { WizardData } from '@/types/ wizard-types';
 interface ValidationStepProps {
   wizardData: WizardData;
   onGenerationSuccess: () => void;
+}
+
+interface ValidationResult {
+    type: 'success' | 'warning' | 'error';
+    message: string;
+    details?: string;
 }
 
 const ValidationStep: React.FC<ValidationStepProps> = ({ 
@@ -27,44 +33,56 @@ const ValidationStep: React.FC<ValidationStepProps> = ({
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
-  const [validationResults, setValidationResults] = useState<any[]>([]);
+  const [validationResults, setValidationResults] = useState<ValidationResult[]>([]);
   const [isGenerated, setIsGenerated] = useState(false);
 
   const validateData = useCallback(() => {
-    const results: any[] = [];
+    const results: ValidationResult[] = [];
+    const { school, classes, teachers, subjects, lessonRequirements, teacherAssignments } = wizardData;
     
-    if (!wizardData.school.name) {
-      results.push({ 
-        type: 'error', 
-        message: "Nom d'établissement manquant" 
-      });
-    }
-    
-    if (wizardData.classes.length === 0) {
-      results.push({ 
-        type: 'error', 
-        message: 'Aucune classe configurée' 
-      });
-    }
-    
-    if (wizardData.teachers.length === 0) {
-      results.push({ 
-        type: 'error', 
-        message: 'Aucun enseignant configuré' 
-      });
-    }
-    
-    if (wizardData.subjects.length === 0) {
-      results.push({ 
-        type: 'error', 
-        message: 'Aucune matière configurée' 
-      });
-    }
+    // Basic data presence checks
+    if (!school.name) results.push({ type: 'error', message: "Nom d'établissement manquant." });
+    if (classes.length === 0) results.push({ type: 'error', message: 'Aucune classe configurée.' });
+    if (teachers.length === 0) results.push({ type: 'error', message: 'Aucun enseignant configuré.' });
+    if (subjects.length === 0) results.push({ type: 'error', message: 'Aucune matière configurée.' });
+    if (results.some(r => r.type === 'error')) return results;
+
+    // Advanced consistency checks
+    lessonRequirements.forEach(req => {
+        if (req.hours > 0) {
+            const assignmentExists = teacherAssignments.some(a => a.classIds.includes(req.classId) && a.subjectId === req.subjectId);
+            if (!assignmentExists) {
+                const className = classes.find(c => c.id === req.classId)?.name;
+                const subjectName = subjects.find(s => s.id === req.subjectId)?.name;
+                results.push({
+                    type: 'error',
+                    message: `Matière non assignée`,
+                    details: `La matière "${subjectName}" requise pour la classe "${className}" n'a pas de professeur assigné.`
+                });
+            }
+        }
+    });
+
+    const totalSchoolHours = (school.schoolDays?.length || 0) * (generateTimeSlots(school.startTime, school.endTime, school.sessionDuration).length);
+    classes.forEach(cls => {
+        const totalRequiredHours = lessonRequirements
+            .filter(r => r.classId === cls.id)
+            .reduce((sum, r) => sum + r.hours, 0);
+        
+        if (totalRequiredHours > totalSchoolHours) {
+            results.push({
+                type: 'warning',
+                message: 'Classe surchargée',
+                details: `La classe "${cls.name}" a ${totalRequiredHours} heures de cours requises, mais seulement ${totalSchoolHours} créneaux sont disponibles par semaine.`
+            });
+        }
+    });
+
     
     if (results.every(r => r.type !== 'error')) {
-      results.push({ 
+      results.unshift({ 
         type: 'success', 
-        message: 'Configuration valide' 
+        message: 'Configuration de base valide et prête pour la génération.' 
       });
     }
     
@@ -75,50 +93,47 @@ const ValidationStep: React.FC<ValidationStepProps> = ({
     setValidationResults(validateData());
   }, [wizardData, validateData]);
 
-  const simulateGeneration = async () => {
+  const handleGenerate = async () => {
     setIsGenerating(true);
     setGenerationProgress(0);
     
-    const steps = [
-      'Analyse...', 
-      'Calcul des créneaux...', 
-      'Assignation...', 
-      'Optimisation...', 
-      'Validation finale...', 
-      'Terminé !'
-    ];
+    await new Promise(resolve => setTimeout(resolve, 200));
+    setGenerationProgress(20);
     
-    for (let i = 0; i < steps.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setGenerationProgress(((i + 1) / steps.length) * 100);
+    // Use a try-catch block to handle potential errors during generation
+    try {
+        const finalSchedule = generateSchedule(wizardData);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setGenerationProgress(100);
+
+        dispatch(setInitialSchedule(finalSchedule));
+        setIsGenerated(true);
+        toast({
+          title: "Génération terminée !",
+          description: "Les emplois du temps ont été générés avec succès. Vous pouvez maintenant les éditer."
+        });
+        onGenerationSuccess();
+
+    } catch (error) {
+        console.error("Schedule Generation Error:", error);
+        toast({
+            variant: 'destructive',
+            title: "Erreur de Génération",
+            description: "Une erreur est survenue. Vérifiez les contraintes et réessayez."
+        });
+    } finally {
+        setIsGenerating(false);
     }
-    
-    const finalSchedule = generateSchedule(wizardData);
-    dispatch(setInitialSchedule(finalSchedule));
-    
-    setIsGenerating(false);
-    setIsGenerated(true);
-    
-    toast({
-      title: "Génération terminée !",
-      description: "Les emplois du temps ont été générés."
-    });
-    
-    onGenerationSuccess();
   };
 
   const canGenerate = validationResults.every(result => result.type !== 'error');
 
   const getValidationIcon = (type: string) => {
     switch (type) {
-      case 'success':
-        return <CheckCircle className="text-green-500" size={20} />;
-      case 'warning':
-        return <AlertTriangle className="text-yellow-500" size={20} />;
-      case 'error':
-        return <AlertTriangle className="text-destructive" size={20} />;
-      default:
-        return null;
+      case 'success': return <CheckCircle className="text-green-500" size={20} />;
+      case 'warning': return <AlertTriangle className="text-yellow-500" size={20} />;
+      case 'error': return <AlertTriangle className="text-destructive" size={20} />;
+      default: return null;
     }
   };
 
@@ -134,6 +149,7 @@ const ValidationStep: React.FC<ValidationStepProps> = ({
           {validationResults.map((result, index) => (
             <Alert 
               key={index} 
+              variant={result.type === 'error' ? 'destructive' : 'default'}
               className={`border-l-4 ${
                 result.type === 'success' 
                   ? 'border-green-500 bg-green-500/10' 
@@ -145,22 +161,18 @@ const ValidationStep: React.FC<ValidationStepProps> = ({
               <div className="flex items-start space-x-3">
                 {getValidationIcon(result.type)}
                 <div className="flex-1">
-                  <AlertDescription>
-                    <p className={`font-medium ${
-                      result.type === 'success' 
-                        ? 'text-green-700 dark:text-green-400' 
-                        : result.type === 'warning' 
-                          ? 'text-yellow-700 dark:text-yellow-400' 
-                          : 'text-destructive'
-                    }`}>
-                      {result.message}
-                    </p>
-                    {result.details && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {result.details}
-                      </p>
-                    )}
-                  </AlertDescription>
+                  <AlertTitle className={`font-semibold ${
+                      result.type === 'success' ? 'text-green-700 dark:text-green-400'
+                      : result.type === 'warning' ? 'text-yellow-700 dark:text-yellow-400'
+                      : 'text-destructive'
+                  }`}>
+                    {result.message}
+                  </AlertTitle>
+                  {result.details && (
+                    <AlertDescription className="text-sm text-muted-foreground mt-1">
+                      {result.details}
+                    </AlertDescription>
+                  )}
                 </div>
               </div>
             </Alert>
@@ -195,7 +207,7 @@ const ValidationStep: React.FC<ValidationStepProps> = ({
             
             <div className="flex flex-col sm:flex-row gap-4">
               <Button 
-                onClick={simulateGeneration} 
+                onClick={handleGenerate} 
                 disabled={!canGenerate} 
                 className="flex-1" 
                 size="lg"
@@ -204,14 +216,6 @@ const ValidationStep: React.FC<ValidationStepProps> = ({
                 Générer l'emploi du temps
               </Button>
             </div>
-            
-            {canGenerate && !isGenerated && (
-              <div className="p-4 bg-green-500/10 rounded-lg mt-4">
-                <p className="text-sm text-green-600 dark:text-green-400">
-                  ✅ Configuration validée ! La génération peut être lancée.
-                </p>
-              </div>
-            )}
           </div>
         )}
       </Card>
