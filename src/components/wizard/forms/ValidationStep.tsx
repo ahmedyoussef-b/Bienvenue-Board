@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { setInitialSchedule } from '@/lib/redux/features/schedule/scheduleSlice';
-import { generateSchedule } from '@/lib/schedule-utils';
+import { generateSchedule, generateTimeSlots } from '@/lib/schedule-utils';
 import { useToast } from '@/hooks/use-toast';
 import { WizardData } from '@/types/ wizard-types';
 
