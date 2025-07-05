@@ -12,19 +12,15 @@ const EFFECTIVE_JWT_EXPIRATION_TIME = (jwtExpirationEnv && jwtExpirationEnv.trim
 const SESSION_COOKIE_NAME = 'appSessionToken';
 
 export const POST = async (req: NextRequest) => {
-  console.log('--- [API /api/auth/login] DÉBUT de la tentative de connexion ---');
   if (!JWT_SECRET_KEY) {
-    console.error('❌ [API /api/auth/login] ERREUR : JWT_SECRET_KEY n\'est pas défini.');
-    return NextResponse.json({ message: 'Erreur de configuration interne' }, { status: 500 });
+    console.error('Login failed: JWT_SECRET_KEY is not defined.');
+    return NextResponse.json({ message: 'Internal server configuration error' }, { status: 500 });
   }
-  console.log('✅ [API /api/auth/login] JWT_SECRET_KEY est présent.');
 
   const body = await req.json();
   const { email, password } = body;
-  console.log(`[API /api/auth/login] Tentative de connexion pour l'email : ${email}`);
 
   if (!email || !password) {
-    console.warn(`[API /api/auth/login] Email ou mot de passe manquant dans la requête.`);
     return NextResponse.json({ message: 'Email and password are required' }, { status: 400 });
   }
 
@@ -33,23 +29,16 @@ export const POST = async (req: NextRequest) => {
       where: { email },
     });
 
-    if (!user) {
-      console.warn(`[API /api/auth/login] Utilisateur non trouvé pour l'email : ${email}`);
-      return NextResponse.json({ message: 'User not found' }, { status: 404 });
-    }
-    if (!user.password) {
-        console.error(`[API /api/auth/login] ERREUR: L'utilisateur ${email} n'a pas de mot de passe dans la base de données.`);
-        return NextResponse.json({ message: 'Invalid user record (missing password)' }, { status: 401 });
+    if (!user || !user.password) {
+      // Return a generic message to avoid revealing if a user exists
+      return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
     
-    console.log(`[API /api/auth/login] Utilisateur trouvé : ${user.email}. Comparaison des mots de passe...`);
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
-      console.warn(`[API /api/auth/login] Le mot de passe est incorrect pour l'utilisateur ${email}.`);
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
-    console.log(`✅ [API /api/auth/login] Mot de passe correct pour ${email}.`);
     
     const finalName = user.name || user.username || user.email;
     const userRole = user.role as AppRole;
@@ -66,9 +55,7 @@ export const POST = async (req: NextRequest) => {
         expiresIn: EFFECTIVE_JWT_EXPIRATION_TIME 
     };
 
-    console.log(`[API /api/auth/login] Création du JWT avec le payload :`, tokenPayload);
     const token = jwt.sign(tokenPayload, secretKey, signOptions);
-    console.log(`[API /api/auth/login] JWT créé : ${token.substring(0, 30)}...`);
     
     const { password: _, ...userScalars } = user;
 
@@ -88,14 +75,12 @@ export const POST = async (req: NextRequest) => {
       sameSite: 'lax',
     } as const;
 
-    console.log(`[API /api/auth/login] Définition du cookie de session "${SESSION_COOKIE_NAME}" avec les options :`, cookieOptions);
     response.cookies.set(SESSION_COOKIE_NAME, token, cookieOptions);
 
-    console.log(`✅ [API /api/auth/login] Connexion réussie. Envoi de la réponse.`);
     return response;
 
   } catch (error) {
-    console.error('❌ [API /api/auth/login] ERREUR INATTENDUE :', error);
+    console.error('Unexpected error during login:', error);
     if (error instanceof PrismaClientKnownRequestError) {
       return NextResponse.json({ message: `Database error: ${error.message}` }, { status: 500 });
     }
