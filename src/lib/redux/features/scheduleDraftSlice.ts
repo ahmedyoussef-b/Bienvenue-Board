@@ -24,8 +24,8 @@ export const fetchScheduleDraft = createAsyncThunk<ScheduleDraft | null, void, {
     'scheduleDraft/fetch',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await fetch('/api/schedule-draft');
-            if (response.status === 404 || response.status === 204) { // Handle 204 No Content
+            const response = await fetch('/api/schedule-draft', { credentials: 'include' });
+            if (response.status === 204) { // Handle 204 No Content for non-existent drafts
                 return null;
             }
             if (!response.ok) {
@@ -47,7 +47,6 @@ export const saveScheduleDraft = createAsyncThunk<
 >(
     'scheduleDraft/save',
     async (_, { getState, rejectWithValue }) => {
-        console.log('--- [Client] Attempting to save schedule draft ---');
         const state = getState();
         const draftPayload = {
             schoolConfig: state.schoolConfig,
@@ -64,21 +63,18 @@ export const saveScheduleDraft = createAsyncThunk<
         };
 
         try {
-            console.log('[Client] Sending POST request to /api/schedule-draft');
             const response = await fetch('/api/schedule-draft', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(draftPayload),
+                credentials: 'include', // Include cookies with the request
             });
-            console.log(`[Client] Received response with status: ${response.status}`);
             if (!response.ok) {
                 const errorData = await response.json();
-                console.error('[Client] Save draft failed with error:', errorData);
                 return rejectWithValue(errorData.message ?? 'Failed to save draft');
             }
             return await response.json();
         } catch (error) {
-            console.error('[Client] Network or other error during save draft:', error);
             return rejectWithValue(error instanceof Error ? error.message : 'An unknown network error occurred');
         }
     }

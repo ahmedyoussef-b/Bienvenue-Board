@@ -14,13 +14,17 @@ export async function GET(request: NextRequest) {
     
     if (!prisma.scheduleDraft) {
         console.warn('[API/schedule-draft GET] ScheduleDraft model not found on Prisma client.');
-        return NextResponse.json(null, { status: 200 });
+        return new NextResponse(null, { status: 204 });
     }
 
     try {
         const draft = await prisma.scheduleDraft.findUnique({
             where: { userId: session.userId },
         });
+
+        if (!draft) {
+             return new NextResponse(null, { status: 204 });
+        }
         
         return NextResponse.json(draft, { status: 200 });
 
@@ -31,18 +35,13 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    console.log('--- [API Route] /api/schedule-draft POST request received ---');
     const session = await getServerSession();
     
-    console.log('[API Route] Session check result:', session);
-
     if (!session || session.role !== Role.ADMIN) {
-        console.error(`[API Route] Unauthorized access attempt. Session: ${JSON.stringify(session)}`);
         return NextResponse.json({ message: 'Non autorisé' }, { status: 401 });
     }
 
     if (!prisma.scheduleDraft) {
-        console.warn('[API/schedule-draft POST] ScheduleDraft model not found on Prisma client.');
         return NextResponse.json({ message: 'Service de brouillon non disponible (modèle non trouvé).' }, { status: 503 });
     }
 
