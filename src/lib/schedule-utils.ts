@@ -198,6 +198,15 @@ export const generateSchedule = (wizardData: WizardData): SchedulableLesson[] =>
         const shuffledDays = [...schoolDays].sort(() => Math.random() - 0.5);
 
         for (const day of shuffledDays) {
+            // NEW: Check if this subject has already been scheduled for this class today.
+            // If so, we cannot schedule it again on the same day.
+            const alreadyScheduledToday = newSchedule.some(
+                l => l.classId === classItem.id && l.subjectId === subject.id && l.day === day
+            );
+            if (alreadyScheduledToday) {
+                continue; // Skip this day and try the next one.
+            }
+            
             const subjectReq = subjectRequirements.find(r => r.subjectId === subject.id);
             const amSlots = allTimeSlots.filter(slot => parseInt(slot.split(':')[0]) < 12);
             const pmSlots = allTimeSlots.filter(slot => parseInt(slot.split(':')[0]) >= 14);
@@ -208,6 +217,7 @@ export const generateSchedule = (wizardData: WizardData): SchedulableLesson[] =>
             const shuffledTimes = [...applicableTimeSlots].sort(() => Math.random() - 0.5);
 
             for (const time of shuffledTimes) {
+                
                 // Check if class is already busy
                 if (occupancy[`class-${classItem.id}-${day}-${time}`]) continue;
                 
