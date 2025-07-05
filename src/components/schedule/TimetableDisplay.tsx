@@ -142,6 +142,7 @@ const DraggableLesson = ({ lesson, wizardData, onDelete, isEditable, fullSchedul
                 <>
                     <button
                         onClick={() => onDelete(lesson.id)}
+                        onMouseDown={(e) => e.stopPropagation()}
                         className="absolute top-0 left-0 p-0.5 bg-destructive/80 text-destructive-foreground rounded-br-md opacity-0 group-hover:opacity-100 transition-opacity"
                         title="Supprimer ce cours"
                     >
