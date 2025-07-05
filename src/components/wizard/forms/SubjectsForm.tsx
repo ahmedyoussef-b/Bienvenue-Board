@@ -79,29 +79,17 @@ const SubjectsForm: React.FC<SubjectsFormProps> = ({ wizardData }) => {
     setDeletingId(null);
   };
 
-  const getRequirement = (classId: number, subjectId: number): number | undefined => {
-    const specificReq = lessonRequirements.find(r => 
-      r.classId === classId && r.subjectId === subjectId
-    );
-    if (specificReq !== undefined) return specificReq.hours;
-
-    const firstClassId = classes[0]?.id;
-    if (classId !== firstClassId && firstClassId !== undefined) {
-      const firstClassReq = lessonRequirements.find(r => 
-        r.classId === firstClassId && r.subjectId === subjectId
+  // Simplified getRequirement to match logic used elsewhere
+  const getRequirement = (classId: number, subjectId: number): number => {
+      const specificReq = lessonRequirements.find(r => 
+          r.classId === classId && r.subjectId === subjectId
       );
-      if (firstClassReq !== undefined) return firstClassReq.hours;
-    }
-
-    return subjects.find(s => s.id === subjectId)?.weeklyHours;
+      return specificReq?.hours ?? subjects.find(s => s.id === subjectId)?.weeklyHours ?? 0;
   };
 
+  // Simplified isUsingDefault to match
   const isUsingDefault = (classId: number, subjectId: number): boolean => {
-    if (classId === classes[0]?.id) return false;
-    const specificReq = lessonRequirements.find(r => 
-      r.classId === classId && r.subjectId === subjectId
-    );
-    return specificReq === undefined;
+      return !lessonRequirements.some(r => r.classId === classId && r.subjectId === subjectId);
   };
 
   const firstClassId = classes[0]?.id;
@@ -237,8 +225,8 @@ const SubjectsForm: React.FC<SubjectsFormProps> = ({ wizardData }) => {
                                     subject.id, 
                                     parseInt(e.target.value) || 0
                                   )}
-                                  title={isDefaulted && firstClassId 
-                                    ? `Valeur par défaut de la classe ${classes.find(c => c.id === firstClassId)?.name}`
+                                  title={isDefaulted 
+                                    ? `Valeur par défaut du sujet : ${subjects.find(s => s.id === subject.id)?.weeklyHours}`
                                     : ''
                                   }
                                 />
