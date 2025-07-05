@@ -24,7 +24,12 @@ export const fetchScheduleDraft = createAsyncThunk<ScheduleDraft | null, void, {
     'scheduleDraft/fetch',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await fetch('/api/schedule-draft');
+            const response = await fetch('/api/schedule-draft', {
+                credentials: 'include' // <-- Fix: Send cookies with the request
+            });
+            if (response.status === 404) {
+                return null; // Handle not found gracefully
+            }
             if (!response.ok) {
                 const errorData = await response.json();
                 return rejectWithValue(errorData.message ?? 'Échec de la récupération du brouillon');
@@ -64,6 +69,7 @@ export const saveScheduleDraft = createAsyncThunk<
             const response = await fetch('/api/schedule-draft', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include', // <-- Fix: Send cookies with the request
                 body: JSON.stringify(draftPayload),
             });
             if (!response.ok) {
