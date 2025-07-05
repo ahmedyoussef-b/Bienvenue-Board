@@ -15,8 +15,8 @@ import { addTeacherConstraint, removeTeacherConstraint } from '@/lib/redux/featu
 import { setSubjectRequirement, setSubjectTimePreference } from '@/lib/redux/features/subjectRequirementsSlice';
 import { dayLabels, labSubjectKeywords } from '@/lib/wizard-utils';
 import type { Day, TeacherConstraint } from '@/types';
-import type { WizardData } from '@/types/wizard-types';
 import SaveDraftButton from '../SaveDraftButton';
+import { WizardData } from '@/types/ wizard-types';
 
 interface ConstraintsFormProps {
   wizardData: WizardData;

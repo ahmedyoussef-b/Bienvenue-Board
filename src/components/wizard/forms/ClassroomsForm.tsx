@@ -12,8 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
 import { localAddClassroom, localDeleteClassroom } from '@/lib/redux/features/classrooms/classroomsSlice';
 import { useToast } from '@/hooks/use-toast';
-import type { WizardData } from '@/types/wizard-types';
 import SaveDraftButton from '../SaveDraftButton';
+import { WizardData } from '@/types/ wizard-types';
 
 interface ClassroomsFormProps {
   wizardData: WizardData;

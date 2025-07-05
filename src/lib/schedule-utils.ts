@@ -6,6 +6,34 @@ type SchedulableLesson = Omit<PrismaLesson, 'id' | 'createdAt' | 'updatedAt'>;
 
 const formatTimeSimple = (date: string | Date): string => `${new Date(date).getUTCHours().toString().padStart(2, '0')}:00`;
 
+export const generateTimeSlots = (startTime: string, endTime: string, sessionDuration: number): string[] => {
+    const slots: string[] = [];
+    if (!startTime || !endTime || !sessionDuration) return [];
+
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+
+    // Use a fixed date to avoid DST issues
+    const startDate = new Date(Date.UTC(2000, 0, 1, startHour, startMinute));
+    const endDate = new Date(Date.UTC(2000, 0, 1, endHour, endMinute));
+
+    let currentTime = new Date(startDate);
+
+    while (currentTime < endDate) {
+        // Skip lunch break from 12:00 to 13:59
+        if (currentTime.getUTCHours() === 12 || currentTime.getUTCHours() === 13) {
+            currentTime.setUTCHours(14, 0, 0, 0);
+            if (currentTime >= endDate) break;
+        }
+
+        slots.push(
+            `${currentTime.getUTCHours().toString().padStart(2, '0')}:${currentTime.getUTCMinutes().toString().padStart(2, '0')}`
+        );
+        currentTime.setUTCMinutes(currentTime.getUTCMinutes() + sessionDuration);
+    }
+    return slots;
+};
+
 export const findConflictingConstraint = (
     teacherId: string,
     day: Day,
@@ -45,7 +73,7 @@ export const calculateAvailableSlots = (
 
     const { school, teachers, teacherConstraints = [], teacherAssignments = [], subjectRequirements = [] } = wizardData;
     const schoolDays = school.schoolDays.map(d => d.toUpperCase() as Day);
-    const timeSlots = ['08:00', '09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00'];
+    const timeSlots = generateTimeSlots(school.startTime, school.endTime, school.sessionDuration);
     const classIdNum = parseInt(selectedClassId, 10);
     if (isNaN(classIdNum)) return slots;
     
@@ -60,8 +88,8 @@ export const calculateAvailableSlots = (
     schoolDays.forEach(day => {
         
         const subjectReq = subjectRequirements.find(r => r.subjectId === selectedSubject.id);
-        const amSlots = ['08:00', '09:00', '10:00', '11:00'];
-        const pmSlots = ['12:00', '14:00', '15:00', '16:00', '17:00'];
+        const amSlots = timeSlots.filter(slot => parseInt(slot.split(':')[0]) < 12);
+        const pmSlots = timeSlots.filter(slot => parseInt(slot.split(':')[0]) >= 12);
         let applicableTimeSlots = timeSlots;
         if (subjectReq?.timePreference === 'AM') applicableTimeSlots = amSlots;
         if (subjectReq?.timePreference === 'PM') applicableTimeSlots = pmSlots;
@@ -131,9 +159,10 @@ export const generateSchedule = (wizardData: WizardData): SchedulableLesson[] =>
     if (!school.schoolDays || school.schoolDays.length === 0) return [];
 
     const schoolDays = school.schoolDays.map(d => d.toUpperCase() as Day);
-    const allTimeSlots = ['08:00', '09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00'];
-    const amSlots = ['08:00', '09:00', '10:00', '11:00'];
-    const pmSlots = ['12:00', '14:00', '15:00', '16:00', '17:00'];
+    const allTimeSlots = generateTimeSlots(school.startTime, school.endTime, school.sessionDuration);
+    const amSlots = allTimeSlots.filter(slot => parseInt(slot.split(':')[0]) < 12);
+    const pmSlots = allTimeSlots.filter(slot => parseInt(slot.split(':')[0]) >= 12);
+
 
     const occupancy: { [key: string]: boolean } = {};
 

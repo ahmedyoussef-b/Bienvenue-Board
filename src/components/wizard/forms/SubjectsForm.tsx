@@ -15,8 +15,8 @@ import { cn } from '@/lib/utils';
 import { localAddSubject, localDeleteSubject } from '@/lib/redux/features/subjects/subjectsSlice';
 import { setRequirement } from '@/lib/redux/features/lessonRequirements/lessonRequirementsSlice';
 import { useToast } from '@/hooks/use-toast';
-import type { WizardData } from '@/types/wizard-types';
 import SaveDraftButton from '../SaveDraftButton';
+import { WizardData } from '@/types/ wizard-types';
 
 interface SubjectsFormProps {
   wizardData: WizardData;

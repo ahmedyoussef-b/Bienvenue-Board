@@ -14,7 +14,7 @@ import { updateLessonRoom } from '@/lib/redux/features/schedule/scheduleSlice';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { mergeConsecutiveLessons, calculateAvailableSlots } from '@/lib/schedule-utils';
+import { generateTimeSlots, mergeConsecutiveLessons, calculateAvailableSlots } from '@/lib/schedule-utils';
 import { ScrollArea } from '../ui/scroll-area';
 
 const dayLabels: Record<Day, string> = { MONDAY: 'Lundi', TUESDAY: 'Mardi', WEDNESDAY: 'Mercredi', THURSDAY: 'Jeudi', FRIDAY: 'Vendredi', SATURDAY: 'Samedi', SUNDAY: 'Dimanche' };
@@ -141,8 +141,7 @@ const DraggableLesson = ({ lesson, wizardData, onDelete, isEditable, fullSchedul
              {isEditable && (
                 <>
                     <button
-                        onClick={() => onDelete(lesson.id)}
-                        onMouseDown={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => { e.stopPropagation(); onDelete(lesson.id); }}
                         className="absolute top-0 left-0 p-0.5 bg-destructive/80 text-destructive-foreground rounded-br-md opacity-0 group-hover:opacity-100 transition-opacity"
                         title="Supprimer ce cours"
                     >
@@ -282,7 +281,15 @@ const TimetableDisplay: React.FC<TimetableDisplayProps> = ({
     selectedViewId,
 }) => {
   const schoolDays = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-  const timeSlots = useMemo(() => ['08:00', '09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00'], []);
+  const timeSlots = useMemo(() => {
+    if (!wizardData?.school) return [];
+    return generateTimeSlots(
+        wizardData.school.startTime, 
+        wizardData.school.endTime, 
+        wizardData.school.sessionDuration
+    );
+  }, [wizardData?.school]);
+
   const dayMapping: { [key: string]: Day } = { Lundi: 'MONDAY', Mardi: 'TUESDAY', Mercredi: 'WEDNESDAY', Jeudi: 'THURSDAY', Vendredi: 'FRIDAY', Samedi: 'SATURDAY' };
   
   const [hoveredSubjectId, setHoveredSubjectId] = useState<number | null>(null);
@@ -315,7 +322,7 @@ const TimetableDisplay: React.FC<TimetableDisplayProps> = ({
     if (!Array.isArray(scheduleData) || !wizardData || !wizardData.school) return { scheduleGrid: {}, spannedSlots: new Set() };
     const mergedLessons = mergeConsecutiveLessons(scheduleData, wizardData);
     const grid: { [key: string]: { lesson: Lesson, rowSpan: number } } = {};
-    const localSpannedSlots = new Set<string>();
+    const localSpannedSlots = new Set();
 
     mergedLessons.forEach((lesson) => {
       const day = lesson.day;
@@ -389,7 +396,7 @@ const TimetableDisplay: React.FC<TimetableDisplayProps> = ({
                           return null;
                       }
 
-                      const cellData = scheduleGrid[cellId];
+                      const cellData = scheduleGrid[cellId] as Record<string, { lesson: Lesson, rowSpan: number }>[string];
                       const highlightClass = highlightedSlotsMap.get(cellId);
                       
                       if (cellData) {

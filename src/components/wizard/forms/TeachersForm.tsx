@@ -13,8 +13,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { updateTeacherAssignment, clearAllAssignments } from '@/lib/redux/features/teacherAssignmentsSlice';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import type { WizardData } from '@/types/wizard-types';
 import SaveDraftButton from '../SaveDraftButton';
+import { WizardData } from '@/types/ wizard-types';
 
 interface TeachersFormProps {
   wizardData: WizardData;

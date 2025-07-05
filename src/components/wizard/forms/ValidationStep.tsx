@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { setInitialSchedule } from '@/lib/redux/features/schedule/scheduleSlice';
 import { generateSchedule } from '@/lib/schedule-utils';
 import { useToast } from '@/hooks/use-toast';
-import type { WizardData } from '@/types/wizard-types';
+import { WizardData } from '@/types/ wizard-types';
 
 interface ValidationStepProps {
   wizardData: WizardData;
