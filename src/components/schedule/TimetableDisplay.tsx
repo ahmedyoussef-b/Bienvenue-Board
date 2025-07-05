@@ -202,7 +202,10 @@ const InteractiveEmptyCell: React.FC<{
             }, {} as Record<number, number>);
 
         return wizardData.subjects.filter(subject => {
-            const requiredHours = wizardData.lessonRequirements.find(r => r.classId === classIdNum && r.subjectId === subject.id)?.hours ?? subject.weeklyHours ?? 0;
+            const requirement = wizardData.lessonRequirements?.find(r => 
+                r.classId === classIdNum && r.subjectId === subject.id
+            );
+            const requiredHours = requirement ? requirement.hours : (subject.weeklyHours || 0);
             const scheduledHours = scheduledHoursBySubject[subject.id] || 0;
             return scheduledHours < requiredHours;
         });
@@ -305,7 +308,8 @@ const TimetableDisplay: React.FC<TimetableDisplayProps> = ({
         subject,
         String(selectedViewId),
         fullSchedule,
-        wizardData
+        wizardData,
+        true // Ignore time preference for manual editing highlights
     );
     
     const colorClass = getSubjectColorClass(hoveredSubjectId, wizardData.subjects);

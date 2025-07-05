@@ -63,15 +63,16 @@ export const calculateAvailableSlots = (
     selectedSubject: Subject,
     selectedClassId: string,
     schedule: Lesson[],
-    wizardData: WizardData
+    wizardData: WizardData,
+    ignoreTimePreference: boolean = false
 ): Set<string> => {
     const slots = new Set<string>();
+    const { school, teachers, teacherConstraints = [], teacherAssignments = [], subjectRequirements = [] } = wizardData;
 
-    if (!selectedClassId || !wizardData.school || !wizardData.teachers) {
+    if (!selectedClassId || !school || !teachers) {
         return slots;
     }
 
-    const { school, teachers, teacherConstraints = [], teacherAssignments = [], subjectRequirements = [] } = wizardData;
     const schoolDays = school.schoolDays.map(d => d.toUpperCase() as Day);
     const timeSlots = generateTimeSlots(school.startTime, school.endTime, school.sessionDuration);
     const classIdNum = parseInt(selectedClassId, 10);
@@ -88,12 +89,15 @@ export const calculateAvailableSlots = (
     schoolDays.forEach(day => {
         
         const subjectReq = subjectRequirements.find(r => r.subjectId === selectedSubject.id);
-        const amSlots = timeSlots.filter(slot => parseInt(slot.split(':')[0]) < 12);
-        const pmSlots = timeSlots.filter(slot => parseInt(slot.split(':')[0]) >= 14);
+        
         let applicableTimeSlots = timeSlots;
-        if (subjectReq?.timePreference === 'AM') applicableTimeSlots = amSlots;
-        if (subjectReq?.timePreference === 'PM') applicableTimeSlots = pmSlots;
-
+        if (!ignoreTimePreference) {
+            const amSlots = timeSlots.filter(slot => parseInt(slot.split(':')[0]) < 12);
+            const pmSlots = timeSlots.filter(slot => parseInt(slot.split(':')[0]) >= 14);
+            if (subjectReq?.timePreference === 'AM') applicableTimeSlots = amSlots;
+            if (subjectReq?.timePreference === 'PM') applicableTimeSlots = pmSlots;
+        }
+        
         applicableTimeSlots.forEach(time => {
             const [hour, minute] = time.split(':').map(Number);
             const lessonEndTime = new Date(Date.UTC(0, 0, 1, hour, minute + school.sessionDuration));
@@ -184,7 +188,7 @@ export const generateSchedule = (wizardData: WizardData): SchedulableLesson[] =>
     lessonSlotsToFill.sort((a, b) => b.score - a.score);
 
     const occupancy: { [key: string]: boolean } = {};
-    const unplacedLessons: typeof lessonSlotsToFill = [];
+    let unplacedLessons: typeof lessonSlotsToFill = [];
 
     // --- PASS 1: Strict Placement ---
     console.log("--- Démarrage de la Passe 1 : Placement Strict ---");
@@ -195,6 +199,8 @@ export const generateSchedule = (wizardData: WizardData): SchedulableLesson[] =>
 
         for (const day of shuffledDays) {
             if (placed) break;
+            
+            // New constraint check: Don't place the same subject for the same class twice in one day.
             if (newSchedule.some(l => l.classId === classItem.id && l.subjectId === subject.id && l.day === day)) continue;
 
             const subjectReq = subjectRequirements.find(r => r.subjectId === subject.id);
@@ -265,6 +271,7 @@ export const generateSchedule = (wizardData: WizardData): SchedulableLesson[] =>
             const shuffledDays = [...schoolDays].sort(() => Math.random() - 0.5);
             for (const day of shuffledDays) {
                 if (placed) break;
+                
                 if (newSchedule.some(l => l.classId === classItem.id && l.subjectId === subject.id && l.day === day)) continue;
 
                 const shuffledTimes = [...allTimeSlots].sort(() => Math.random() - 0.5);
@@ -307,8 +314,9 @@ export const generateSchedule = (wizardData: WizardData): SchedulableLesson[] =>
                 stillUnplacedLessons.push(slot);
             }
         });
-        if (stillUnplacedLessons.length > 0) {
-            console.warn(`Impossible de placer ${stillUnplacedLessons.length} cours même après avoir assoupli les contraintes horaires.`, stillUnplacedLessons.map(s => `${s.subject.name} pour ${s.classItem.name}`));
+        unplacedLessons = stillUnplacedLessons;
+        if (unplacedLessons.length > 0) {
+            console.warn(`Impossible de placer ${unplacedLessons.length} cours même après avoir assoupli les contraintes horaires.`, unplacedLessons.map(s => `${s.subject.name} pour ${s.classItem.name}`));
         }
     }
 
