@@ -21,9 +21,7 @@ export async function GET(request: NextRequest) {
         const draft = await prisma.scheduleDraft.findUnique({
             where: { userId: session.userId },
         });
-
-        // If draft is null, client receives null body with 200 OK.
-        // If draft is found, client receives draft object with 200 OK.
+        
         return NextResponse.json(draft, { status: 200 });
 
     } catch (error) {
@@ -33,9 +31,13 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    console.log('--- [API Route] /api/schedule-draft POST request received ---');
     const session = await getServerSession();
+    
+    console.log('[API Route] Session check result:', session);
 
     if (!session || session.role !== Role.ADMIN) {
+        console.error(`[API Route] Unauthorized access attempt. Session: ${JSON.stringify(session)}`);
         return NextResponse.json({ message: 'Non autorisé' }, { status: 401 });
     }
 

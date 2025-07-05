@@ -24,17 +24,14 @@ export const fetchScheduleDraft = createAsyncThunk<ScheduleDraft | null, void, {
     'scheduleDraft/fetch',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await fetch('/api/schedule-draft', {
-                credentials: 'include' // <-- Fix: Send cookies with the request
-            });
-            if (response.status === 404) {
-                return null; // Handle not found gracefully
+            const response = await fetch('/api/schedule-draft');
+            if (response.status === 404 || response.status === 204) { // Handle 204 No Content
+                return null;
             }
             if (!response.ok) {
                 const errorData = await response.json();
                 return rejectWithValue(errorData.message ?? 'Échec de la récupération du brouillon');
             }
-            // The response body will be the draft object or null.
             const data = await response.json();
             return data;
         } catch (error) {
@@ -50,6 +47,7 @@ export const saveScheduleDraft = createAsyncThunk<
 >(
     'scheduleDraft/save',
     async (_, { getState, rejectWithValue }) => {
+        console.log('--- [Client] Attempting to save schedule draft ---');
         const state = getState();
         const draftPayload = {
             schoolConfig: state.schoolConfig,
@@ -66,18 +64,21 @@ export const saveScheduleDraft = createAsyncThunk<
         };
 
         try {
+            console.log('[Client] Sending POST request to /api/schedule-draft');
             const response = await fetch('/api/schedule-draft', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include', // <-- Fix: Send cookies with the request
                 body: JSON.stringify(draftPayload),
             });
+            console.log(`[Client] Received response with status: ${response.status}`);
             if (!response.ok) {
                 const errorData = await response.json();
+                console.error('[Client] Save draft failed with error:', errorData);
                 return rejectWithValue(errorData.message ?? 'Failed to save draft');
             }
             return await response.json();
         } catch (error) {
+            console.error('[Client] Network or other error during save draft:', error);
             return rejectWithValue(error instanceof Error ? error.message : 'An unknown network error occurred');
         }
     }
@@ -94,10 +95,10 @@ const scheduleDraftSlice = createSlice({
             })
             .addCase(fetchScheduleDraft.fulfilled, (state, action: PayloadAction<ScheduleDraft | null>) => {
                 state.status = 'succeeded';
-                if (action.payload) { // Check if a draft was actually returned
+                if (action.payload) { 
                     state.lastSaved = action.payload.updatedAt;
                 } else {
-                    state.lastSaved = null; // No draft found
+                    state.lastSaved = null; 
                 }
             })
             .addCase(fetchScheduleDraft.rejected, (state, action) => {
