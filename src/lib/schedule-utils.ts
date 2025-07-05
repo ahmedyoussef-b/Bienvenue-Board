@@ -161,7 +161,6 @@ export const generateSchedule = (wizardData: WizardData): SchedulableLesson[] =>
     const schoolDays = school.schoolDays.map(d => d.toUpperCase() as Day);
     const allTimeSlots = generateTimeSlots(school.startTime, school.endTime, school.sessionDuration);
 
-    // 1. Create a list of all lesson "units" to be scheduled
     const lessonSlotsToFill: { classItem: typeof classes[0], subject: typeof subjects[0], score: number }[] = [];
     classes.forEach(classItem => {
         subjects.forEach(subject => {
@@ -169,15 +168,12 @@ export const generateSchedule = (wizardData: WizardData): SchedulableLesson[] =>
             const hoursToSchedule = requirement ? requirement.hours : (subject.weeklyHours || 0);
             
             if (hoursToSchedule > 0) {
-                // Calculate a "difficulty" score for this subject/class combination
                 let score = 0;
                 const subjectReq = subjectRequirements.find(r => r.subjectId === subject.id);
-                if (subjectReq?.requiredRoomId) score += 100; // High priority for specific room needs
-                if (subjectReq?.timePreference !== 'ANY') score += 50; // Priority for time preference
-
+                if (subjectReq?.requiredRoomId) score += 100;
+                if (subjectReq?.timePreference !== 'ANY') score += 50;
                 const assignment = teacherAssignments.find(a => a.subjectId === subject.id && a.classIds.includes(classItem.id));
-                if (!assignment) score += 200; // Very high priority if no teacher is assigned yet (less choice)
-
+                if (!assignment) score += 200;
                 for (let i = 0; i < hoursToSchedule; i++) {
                     lessonSlotsToFill.push({ classItem, subject, score });
                 }
@@ -185,92 +181,136 @@ export const generateSchedule = (wizardData: WizardData): SchedulableLesson[] =>
         });
     });
 
-    // 2. Sort lessons by difficulty score, highest first
     lessonSlotsToFill.sort((a, b) => b.score - a.score);
 
     const occupancy: { [key: string]: boolean } = {};
+    const unplacedLessons: typeof lessonSlotsToFill = [];
 
-    // 3. Place each lesson
+    // --- PASS 1: Strict Placement ---
+    console.log("--- Démarrage de la Passe 1 : Placement Strict ---");
     lessonSlotsToFill.forEach(slot => {
         const { classItem, subject } = slot;
         let placed = false;
-
         const shuffledDays = [...schoolDays].sort(() => Math.random() - 0.5);
 
         for (const day of shuffledDays) {
-            // NEW: Check if this subject has already been scheduled for this class today.
-            // If so, we cannot schedule it again on the same day.
-            const alreadyScheduledToday = newSchedule.some(
-                l => l.classId === classItem.id && l.subjectId === subject.id && l.day === day
-            );
-            if (alreadyScheduledToday) {
-                continue; // Skip this day and try the next one.
-            }
-            
+            if (placed) break;
+            if (newSchedule.some(l => l.classId === classItem.id && l.subjectId === subject.id && l.day === day)) continue;
+
             const subjectReq = subjectRequirements.find(r => r.subjectId === subject.id);
-            const amSlots = allTimeSlots.filter(slot => parseInt(slot.split(':')[0]) < 12);
-            const pmSlots = allTimeSlots.filter(slot => parseInt(slot.split(':')[0]) >= 14);
+            const amSlots = allTimeSlots.filter(s => parseInt(s.split(':')[0]) < 12);
+            const pmSlots = allTimeSlots.filter(s => parseInt(s.split(':')[0]) >= 14);
             let applicableTimeSlots = allTimeSlots;
             if (subjectReq?.timePreference === 'AM') applicableTimeSlots = amSlots;
             if (subjectReq?.timePreference === 'PM') applicableTimeSlots = pmSlots;
-            
+
             const shuffledTimes = [...applicableTimeSlots].sort(() => Math.random() - 0.5);
 
             for (const time of shuffledTimes) {
-                
-                // Check if class is already busy
                 if (occupancy[`class-${classItem.id}-${day}-${time}`]) continue;
-                
-                // Find an available teacher
                 const assignment = teacherAssignments.find(a => a.subjectId === subject.id && a.classIds.includes(classItem.id));
-                const potentialTeachers = assignment 
-                    ? teachers.filter(t => t.id === assignment.teacherId)
-                    : teachers.filter(t => t.subjects.some(s => s.id === subject.id));
-
-                const availableTeacher = potentialTeachers.find(t => {
-                    if (occupancy[`teacher-${t.id}-${day}-${time}`]) return false;
-                    const [hour, minute] = time.split(':').map(Number);
-                    const lessonEndTime = new Date(Date.UTC(0, 0, 1, hour, minute + school.sessionDuration));
-                    const lessonEndTimeStr = `${String(lessonEndTime.getUTCHours()).padStart(2, '0')}:${String(lessonEndTime.getUTCMinutes()).padStart(2, '0')}`;
-                    return !findConflictingConstraint(t.id, day, time, lessonEndTimeStr, teacherConstraints);
-                });
-                
+                if (!assignment) continue;
+                const availableTeacher = teachers.find(t => t.id === assignment.teacherId);
                 if (!availableTeacher) continue;
+                if (occupancy[`teacher-${availableTeacher.id}-${day}-${time}`]) continue;
+                
+                const [hour, minute] = time.split(':').map(Number);
+                const lessonEndTime = new Date(Date.UTC(0, 0, 1, hour, minute + school.sessionDuration));
+                const lessonEndTimeStr = `${String(lessonEndTime.getUTCHours()).padStart(2, '0')}:${String(lessonEndTime.getUTCMinutes()).padStart(2, '0')}`;
+                if (findConflictingConstraint(availableTeacher.id, day, time, lessonEndTimeStr, teacherConstraints)) continue;
 
-                // Find an available room
                 const requiredRoomId = subjectReq?.requiredRoomId;
                 let potentialRooms = rooms.filter(r => !occupancy[`room-${r.id}-${day}-${time}`] && r.capacity >= classItem.capacity);
-                if (requiredRoomId && requiredRoomId !== null) {
+                if (requiredRoomId !== null && requiredRoomId !== undefined) {
                     potentialRooms = potentialRooms.filter(r => r.id === requiredRoomId);
                 }
                 const availableRoom = potentialRooms.length > 0 ? potentialRooms[0] : null;
+                if (requiredRoomId && !availableRoom) continue;
 
-                if (requiredRoomId && !availableRoom) continue; // Specific room required but not available
-                
-                // If all checks pass, place the lesson
-                const [hour, minute] = time.split(':').map(Number);
                 newSchedule.push({
-                    name: `${subject.name} - ${classItem.name}`,
-                    day,
+                    name: `${subject.name} - ${classItem.name}`, day,
                     startTime: new Date(Date.UTC(2000, 0, 1, hour, minute)).toISOString(),
-                    endTime: new Date(Date.UTC(2000, 0, 1, hour, minute + school.sessionDuration)).toISOString(),
-                    subjectId: subject.id,
-                    teacherId: availableTeacher.id,
-                    classId: classItem.id,
+                    endTime: lessonEndTime.toISOString(),
+                    subjectId: subject.id, teacherId: availableTeacher.id, classId: classItem.id,
                     classroomId: availableRoom ? availableRoom.id : null,
                 });
 
-                // Update occupancy maps
                 occupancy[`teacher-${availableTeacher.id}-${day}-${time}`] = true;
                 occupancy[`class-${classItem.id}-${day}-${time}`] = true;
                 if (availableRoom) occupancy[`room-${availableRoom.id}-${day}-${time}`] = true;
-
                 placed = true;
-                break; // Go to next lesson slot
+                break;
             }
-            if (placed) break; // Go to next lesson slot
+        }
+        if (!placed) {
+            unplacedLessons.push(slot);
         }
     });
+
+    // --- PASS 2: Relaxed Time Preference Placement ---
+    if (unplacedLessons.length > 0) {
+        console.log(`--- Démarrage de la Passe 2 : Placement assoupli pour ${unplacedLessons.length} cours ---`);
+        const stillUnplacedLessons: typeof lessonSlotsToFill = [];
+        unplacedLessons.forEach(slot => {
+            const { classItem, subject } = slot;
+            let placed = false;
+            const subjectReq = subjectRequirements.find(r => r.subjectId === subject.id);
+
+            // Only try to relax if there was a time preference
+            if (!subjectReq || subjectReq.timePreference === 'ANY') {
+                stillUnplacedLessons.push(slot);
+                return;
+            }
+
+            const shuffledDays = [...schoolDays].sort(() => Math.random() - 0.5);
+            for (const day of shuffledDays) {
+                if (placed) break;
+                if (newSchedule.some(l => l.classId === classItem.id && l.subjectId === subject.id && l.day === day)) continue;
+
+                const shuffledTimes = [...allTimeSlots].sort(() => Math.random() - 0.5);
+                for (const time of shuffledTimes) {
+                    if (occupancy[`class-${classItem.id}-${day}-${time}`]) continue;
+                    const assignment = teacherAssignments.find(a => a.subjectId === subject.id && a.classIds.includes(classItem.id));
+                    if (!assignment) continue;
+                    const availableTeacher = teachers.find(t => t.id === assignment.teacherId);
+                    if (!availableTeacher) continue;
+                    if (occupancy[`teacher-${availableTeacher.id}-${day}-${time}`]) continue;
+                    
+                    const [hour, minute] = time.split(':').map(Number);
+                    const lessonEndTime = new Date(Date.UTC(0, 0, 1, hour, minute + school.sessionDuration));
+                    const lessonEndTimeStr = `${String(lessonEndTime.getUTCHours()).padStart(2, '0')}:${String(lessonEndTime.getUTCMinutes()).padStart(2, '0')}`;
+                    if (findConflictingConstraint(availableTeacher.id, day, time, lessonEndTimeStr, teacherConstraints)) continue;
+
+                    const requiredRoomId = subjectReq?.requiredRoomId;
+                    let potentialRooms = rooms.filter(r => !occupancy[`room-${r.id}-${day}-${time}`] && r.capacity >= classItem.capacity);
+                    if (requiredRoomId !== null && requiredRoomId !== undefined) {
+                        potentialRooms = potentialRooms.filter(r => r.id === requiredRoomId);
+                    }
+                    const availableRoom = potentialRooms.length > 0 ? potentialRooms[0] : null;
+                    if (requiredRoomId && !availableRoom) continue;
+
+                    newSchedule.push({
+                        name: `${subject.name} - ${classItem.name}`, day,
+                        startTime: new Date(Date.UTC(2000, 0, 1, hour, minute)).toISOString(),
+                        endTime: lessonEndTime.toISOString(),
+                        subjectId: subject.id, teacherId: availableTeacher.id, classId: classItem.id,
+                        classroomId: availableRoom ? availableRoom.id : null,
+                    });
+                    occupancy[`teacher-${availableTeacher.id}-${day}-${time}`] = true;
+                    occupancy[`class-${classItem.id}-${day}-${time}`] = true;
+                    if (availableRoom) occupancy[`room-${availableRoom.id}-${day}-${time}`] = true;
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed) {
+                stillUnplacedLessons.push(slot);
+            }
+        });
+        if (stillUnplacedLessons.length > 0) {
+            console.warn(`Impossible de placer ${stillUnplacedLessons.length} cours même après avoir assoupli les contraintes horaires.`, stillUnplacedLessons.map(s => `${s.subject.name} pour ${s.classItem.name}`));
+        }
+    }
 
     return newSchedule;
 };
