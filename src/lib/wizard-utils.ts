@@ -25,3 +25,4 @@ export const attendanceMap: { [key: string]: { present: number; absent: number }
     Ven: { present: 0, absent: 0 },
     Sam: { present: 0, absent: 0 },
   };
+ 
