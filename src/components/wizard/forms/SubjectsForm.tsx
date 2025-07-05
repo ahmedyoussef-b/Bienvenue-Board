@@ -16,6 +16,7 @@ import { localAddSubject, localDeleteSubject } from '@/lib/redux/features/subjec
 import { setRequirement } from '@/lib/redux/features/lessonRequirements/lessonRequirementsSlice';
 import { useToast } from '@/hooks/use-toast';
 import type { WizardData } from '@/types/wizard-types';
+import SaveDraftButton from '../SaveDraftButton';
 
 interface SubjectsFormProps {
   wizardData: WizardData;
@@ -270,6 +271,7 @@ const SubjectsForm: React.FC<SubjectsFormProps> = ({ wizardData }) => {
           </Accordion>
         )}
       </Card>
+      <SaveDraftButton />
     </div>
   );
 };

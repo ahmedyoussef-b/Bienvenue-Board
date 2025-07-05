@@ -14,6 +14,7 @@ import { updateTeacherAssignment, clearAllAssignments } from '@/lib/redux/featur
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import type { WizardData } from '@/types/wizard-types';
+import SaveDraftButton from '../SaveDraftButton';
 
 interface TeachersFormProps {
   wizardData: WizardData;
@@ -169,6 +170,7 @@ const TeachersForm: React.FC<TeachersFormProps> = ({ wizardData }) => {
           );
         })}
       </Accordion>
+      <SaveDraftButton />
     </div>
   );
 };

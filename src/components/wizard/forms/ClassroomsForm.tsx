@@ -13,6 +13,7 @@ import { Loader2 } from 'lucide-react';
 import { localAddClassroom, localDeleteClassroom } from '@/lib/redux/features/classrooms/classroomsSlice';
 import { useToast } from '@/hooks/use-toast';
 import type { WizardData } from '@/types/wizard-types';
+import SaveDraftButton from '../SaveDraftButton';
 
 interface ClassroomsFormProps {
   wizardData: WizardData;
@@ -199,6 +200,7 @@ const ClassroomsForm: React.FC<ClassroomsFormProps> = ({ wizardData }) => {
           </div>
         </Card>
       )}
+      <SaveDraftButton />
     </div>
   );
 };

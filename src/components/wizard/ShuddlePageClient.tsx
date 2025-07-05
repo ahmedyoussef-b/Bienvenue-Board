@@ -2,11 +2,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAppDispatch, useAppSelector} from '@/hooks/redux-hooks';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { useAppSelector } from '@/hooks/redux-hooks';
 import { cn } from '@/lib/utils';
-import { Loader2, ChevronLeft, ChevronRight, Save } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -15,25 +13,17 @@ import { Card } from '@/components/ui/card';
 import ScheduleEditor from '../schedule/ScheduleEditor';
 
 // Hooks
-import { useToast } from '@/hooks/use-toast';
 import useWizardData from '@/hooks/useWizardData';
 import useWizardSteps from '@/hooks/useWizardSteps';
 import { selectSchedule, selectScheduleStatus } from '@/lib/redux/features/schedule/scheduleSlice';
-import { saveScheduleDraft, selectLastSaved, selectSaveStatus } from '@/lib/redux/features/scheduleDraftSlice';
-
 
 const ShuddlePageClient: React.FC = () => {
-    const dispatch = useAppDispatch();
-    const { toast } = useToast();
-    
     const [mode, setMode] = useState<'wizard' | 'edit'>('wizard');
     const [initialModeSet, setInitialModeSet] = useState(false);
 
     // Selectors
     const schedule = useAppSelector(selectSchedule);
     const scheduleStatus = useAppSelector(selectScheduleStatus);
-    const saveStatus = useAppSelector(selectSaveStatus);
-    const lastSaved = useAppSelector(selectLastSaved);
 
     // Custom hooks
     const wizardData = useWizardData();
@@ -47,22 +37,6 @@ const ShuddlePageClient: React.FC = () => {
     }, [schedule, scheduleStatus, initialModeSet]);
 
     const handleGenerationSuccess = () => setMode('edit');
-    const handleSaveDraft = async () => {
-        const resultAction = await dispatch(saveScheduleDraft());
-        
-        if (saveScheduleDraft.fulfilled.match(resultAction)) {
-            toast({
-                title: "Brouillon sauvegardé !",
-                description: `Votre progression a été enregistrée à ${format(new Date(), 'HH:mm:ss')}.`,
-            });
-        } else {
-            toast({
-                variant: 'destructive',
-                title: "Échec de la sauvegarde",
-                description: resultAction.payload as string ?? "Une erreur inconnue est survenue.",
-            });
-        }
-    };
 
     const renderStepContent = () => {
         const StepComponent = steps[currentStep].component;
@@ -114,9 +88,6 @@ const ShuddlePageClient: React.FC = () => {
                             </div>
                             
                             <StepFooter 
-                                saveStatus={saveStatus}
-                                lastSaved={lastSaved}
-                                onSaveDraft={handleSaveDraft}
                                 onPrevious={handlePrevious}
                                 onNext={handleNext}
                                 currentStep={currentStep}
@@ -209,42 +180,17 @@ const StepHeader: React.FC<{
 );
 
 const StepFooter: React.FC<{
-    saveStatus: string;
-    lastSaved: Date | null;
-    onSaveDraft: () => void;
     onPrevious: () => void;
     onNext: () => void;
     currentStep: number;
     stepsLength: number;
 }> = ({ 
-    saveStatus, 
-    lastSaved, 
-    onSaveDraft, 
     onPrevious, 
     onNext, 
     currentStep, 
     stepsLength 
 }) => (
-    <div className="flex justify-between items-center mt-auto">
-        <div className="flex items-center gap-4">
-            <Button 
-                variant="outline" 
-                onClick={onSaveDraft} 
-                disabled={saveStatus === 'loading'}
-            >
-                {saveStatus === 'loading' ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                ) : (
-                    <Save className="mr-2 h-4 w-4" />
-                )}
-                Sauvegarder le brouillon
-            </Button>
-            {lastSaved && (
-                <p className="text-xs text-muted-foreground">
-                    Dernière sauvegarde: {format(new Date(lastSaved), 'dd/MM/yyyy HH:mm:ss', {locale: fr})}
-                </p>
-            )}
-        </div>
+    <div className="flex justify-end items-center mt-auto">
         <div className="flex items-center gap-2">
             <Button 
                 variant="outline" 

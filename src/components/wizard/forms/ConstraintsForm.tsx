@@ -16,6 +16,7 @@ import { setSubjectRequirement, setSubjectTimePreference } from '@/lib/redux/fea
 import { dayLabels, labSubjectKeywords } from '@/lib/wizard-utils';
 import type { Day, TeacherConstraint } from '@/types';
 import type { WizardData } from '@/types/wizard-types';
+import SaveDraftButton from '../SaveDraftButton';
 
 interface ConstraintsFormProps {
   wizardData: WizardData;
@@ -73,6 +74,7 @@ const ConstraintsForm: React.FC<ConstraintsFormProps> = ({ wizardData }) => {
   };
 
   return (
+    <div className="space-y-6">
     <Tabs defaultValue="teacher_constraints" className="w-full">
       <TabsList className="grid w-full grid-cols-2 mb-6">
         <TabsTrigger value="teacher_constraints">
@@ -356,6 +358,8 @@ const ConstraintsForm: React.FC<ConstraintsFormProps> = ({ wizardData }) => {
         </Card>
       </TabsContent>
     </Tabs>
+    <SaveDraftButton />
+    </div>
   );
 };
 

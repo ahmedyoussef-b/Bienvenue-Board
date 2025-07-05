@@ -14,6 +14,7 @@ import { localAddClass, localDeleteClass } from '@/lib/redux/features/classes/cl
 import { useToast } from '@/hooks/use-toast';
 import { sectionOptions } from '@/lib/wizard-utils';
 import type { WizardData } from '@/types/wizard-types';
+import SaveDraftButton from '../SaveDraftButton';
 
 interface ClassesFormProps {
   wizardData: WizardData;
@@ -257,6 +258,8 @@ const ClassesForm: React.FC<ClassesFormProps> = ({ wizardData }) => {
           </div>
         </Card>
       )}
+
+      <SaveDraftButton />
     </div>
   );
 };
