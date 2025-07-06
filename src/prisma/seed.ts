@@ -101,8 +101,8 @@ async function main() {
   console.log('Création des matières...');
   const subjectNames = [
     'MATHEMATIQUE', 'FRANCAIS', 'ARABE', 'ANGLAIS', 'SCIENCES', 'PHYSIQUE',
-    'INFORMATIQUE', 'HISTOIRE', 'GEOGRAPHY', 'EDUCATION CIVILE', 'EDUCATION RELIGIEUSE',
-    'ART', 'MUSIQUE', 'EDUCATION SPORTIVE'
+    'INFORMATIQUE', 'HISTOIRE', 'GEOGRAPHIE', 'EDUCATION CIVILE', 'EDUCATION RELIGIEUSE',
+    'ART', 'MUSIQUE', 'EDUCATION SPORTIVE', 'TECHNIQUE'
   ];
   const subjects = await Promise.all(
     subjectNames.map((name) => prisma.subject.create({ data: { name, weeklyHours: 2, coefficient: 1 } }))
@@ -137,15 +137,21 @@ async function main() {
     const user = await prisma.user.create({ data: { email: `prof.sport${i}@example.com`, username: `prof.sport${i}`, password: hashedPassword, role: Role.TEACHER, name: `Prof Sport ${i}`, active: true } });
     createdTeachers.push(await prisma.teacher.create({ data: { userId: user.id, name: 'Professeur', surname: `Sportif ${i}`, sex: UserSex.MALE, birthday: new Date(), bloodType: 'A+', subjects: { connect: { id: subjectMap.get('EDUCATION SPORTIVE')!.id } } } }));
   }
-  for (let i = 1; i <= 2; i++) {
+  for (let i = 1; i <= 3; i++) {
     const user = await prisma.user.create({ data: { email: `prof.musi${i}@example.com`, username: `prof.musi${i}`, password: hashedPassword, role: Role.TEACHER, name: `Prof Musique ${i}`, active: true } });
     createdTeachers.push(await prisma.teacher.create({ data: { userId: user.id, name: 'Professeur', surname: `Musical ${i}`, sex: UserSex.FEMALE, birthday: new Date(), bloodType: 'B+', subjects: { connect: { id: subjectMap.get('MUSIQUE')!.id } } } }));
   }
-  const artUser = await prisma.user.create({ data: { email: 'prof.art1@example.com', username: 'prof.art1', password: hashedPassword, role: Role.TEACHER, name: 'Prof Art 1', active: true } });
-  createdTeachers.push(await prisma.teacher.create({ data: { userId: artUser.id, name: 'Professeur', surname: 'Artiste', sex: UserSex.FEMALE, birthday: new Date(), bloodType: 'AB+', subjects: { connect: { id: subjectMap.get('ART')!.id } } } }));
+  for (let i = 1; i <= 2; i++) {
+    const user = await prisma.user.create({ data: { email: `prof.art${i}@example.com`, username: `prof.art${i}`, password: hashedPassword, role: Role.TEACHER, name: `Prof Art ${i}`, active: true } });
+    createdTeachers.push(await prisma.teacher.create({ data: { userId: user.id, name: 'Professeur', surname: `Artiste ${i}`, sex: i % 2 === 0 ? UserSex.FEMALE : UserSex.MALE, birthday: new Date(), bloodType: 'AB+', subjects: { connect: { id: subjectMap.get('ART')!.id } } } }));
+  }
+  for (let i = 1; i <= 3; i++) {
+    const user = await prisma.user.create({ data: { email: `prof.tech${i}@example.com`, username: `prof.tech${i}`, password: hashedPassword, role: Role.TEACHER, name: `Prof Technique ${i}`, active: true } });
+    createdTeachers.push(await prisma.teacher.create({ data: { userId: user.id, name: 'Professeur', surname: `Technique ${i}`, sex: UserSex.MALE, birthday: new Date(), bloodType: 'O+', subjects: { connect: { id: subjectMap.get('TECHNIQUE')!.id } } } }));
+  }
 
   // Professeurs pour les autres matières
-  const coreSubjects = subjects.filter(s => !['EDUCATION SPORTIVE', 'MUSIQUE', 'ART'].includes(s.name));
+  const coreSubjects = subjects.filter(s => !['EDUCATION SPORTIVE', 'MUSIQUE', 'ART', 'TECHNIQUE'].includes(s.name));
   for (const subject of coreSubjects) {
     for (let i = 1; i <= 3; i++) {
       const sanitizedSubjectName = subject.name.toLowerCase().replace(/[^a-z0-9]/g, '');

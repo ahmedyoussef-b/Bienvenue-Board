@@ -38,7 +38,7 @@ const ValidationStep: React.FC<ValidationStepProps> = ({
 
   const validateData = useCallback(() => {
     const results: ValidationResult[] = [];
-    const { school, classes, teachers, subjects, lessonRequirements, teacherAssignments } = wizardData;
+    const { school, classes, teachers, subjects, lessonRequirements, teacherAssignments, subjectRequirements, rooms } = wizardData;
     
     // Basic data presence checks
     if (!school.name) results.push({ type: 'error', message: "Nom d'établissement manquant." });
@@ -64,21 +64,59 @@ const ValidationStep: React.FC<ValidationStepProps> = ({
     });
 
     const totalSchoolHours = (school.schoolDays?.length || 0) * (generateTimeSlots(school.startTime, school.endTime, school.sessionDuration).length);
-    classes.forEach(cls => {
-        const totalRequiredHours = lessonRequirements
-            .filter(r => r.classId === cls.id)
-            .reduce((sum, r) => sum + r.hours, 0);
-        
-        if (totalRequiredHours > totalSchoolHours) {
+    
+    // Check Teacher Workload
+    const MAX_TEACHER_HOURS = 25; // A reasonable weekly maximum
+    teachers.forEach(teacher => {
+        const assignments = teacherAssignments.filter(a => a.teacherId === teacher.id);
+        let totalHours = 0;
+        assignments.forEach(assignment => {
+            assignment.classIds.forEach(classId => {
+                const requirement = lessonRequirements.find(r => r.classId === classId && r.subjectId === assignment.subjectId);
+                const subjectDefault = subjects.find(s => s.id === assignment.subjectId);
+                totalHours += requirement ? requirement.hours : (subjectDefault?.weeklyHours || 0);
+            });
+        });
+
+        if (totalHours > MAX_TEACHER_HOURS) {
             results.push({
                 type: 'warning',
-                message: 'Classe surchargée',
-                details: `La classe "${cls.name}" a ${totalRequiredHours} heures de cours requises, mais seulement ${totalSchoolHours} créneaux sont disponibles par semaine.`
+                message: `Charge de travail élevée pour ${teacher.name} ${teacher.surname}`,
+                details: `Assigné à ${totalHours}h de cours/semaine. Le maximum recommandé est ${MAX_TEACHER_HOURS}h.`
             });
         }
     });
 
-    
+    // Check Room Contention
+    const requiredRoomsUsage: { [key: number]: { hours: number, subjects: string[] } } = {};
+    if (subjectRequirements) {
+        subjectRequirements.forEach(req => {
+            if (req.requiredRoomId !== null) {
+                const subject = subjects.find(s => s.id === req.subjectId);
+                if (subject) {
+                    const totalHoursForSubject = lessonRequirements.filter(lr => lr.subjectId === req.subjectId).reduce((sum, lr) => sum + lr.hours, 0);
+                    if (!requiredRoomsUsage[req.requiredRoomId]) {
+                        requiredRoomsUsage[req.requiredRoomId] = { hours: 0, subjects: [] };
+                    }
+                    requiredRoomsUsage[req.requiredRoomId].hours += totalHoursForSubject;
+                    requiredRoomsUsage[req.requiredRoomId].subjects.push(subject.name);
+                }
+            }
+        });
+    }
+
+    Object.entries(requiredRoomsUsage).forEach(([roomId, data]) => {
+        if (data.hours > totalSchoolHours) {
+            const roomName = rooms.find(r => r.id === parseInt(roomId))?.name;
+            results.push({
+                type: 'error',
+                message: `Salle surchargée : ${roomName}`,
+                details: `Cette salle est requise pour ${data.hours}h (${data.subjects.join(', ')}), mais il n'y a que ${totalSchoolHours} créneaux disponibles.`
+            });
+        }
+    });
+
+
     if (results.every(r => r.type !== 'error')) {
       results.unshift({ 
         type: 'success', 
@@ -100,7 +138,6 @@ const ValidationStep: React.FC<ValidationStepProps> = ({
     await new Promise(resolve => setTimeout(resolve, 200));
     setGenerationProgress(20);
     
-    // Use a try-catch block to handle potential errors during generation
     try {
         const finalSchedule = generateSchedule(wizardData);
         await new Promise(resolve => setTimeout(resolve, 500));
