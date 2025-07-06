@@ -52,22 +52,29 @@ const RoomSelectorPopover: React.FC<{
     const availableRooms = useMemo(() => {
         if (!wizardData?.rooms || !Array.isArray(fullSchedule) || !lesson) return [];
         
-        const slotStartMinutes = timeToMinutes(timeSlot);
-        const slotEndMinutes = slotStartMinutes + (wizardData.school.sessionDuration || 60);
+        // Use the actual lesson's start and end time for accurate conflict detection
+        const lessonStartMinutes = timeToMinutes(formatTimeSimple(lesson.startTime));
+        const lessonEndMinutes = timeToMinutes(formatTimeSimple(lesson.endTime));
 
         const occupiedRoomIds = new Set(
             fullSchedule
-                .filter(l => l.id !== lesson.id && l.classroomId != null && l.day === day)
+                // 1. Exclude the current lesson from the conflict check
+                .filter(l => l.id !== lesson.id) 
+                // 2. Only consider lessons on the same day that have a room assigned
+                .filter(l => l.classroomId != null && l.day === day)
+                // 3. Check for time overlap
                 .filter(l => {
-                    const lessonStartMinutes = timeToMinutes(formatTimeSimple(l.startTime));
-                    const lessonEndMinutes = timeToMinutes(formatTimeSimple(l.endTime));
-                    // Check for overlap: (StartA < EndB) and (EndA > StartB)
-                    return lessonStartMinutes < slotEndMinutes && lessonEndMinutes > slotStartMinutes;
+                    const otherLessonStart = timeToMinutes(formatTimeSimple(l.startTime));
+                    const otherLessonEnd = timeToMinutes(formatTimeSimple(l.endTime));
+                    // Standard overlap check: (StartA < EndB) and (EndA > StartB)
+                    return lessonStartMinutes < otherLessonEnd && lessonEndMinutes > otherLessonStart;
                 })
+                // 4. Collect the IDs of the occupied rooms
                 .map(l => l.classroomId!)
         );
+        // 5. Return all rooms that are not in the occupied set
         return wizardData.rooms.filter(room => !occupiedRoomIds.has(room.id));
-    }, [day, timeSlot, fullSchedule, wizardData, lesson]);
+    }, [day, fullSchedule, wizardData, lesson]);
     
     const handleRoomChange = (newRoomId: number | null) => {
         if (!lesson) return;
