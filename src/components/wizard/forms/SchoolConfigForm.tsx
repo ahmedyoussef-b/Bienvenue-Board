@@ -2,20 +2,26 @@
 'use client';
 
 import React from 'react';
-import { useAppDispatch, useAppSelector } from '@/hooks/redux-hooks';
+import { useAppDispatch } from '@/hooks/redux-hooks';
 import { School, Clock, Calendar } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { updateSchoolConfig, selectSchoolConfig } from '@/lib/redux/features/schoolConfigSlice';
+import { updateSchoolConfig } from '@/lib/redux/features/schoolConfigSlice';
 import { Loader2 } from 'lucide-react';
 import ScenarioManager from '../ScenarioManager';
+import ImportConfigDialog from './ImportConfigDialog';
+import { WizardData } from '@/types/ wizard-types';
 
-const SchoolConfigForm: React.FC = () => {
+interface SchoolConfigFormProps {
+  wizardData: WizardData;
+}
+
+const SchoolConfigForm: React.FC<SchoolConfigFormProps> = ({ wizardData }) => {
   const dispatch = useAppDispatch();
-  const data = useAppSelector(selectSchoolConfig);
+  const data = wizardData.school;
 
   const handleInputChange = (field: keyof typeof data, value: any) => {
     dispatch(updateSchoolConfig({ [field]: value }));
@@ -45,6 +51,9 @@ const SchoolConfigForm: React.FC = () => {
 
   return (
     <div className="space-y-6">
+       <div className="flex justify-end">
+        <ImportConfigDialog grades={wizardData.grades} />
+      </div>
       <Card className="p-6">
         <div className="flex items-center space-x-2 mb-4">
           <School className="text-primary" size={20} />
