@@ -52,10 +52,10 @@ async function main() {
   await prisma.user.deleteMany({});
   console.log('Anciennes données supprimées.');
 
-  // 2. Création de l'utilisateur Administrateur
-  console.log('Création de l\'administrateur...');
+  // 2. Création des utilisateurs Administrateurs
+  console.log('Création des administrateurs...');
   const hashedPassword = await bcrypt.hash('password123', HASH_ROUNDS);
-  const adminUser = await prisma.user.create({
+  const adminUser1 = await prisma.user.create({
     data: {
       email: 'admin@example.com',
       username: 'admin',
@@ -67,13 +67,32 @@ async function main() {
   });
   await prisma.admin.create({
     data: {
-      userId: adminUser.id,
+      userId: adminUser1.id,
       name: 'Admin',
       surname: 'Principal',
       phone: '0123456789',
     },
   });
-  console.log('Administrateur créé.');
+
+  const adminUser2 = await prisma.user.create({
+    data: {
+      email: 'admin2@example.com',
+      username: 'admin2',
+      password: hashedPassword,
+      role: Role.ADMIN,
+      name: 'Admin Secondaire',
+      active: true,
+    },
+  });
+  await prisma.admin.create({
+    data: {
+      userId: adminUser2.id,
+      name: 'Admin',
+      surname: 'Secondaire',
+      phone: '0987654321',
+    },
+  });
+  console.log('Administrateurs créés.');
 
   // 3. Création des Niveaux (Grades)
   console.log('Création des niveaux...');
@@ -90,10 +109,10 @@ async function main() {
     classrooms.push(await prisma.classroom.create({ data: { name: `Salle ${i}`, capacity: 30, building: 'Principal' } }));
   }
   for (let i = 1; i <= 2; i++) {
-    classrooms.push(await prisma.classroom.create({ data: { name: `Labo Science ${i}`, capacity: 30, building: 'Sciences' } }));
-    classrooms.push(await prisma.classroom.create({ data: { name: `Labo Physique ${i}`, capacity: 30, building: 'Sciences' } }));
-    classrooms.push(await prisma.classroom.create({ data: { name: `Labo Technique ${i}`, capacity: 30, building: 'Technique' } }));
-    classrooms.push(await prisma.classroom.create({ data: { name: `Labo Informatique ${i}`, capacity: 30, building: 'Informatique' } }));
+    classrooms.push(await prisma.classroom.create({ data: { name: `Labo Science ${i}`, capacity: 25, building: 'Sciences' } }));
+    classrooms.push(await prisma.classroom.create({ data: { name: `Labo Physique ${i}`, capacity: 25, building: 'Sciences' } }));
+    classrooms.push(await prisma.classroom.create({ data: { name: `Labo Technique ${i}`, capacity: 25, building: 'Technique' } }));
+    classrooms.push(await prisma.classroom.create({ data: { name: `Gymnase ${i}`, capacity: 40, building: 'Sports' } }));
   }
   console.log(`${classrooms.length} salles créées.`);
 
@@ -101,7 +120,7 @@ async function main() {
   console.log('Création des matières...');
   const subjectNames = [
     'MATHEMATIQUE', 'FRANCAIS', 'ARABE', 'ANGLAIS', 'SCIENCES', 'PHYSIQUE',
-    'INFORMATIQUE', 'HISTOIRE', 'GEOGRAPHIE', 'EDUCATION CIVILE', 'EDUCATION RELIGIEUSE',
+    'INFORMATIQUE', 'HISTOIRE', 'GEOGRAPHY', 'EDUCATION CIVILE', 'EDUCATION RELIGIEUSE',
     'ART', 'MUSIQUE', 'EDUCATION SPORTIVE', 'TECHNIQUE'
   ];
   const subjects = await Promise.all(
