@@ -1,6 +1,6 @@
 // src/components/dashboard/admin/AdminActionCards.tsx
 import Link from "next/link";
-import { Wand2, Presentation } from "lucide-react";
+import { Wand2, Presentation, Shuffle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Role as AppRole } from "@/types";
 
@@ -19,11 +19,18 @@ const adminSections = [
     description: "Consulter les statistiques d'utilisation de la Chatroom et lancer des réunions.",
     visible: [AppRole.ADMIN]
   },
+  {
+    title: "Assistant de Remplacement",
+    href: "/admin/replacements",
+    icon: Shuffle,
+    description: "Trouver des remplaçants pour les professeurs absents en utilisant l'IA.",
+    visible: [AppRole.ADMIN]
+  }
 ];
 
 const AdminActionCards = ({ locale }: { locale: string }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {adminSections.map((section) => (
         <Link href={`/${locale}${section.href}`} key={section.title} className="block group">
           <Card className="h-full shadow-lg hover:shadow-xl hover:border-primary transition-all duration-300 transform hover:-translate-y-1">
