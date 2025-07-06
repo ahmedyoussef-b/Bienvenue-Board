@@ -140,16 +140,27 @@ const ValidationStep: React.FC<ValidationStepProps> = ({
     setGenerationProgress(20);
     
     try {
-        const finalSchedule = generateSchedule(wizardData);
+        const { schedule: finalSchedule, unplacedLessons } = generateSchedule(wizardData);
         await new Promise(resolve => setTimeout(resolve, 500));
         setGenerationProgress(100);
 
         dispatch(setInitialSchedule(finalSchedule));
         setIsGenerated(true);
-        toast({
-          title: "Génération terminée !",
-          description: "Les emplois du temps ont été générés avec succès. Vous pouvez maintenant les éditer."
-        });
+
+        if (unplacedLessons.length > 0) {
+            toast({
+                variant: "destructive",
+                title: "Génération Partielle",
+                description: `${unplacedLessons.length} cours n'ont pas pu être placés. Vérifiez les contraintes et réessayez.`,
+                duration: 8000
+            });
+        } else {
+            toast({
+                title: "Génération terminée !",
+                description: "Les emplois du temps ont été générés avec succès. Vous pouvez maintenant les éditer."
+            });
+        }
+
         onGenerationSuccess();
 
     } catch (error) {

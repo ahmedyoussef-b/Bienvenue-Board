@@ -227,12 +227,14 @@ function calculateSlotFitness(
  * It prioritizes placing more constrained lessons first and evaluates the "fitness"
  * of each potential slot to create a more balanced and realistic schedule.
  */
-export const generateSchedule = (wizardData: WizardData): SchedulableLesson[] => {
+export const generateSchedule = (wizardData: WizardData): { schedule: SchedulableLesson[], unplacedLessons: { classItem: any, subject: any, reason: string }[] } => {
     const { school, classes, subjects, rooms } = wizardData;
     const newSchedule: SchedulableLesson[] = [];
     const unplacedLessons: { classItem: any, subject: any, reason: string }[] = [];
 
-    if (!school.schoolDays || school.schoolDays.length === 0) return [];
+    if (!school.schoolDays || school.schoolDays.length === 0) {
+        return { schedule: [], unplacedLessons: [] };
+    }
 
     const schoolDays = school.schoolDays.map(d => d.toUpperCase() as Day);
     const allTimeSlots = generateTimeSlots(school.startTime, school.endTime, school.sessionDuration);
@@ -293,5 +295,5 @@ export const generateSchedule = (wizardData: WizardData): SchedulableLesson[] =>
         console.warn(`Impossible de placer ${unplacedLessons.length} cours.`, unplacedLessons);
     }
 
-    return newSchedule;
+    return { schedule: newSchedule, unplacedLessons };
 };
