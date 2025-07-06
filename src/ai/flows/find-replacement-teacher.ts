@@ -7,11 +7,14 @@
  * - FindReplacementTeacherOutput - The return type for the function.
  */
 
-import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import type { Day } from '@prisma/client';
 import { findConflictingConstraint } from '@/lib/schedule-utils';
+import { model, generate } from 'genkit/generate';
+import { defineFlow, runFlow } from 'genkit/flow';
+import { defineTool } from 'genkit/tool';
+
 
 // Schemas for input and output
 export const FindReplacementTeacherInputSchema = z.object({
@@ -42,7 +45,7 @@ export type FindReplacementTeacherOutput = z.infer<typeof FindReplacementTeacher
 
 
 // Tool definition
-const getTeacherAvailability = ai.defineTool(
+const getTeacherAvailability = defineTool(
   {
     name: 'getTeacherAvailability',
     description: 'Get a list of available and qualified teachers for a specific lesson slot.',
@@ -103,7 +106,7 @@ const getTeacherAvailability = ai.defineTool(
 
 
 // Flow definition
-const findReplacementTeacherFlow = ai.defineFlow(
+const findReplacementTeacherFlow = defineFlow(
   {
     name: 'findReplacementTeacherFlow',
     inputSchema: FindReplacementTeacherInputSchema,
@@ -140,8 +143,9 @@ const findReplacementTeacherFlow = ai.defineFlow(
         endTime: l.endTime.toISOString().substring(11, 16)
     }));
     
-    const llm = ai.model('googleai/gemini-2.0-flash');
-    const response = await llm.generate({
+    const llm = model('googleai/gemini-2.0-flash');
+    const response = await generate({
+      model: llm,
       system: `You are a helpful school administration assistant. Your task is to find the best possible replacements for an absent teacher's lessons.`,
       prompt: `Teacher ${absentTeacher.name} ${absentTeacher.surname} (ID: ${absentTeacherId}) is absent on ${day}. 
       Their schedule for the day is: ${JSON.stringify(simpleLessons)}.
@@ -156,12 +160,12 @@ const findReplacementTeacherFlow = ai.defineFlow(
       }
     });
 
-    return response.output!;
+    return response.output()!;
   }
 );
 
 
 // Exported server action
 export async function findReplacementTeacher(input: FindReplacementTeacherInput): Promise<FindReplacementTeacherOutput> {
-  return findReplacementTeacherFlow(input);
+  return await runFlow(findReplacementTeacherFlow, input);
 }

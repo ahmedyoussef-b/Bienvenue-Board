@@ -18,13 +18,6 @@ const adminSections = [
     icon: Presentation, 
     description: "Consulter les statistiques d'utilisation de la Chatroom et lancer des réunions.",
     visible: [AppRole.ADMIN]
-  },
-  {
-    title: "Assistant de Remplacement",
-    href: "/admin/replacements",
-    icon: Shuffle,
-    description: "Trouver des remplaçants pour les professeurs absents en utilisant l'IA.",
-    visible: [AppRole.ADMIN]
   }
 ];
 
