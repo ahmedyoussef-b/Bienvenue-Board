@@ -12,7 +12,12 @@ const publicAnnouncementSchema = z.object({
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const validation = publicAnnouncementSchema.safeParse(body);
+    // The schema is simpler on the client, so we only validate what we expect to receive.
+    const validation = z.object({
+        title: z.string().min(1),
+        description: z.string(),
+    }).safeParse(body);
+
     if (!validation.success) {
       return NextResponse.json({ message: 'Données invalides', errors: validation.error.flatten().fieldErrors }, { status: 400 });
     }
@@ -24,7 +29,7 @@ export async function POST(request: Request) {
         title,
         description, // The JSON string is stored directly
         date: new Date(),
-        classId: null,
+        classId: null, // Public announcements are not tied to a class
       },
     });
 
@@ -46,20 +51,29 @@ export async function GET() {
       .map(ann => {
         try {
           const publicData = JSON.parse(ann.description || '{}');
-          if (publicData.isPublic && Array.isArray(publicData.files)) {
+          // Check for the new format with text and files
+          if (publicData.isPublic && (publicData.text || (Array.isArray(publicData.files) && publicData.files.length > 0))) {
             return {
               id: ann.id,
               title: ann.title,
               date: ann.date,
-              files: publicData.files,
+              text: publicData.text || null, // Include the text
+              files: publicData.files || [], // Include the files
             };
           }
           return null;
         } catch (e) {
-          return null;
+          // This is a legacy text-only announcement
+          return {
+              id: ann.id,
+              title: ann.title,
+              date: ann.date,
+              text: ann.description,
+              files: [],
+          };
         }
       })
-      .filter(Boolean)
+      .filter((ann): ann is NonNullable<typeof ann> => ann !== null && (!!ann.text || ann.files.length > 0)) // Ensure there's content
       .slice(0, 10);
 
     return NextResponse.json(publicAnnouncements);

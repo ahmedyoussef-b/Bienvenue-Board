@@ -18,6 +18,7 @@ interface PublicAnnouncement {
   id: number;
   title: string;
   date: string;
+  text: string | null;
   files: AnnouncementFile[];
 }
 
@@ -84,20 +85,32 @@ export default function PublicAnnouncements() {
                                 Publié le {new Date(ann.date).toLocaleDateString('fr-FR')}
                             </p>
                         </CardHeader>
-                        <CardContent className="flex-grow">
-                            {ann.files.length > 1 ? (
-                                <Badge><ImageIcon className="mr-2" size={14} /> Galerie</Badge>
-                            ) : ann.files[0]?.type === 'image' ? (
-                                <Badge><ImageIcon className="mr-2" size={14} /> Image</Badge>
-                            ) : (
-                                <Badge><FileText className="mr-2" size={14} /> Document</Badge>
-                            )}
-                            <div className="grid grid-cols-3 gap-2 mt-3">
-                                {ann.files.slice(0, 3).map((file, idx) => (
-                                <Link key={idx} href={file.url} target="_blank" rel="noopener noreferrer" className="block relative aspect-square group">
-                                    <Image src={file.url} alt={`${ann.title} - ${idx + 1}`} fill sizes="100px" className="rounded-md object-cover bg-black/20" />
-                                </Link>
-                                ))}
+                        <CardContent className="flex-grow flex flex-col justify-between">
+                            <div className="space-y-3">
+                                {ann.text && (
+                                    <p className="text-sm text-neutral-200 mb-3 whitespace-pre-wrap">{ann.text}</p>
+                                )}
+                                {ann.files.length > 0 && (
+                                    <div className="grid grid-cols-3 gap-2 mt-2">
+                                        {ann.files.slice(0, 3).map((file, idx) => (
+                                        <Link key={idx} href={file.url} target="_blank" rel="noopener noreferrer" className="block relative aspect-square group">
+                                            <Image src={file.url} alt={`${ann.title} - ${idx + 1}`} fill sizes="100px" className="rounded-md object-cover bg-black/20" />
+                                            {ann.files.length > 3 && idx === 2 && (
+                                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-lg font-bold">
+                                                    +{ann.files.length - 3}
+                                                </div>
+                                            )}
+                                        </Link>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="mt-4">
+                                {ann.files.length === 1 && ann.files[0].type !== 'image' && (
+                                    <Link href={ann.files[0].url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary hover:underline text-sm font-semibold">
+                                        <FileText className="h-4 w-4"/> Voir le document
+                                    </Link>
+                                )}
                             </div>
                         </CardContent>
                     </Card>

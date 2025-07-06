@@ -10,23 +10,25 @@ interface AnnouncementContentProps {
 
 const AnnouncementContent: React.FC<AnnouncementContentProps> = ({ announcement }) => {
   try {
-    // Attempt to parse the description as JSON
     const fileInfo = JSON.parse(announcement.description || '{}');
     
-    // Check for the new multi-file gallery format
+    const textContent = fileInfo.text ? (
+      <p className="text-muted-foreground whitespace-pre-wrap break-words mb-3">{fileInfo.text}</p>
+    ) : null;
+
+    let filesContent = null;
     if (fileInfo.files && Array.isArray(fileInfo.files) && fileInfo.files.length > 0) {
       if (fileInfo.files.length > 1) {
-        // --- Gallery View (Vertical Stack) ---
-        return (
-          <div className="max-w-lg space-y-2">
+        filesContent = (
+          <div className="max-w-lg grid grid-cols-2 sm:grid-cols-3 gap-2">
             {fileInfo.files.map((file: any, index: number) => (
-              <Link key={index} href={file.url} target="_blank" rel="noopener noreferrer" className="block w-full relative aspect-[4/3] rounded-md overflow-hidden group bg-muted/50">
+              <Link key={index} href={file.url} target="_blank" rel="noopener noreferrer" className="block w-full relative aspect-square rounded-md overflow-hidden group bg-muted/50">
                 <Image
                   src={file.url}
                   alt={`${announcement.title} - image ${index + 1}`}
                   fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
-                  style={{ objectFit: 'contain' }}
+                  sizes="(max-width: 768px) 50vw, 33vw"
+                  style={{ objectFit: 'cover' }}
                   className="group-hover:opacity-80 transition-opacity"
                 />
               </Link>
@@ -34,24 +36,23 @@ const AnnouncementContent: React.FC<AnnouncementContentProps> = ({ announcement 
           </div>
         );
       } else {
-        // --- Single File View (from new format) ---
         const file = fileInfo.files[0];
         const fileType = file.type === 'raw' ? 'pdf' : file.type;
 
         if (fileType === 'image') {
-          return (
+          filesContent = (
             <Link href={file.url} target="_blank" rel="noopener noreferrer" className="block w-full max-w-md relative aspect-video bg-muted/20 rounded-lg overflow-hidden group-hover:opacity-90 transition-opacity">
               <Image 
                 src={file.url} 
                 alt={announcement.title} 
                 fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw" 
+                sizes="(max-width: 768px) 100vw, 33vw" 
                 className="object-contain"
               />
             </Link>
           );
         } else {
-          return (
+          filesContent = (
             <Link href={file.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline">
               <FileText className="h-4 w-4"/>
               Voir le document
@@ -59,36 +60,43 @@ const AnnouncementContent: React.FC<AnnouncementContentProps> = ({ announcement 
           );
         }
       }
-    } 
-    // Check for old single-file format (for backward compatibility)
-    else if (fileInfo.fileUrl && fileInfo.fileType) {
+    } else if (fileInfo.fileUrl && fileInfo.fileType) {
+        // Legacy support
         const fileType = fileInfo.fileType === 'raw' ? 'pdf' : fileInfo.fileType;
         if (fileType === 'image') {
-          return (
-            <Link href={fileInfo.fileUrl} target="_blank" rel="noopener noreferrer" className="block w-full max-w-md relative aspect-video bg-muted/20 rounded-lg overflow-hidden group-hover:opacity-90 transition-opacity">
+          filesContent = (
+             <Link href={fileInfo.fileUrl} target="_blank" rel="noopener noreferrer" className="block w-full max-w-md relative aspect-video bg-muted/20 rounded-lg overflow-hidden group-hover:opacity-90 transition-opacity">
               <Image 
                 src={fileInfo.fileUrl} 
                 alt={announcement.title} 
                 fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw" 
+                sizes="(max-width: 768px) 100vw, 33vw" 
                 className="object-contain"
               />
             </Link>
           );
         } else {
-          return (
-            <Link href={fileInfo.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline">
-              <FileText className="h-4 w-4"/>
-              Voir le document
-            </Link>
-          );
+            filesContent = (
+                <Link href={fileInfo.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline">
+                    <FileText className="h-4 w-4"/>
+                    Voir le document
+                </Link>
+            );
         }
-    } else {
-      // --- Fallback to plain text ---
-      return <p className="text-muted-foreground whitespace-pre-wrap break-words">{announcement.description}</p>;
     }
+
+    if (textContent || filesContent) {
+        return (
+            <div>
+                {textContent}
+                {filesContent}
+            </div>
+        );
+    }
+
+    return <p className="text-muted-foreground whitespace-pre-wrap break-words">{announcement.description}</p>;
+
   } catch (e) {
-    // If JSON parsing fails, it's a plain text announcement
     return <p className="text-muted-foreground whitespace-pre-wrap break-words">{announcement.description}</p>;
   }
 };

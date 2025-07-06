@@ -9,16 +9,24 @@ import { CldUploadWidget } from "next-cloudinary";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea"; // Import Textarea
 import { UploadCloud, FileText, Image as ImageIcon, Trash2, Loader2, Plus, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
 import Image from "next/image";
 
+// The schema now validates the visible fields. The hidden `description` is constructed from them.
 const publicAnnouncementSchema = z.object({
   title: z.string().min(1, 'Le titre est requis.'),
-  description: z.string().min(1, 'Veuillez téléverser au moins un fichier.'),
+  text: z.string().optional(),
+  // This is a hidden field now, used to pass the final JSON to the API.
+  description: z.string(), 
+}).refine(data => !!data.text || data.description.includes('"files":[') && !data.description.includes('"files":[]'), {
+  message: "Veuillez ajouter une description ou téléverser au moins un fichier.",
+  path: ["text"], // Show error message under the text field.
 });
 
+// The form values now include the visible text field.
 type PublicAnnouncementFormValues = z.infer<typeof publicAnnouncementSchema>;
 
 interface CloudinaryUploadWidgetInfo {
@@ -38,16 +46,23 @@ export default function PublicAnnouncementForm() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const { register, handleSubmit, formState: { errors }, setValue, reset } = useForm<PublicAnnouncementFormValues>({
+  const { register, handleSubmit, formState: { errors }, setValue, reset, watch } = useForm<PublicAnnouncementFormValues>({
     resolver: zodResolver(publicAnnouncementSchema),
   });
+  
+  const textValue = watch('text');
 
+  // This effect constructs the final JSON string for the hidden 'description' field
+  // whenever the text or uploaded files change.
   useEffect(() => {
-    const descriptionValue = uploadedFiles.length > 0
-      ? JSON.stringify({ isPublic: true, files: uploadedFiles })
-      : "";
+    const descriptionObject = {
+      isPublic: true,
+      text: textValue || '',
+      files: uploadedFiles,
+    };
+    const descriptionValue = JSON.stringify(descriptionObject);
     setValue("description", descriptionValue, { shouldValidate: true });
-  }, [uploadedFiles, setValue]);
+  }, [uploadedFiles, textValue, setValue]);
 
   const handleUploadSuccess = (result: CloudinaryUploadWidgetResults) => {
     if (result.event === "success" && typeof result.info === 'object' && 'secure_url' in result.info) {
@@ -64,12 +79,26 @@ export default function PublicAnnouncementForm() {
   };
   
   const onFormSubmit: SubmitHandler<PublicAnnouncementFormValues> = async (formData) => {
+    // Final check before submitting
+    if (!formData.text && uploadedFiles.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Contenu manquant",
+        description: "Veuillez ajouter une description ou téléverser un fichier.",
+      });
+      return;
+    }
+      
     setIsSubmitting(true);
     try {
       const response = await fetch('/api/public-announcements', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        // We only need to send title and the constructed description.
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+        }),
       });
 
       if (!response.ok) {
@@ -83,7 +112,7 @@ export default function PublicAnnouncementForm() {
       });
       reset();
       setUploadedFiles([]);
-      router.refresh();
+      router.refresh(); // Refresh the page to show the new announcement in the list
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -96,7 +125,7 @@ export default function PublicAnnouncementForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
       <div>
         <Label htmlFor="title">Titre de l'annonce / Galerie</Label>
         <Input id="title" {...register("title")} disabled={isSubmitting} className="mt-1"/>
@@ -104,7 +133,19 @@ export default function PublicAnnouncementForm() {
       </div>
 
       <div>
-        <Label>Fichiers</Label>
+        <Label htmlFor="text">Description (Optionnel)</Label>
+        <Textarea 
+            id="text" 
+            {...register("text")} 
+            disabled={isSubmitting} 
+            placeholder="Ajoutez une description textuelle à votre annonce..."
+            className="mt-1"
+        />
+        {errors.text && <p className="text-destructive text-sm mt-1">{errors.text.message}</p>}
+      </div>
+
+      <div>
+        <Label>Fichiers (Optionnel)</Label>
         <input type="hidden" {...register("description")} />
         
         {uploadedFiles.length > 0 ? (
@@ -162,15 +203,14 @@ export default function PublicAnnouncementForm() {
               >
                 <UploadCloud className="h-10 w-10 text-muted-foreground mb-2"/>
                 <span className="font-semibold">Cliquez pour téléverser</span>
-                <span className="text-xs text-muted-foreground">Téléversez des images pour une galerie ou un seul document</span>
+                <span className="text-xs text-muted-foreground">Téléversez des images ou des documents</span>
               </button>
             )}
           </CldUploadWidget>
         )}
-        {errors.description && <p className="text-destructive text-sm mt-1">{errors.description.message}</p>}
       </div>
 
-      <Button type="submit" disabled={isSubmitting || uploadedFiles.length === 0} className="w-full">
+      <Button type="submit" disabled={isSubmitting} className="w-full">
         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
         {isSubmitting ? 'Publication en cours...' : 'Publier l\'annonce'}
       </Button>
