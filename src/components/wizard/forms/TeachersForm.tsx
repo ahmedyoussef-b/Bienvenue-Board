@@ -34,7 +34,8 @@ const TeachersForm: React.FC<TeachersFormProps> = ({ wizardData }) => {
       description: "Toutes les assignations ont été effacées du brouillon." 
     });
   };
-
+  
+  // Memoize workload calculation
   const teacherWorkload = useMemo(() => {
     const workloadMap = new Map<string, number>();
     teachers.forEach(teacher => {
@@ -51,6 +52,24 @@ const TeachersForm: React.FC<TeachersFormProps> = ({ wizardData }) => {
     });
     return workloadMap;
   }, [assignments, teachers, lessonRequirements, subjects]);
+
+  // NEW: Determine which subjects are relevant (i.e., required by at least one class)
+  const relevantSubjects = useMemo(() => {
+    const relevantSubjectIds = new Set<number>();
+    classes.forEach(cls => {
+      subjects.forEach(subject => {
+        const requiredHours = lessonRequirements.find(
+          req => req.classId === cls.id && req.subjectId === subject.id
+        )?.hours ?? subject.weeklyHours ?? 0;
+
+        if (requiredHours > 0) {
+          relevantSubjectIds.add(subject.id);
+        }
+      });
+    });
+    return subjects.filter(s => relevantSubjectIds.has(s.id));
+  }, [classes, subjects, lessonRequirements]);
+
 
   return (
     <div className="space-y-6">
@@ -81,7 +100,7 @@ const TeachersForm: React.FC<TeachersFormProps> = ({ wizardData }) => {
                     <TableHeader className="sticky top-0 bg-background z-10">
                         <TableRow>
                             <TableHead className="w-[180px] min-w-[180px] sticky left-0 bg-background z-20">Classe</TableHead>
-                            {subjects.map(subject => (
+                            {relevantSubjects.map(subject => (
                                 <TableHead key={subject.id} className="w-[200px] min-w-[200px]">
                                     <div className="flex items-center gap-2">
                                         <BookOpen size={14} className="text-muted-foreground" />
@@ -95,7 +114,21 @@ const TeachersForm: React.FC<TeachersFormProps> = ({ wizardData }) => {
                         {classes.map(cls => (
                             <TableRow key={cls.id}>
                                 <TableHead className="sticky left-0 bg-background z-20 font-semibold">{cls.name}</TableHead>
-                                {subjects.map(subject => {
+                                {relevantSubjects.map(subject => {
+                                    // Check if this class requires this subject
+                                    const requirement = lessonRequirements.find(req => req.classId === cls.id && req.subjectId === subject.id);
+                                    const requiredHours = requirement ? requirement.hours : (subjects.find(s => s.id === subject.id)?.weeklyHours || 0);
+
+                                    if (requiredHours <= 0) {
+                                      return (
+                                        <TableCell key={subject.id} className="p-2 align-middle">
+                                          <div className="h-10 flex items-center justify-center text-muted-foreground text-sm bg-muted/20 rounded-md p-1">
+                                            -
+                                          </div>
+                                        </TableCell>
+                                      );
+                                    }
+
                                     const competentTeachers = teachers.filter(t => t.subjects.some(s => s.id === subject.id));
                                     const currentAssignment = assignments.find(a => a.subjectId === subject.id && a.classIds.includes(cls.id));
                                     const currentTeacherId = currentAssignment?.teacherId || '';
