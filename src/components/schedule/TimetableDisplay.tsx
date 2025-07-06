@@ -24,6 +24,12 @@ const formatTimeSimple = (date: string | Date): string => {
     return `${d.getUTCHours().toString().padStart(2, '0')}:${d.getUTCMinutes().toString().padStart(2, '0')}`;
 };
 
+const timeToMinutes = (time: string): number => {
+    if (typeof time !== 'string' || !time.includes(':')) return 0;
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+};
+
 const subjectColors = ['bg-primary/20', 'bg-secondary/20', 'bg-accent/20', 'bg-chart-1/20', 'bg-chart-2/20', 'bg-chart-3/20', 'bg-chart-4/20', 'bg-chart-5/20'];
 const getSubjectColorClass = (subjectId: number, subjects: Subject[]): string => {
     if (!subjects || !Array.isArray(subjects)) return 'bg-muted';
@@ -45,16 +51,23 @@ const RoomSelectorPopover: React.FC<{
 
     const availableRooms = useMemo(() => {
         if (!wizardData?.rooms || !Array.isArray(fullSchedule) || !lesson) return [];
+        
+        const slotStartMinutes = timeToMinutes(timeSlot);
+        const slotEndMinutes = slotStartMinutes + (wizardData.school.sessionDuration || 60);
 
         const occupiedRoomIds = new Set(
             fullSchedule
-                // Exclude the current lesson from the conflict check
-                .filter(l => l.id !== lesson.id)
-                .filter(l => l.day === day && formatTimeSimple(l.startTime) === timeSlot && l.classroomId != null)
+                .filter(l => l.id !== lesson.id && l.classroomId != null && l.day === day)
+                .filter(l => {
+                    const lessonStartMinutes = timeToMinutes(formatTimeSimple(l.startTime));
+                    const lessonEndMinutes = timeToMinutes(formatTimeSimple(l.endTime));
+                    // Check for overlap: (StartA < EndB) and (EndA > StartB)
+                    return lessonStartMinutes < slotEndMinutes && lessonEndMinutes > slotStartMinutes;
+                })
                 .map(l => l.classroomId!)
         );
         return wizardData.rooms.filter(room => !occupiedRoomIds.has(room.id));
-    }, [day, timeSlot, fullSchedule, wizardData?.rooms, lesson]);
+    }, [day, timeSlot, fullSchedule, wizardData, lesson]);
     
     const handleRoomChange = (newRoomId: number | null) => {
         if (!lesson) return;
