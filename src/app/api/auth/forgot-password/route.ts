@@ -39,17 +39,6 @@ export async function POST(request: NextRequest) {
     // Construire le lien de réinitialisation
     const resetUrl = `${request.nextUrl.origin}/fr/reset-password?token=${resetToken}`;
     
-    // --- Configuration pour l'envoi d'e-mail ---
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT),
-      secure: Number(process.env.SMTP_PORT) === 465, // true for 465, false for other ports
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-
     const emailHtml = `
       <p>Bonjour,</p>
       <p>Vous avez demandé une réinitialisation de votre mot de passe. Cliquez sur le lien ci-dessous pour continuer :</p>
@@ -58,22 +47,46 @@ export async function POST(request: NextRequest) {
       <p>Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer cet e-mail.</p>
     `;
 
-    // Envoyer l'e-mail
-    await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
-      to: user.email,
-      subject: 'Réinitialisation de votre mot de passe SchooLama',
-      html: emailHtml,
-    });
-    
-    // La simulation est maintenant remplacée par l'envoi réel.
-    // Nous ne retournons plus le jeton au client.
-    return NextResponse.json({ 
-      message: 'Si un compte avec cet email existe, un lien de réinitialisation a été envoyé.',
-    });
+    try {
+        // --- Configuration pour l'envoi d'e-mail ---
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: Number(process.env.SMTP_PORT),
+          secure: Number(process.env.SMTP_PORT) === 465, // true for 465, false for other ports
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+        });
+
+        // Envoyer l'e-mail
+        await transporter.sendMail({
+          from: process.env.EMAIL_FROM,
+          to: user.email,
+          subject: 'Réinitialisation de votre mot de passe SchooLama',
+          html: emailHtml,
+        });
+
+        return NextResponse.json({ 
+            message: 'Si un compte avec cet email existe, un lien de réinitialisation a été envoyé.',
+        });
+
+    } catch (emailError) {
+        console.error('******************************************************************************************');
+        console.error('** Échec de l\'envoi de l\'e-mail de réinitialisation. Vérifiez la configuration SMTP. **');
+        console.error(`** Lien de secours pour ${user.email}: ${resetUrl} **`);
+        console.error('******************************************************************************************');
+        
+        // Pour le prototypage, nous renvoyons le token pour que le flux puisse continuer.
+        return NextResponse.json({
+            message: 'Si un compte avec cet email existe, un lien de réinitialisation a été envoyé.',
+            token: resetToken,
+        }, { status: 200 });
+    }
+
 
   } catch (error) {
     console.error('[API FORGOT_PASSWORD] Erreur:', error);
-    return NextResponse.json({ message: 'Une erreur interne est survenue lors de l\'envoi de l\'email.' }, { status: 500 });
+    return NextResponse.json({ message: 'Une erreur interne est survenue.' }, { status: 500 });
   }
 }

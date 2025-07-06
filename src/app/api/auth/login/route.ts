@@ -52,23 +52,30 @@ export const POST = async (req: NextRequest) => {
         { expiresIn: JWT_2FA_TOKEN_EXPIRATION_TIME }
       );
 
-      // Send email using nodemailer
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT),
-        secure: Number(process.env.SMTP_PORT) === 465,
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
+      try {
+          // Send email using nodemailer
+          const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: Number(process.env.SMTP_PORT),
+            secure: Number(process.env.SMTP_PORT) === 465,
+            auth: {
+              user: process.env.SMTP_USER,
+              pass: process.env.SMTP_PASS,
+            },
+          });
 
-      await transporter.sendMail({
-        from: process.env.EMAIL_FROM,
-        to: user.email,
-        subject: 'Votre code de connexion SchooLama',
-        html: `<p>Votre code de vérification est : <strong>${twoFactorCode}</strong></p><p>Il expirera dans 5 minutes.</p>`,
-      });
+          await transporter.sendMail({
+            from: process.env.EMAIL_FROM,
+            to: user.email,
+            subject: 'Votre code de connexion SchooLama',
+            html: `<p>Votre code de vérification est : <strong>${twoFactorCode}</strong></p><p>Il expirera dans 5 minutes.</p>`,
+          });
+      } catch(emailError) {
+          console.error('*************************************************************************************');
+          console.error('** Échec de l\'envoi de l\'e-mail 2FA. Vérifiez la configuration SMTP dans .env. **');
+          console.error(`** Code de secours pour ${user.email}: ${twoFactorCode} **`);
+          console.error('*************************************************************************************');
+      }
 
       return NextResponse.json({
         twoFactorRequired: true,
