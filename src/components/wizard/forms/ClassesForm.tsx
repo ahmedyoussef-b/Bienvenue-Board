@@ -25,16 +25,16 @@ const ClassesForm: React.FC<ClassesFormProps> = ({ wizardData }) => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
   const [newClass, setNewClass] = useState({ 
-    gradeLevel: 0, 
+    gradeId: '',
     section: '', 
     capacity: 25 
   });
   const [isAdding, setIsAdding] = useState(false);
 
   const handleAddClass = () => {
-    if (!newClass.gradeLevel || !newClass.section || !newClass.capacity) return;
+    if (!newClass.gradeId || !newClass.section || !newClass.capacity) return;
     
-    const selectedGrade = grades.find(g => g.level === newClass.gradeLevel);
+    const selectedGrade = grades.find(g => g.id.toString() === newClass.gradeId);
     if (!selectedGrade) {
       toast({
         variant: "destructive",
@@ -74,7 +74,7 @@ const ClassesForm: React.FC<ClassesFormProps> = ({ wizardData }) => {
       description: `La classe "${newClassName}" a été ajoutée à votre configuration.`
     });
 
-    setNewClass({ gradeLevel: 0, section: '', capacity: 25 });
+    setNewClass({ gradeId: '', section: '', capacity: 25 });
     setIsAdding(false);
   };
 
@@ -104,10 +104,10 @@ const ClassesForm: React.FC<ClassesFormProps> = ({ wizardData }) => {
           <div>
             <Label>Niveau</Label>
             <Select 
-              value={newClass.gradeLevel ? String(newClass.gradeLevel) : ''} 
+              value={newClass.gradeId} 
               onValueChange={(value) => setNewClass({
                 ...newClass, 
-                gradeLevel: parseInt(value, 10)
+                gradeId: value
               })}
               disabled={isAdding}
             >
@@ -118,7 +118,7 @@ const ClassesForm: React.FC<ClassesFormProps> = ({ wizardData }) => {
                 {grades.map(grade => (
                   <SelectItem 
                     key={grade.id} 
-                    value={String(grade.level)}
+                    value={String(grade.id)}
                   >
                     {`Niveau ${grade.level}`}
                   </SelectItem>
@@ -169,7 +169,7 @@ const ClassesForm: React.FC<ClassesFormProps> = ({ wizardData }) => {
           <div className="flex items-end">
             <Button 
               onClick={handleAddClass} 
-              disabled={!newClass.gradeLevel || !newClass.section || !newClass.capacity || isAdding} 
+              disabled={!newClass.gradeId || !newClass.section || !newClass.capacity || isAdding} 
               className="w-full"
             >
               {isAdding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
