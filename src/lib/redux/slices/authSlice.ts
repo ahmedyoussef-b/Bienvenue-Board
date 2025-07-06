@@ -56,7 +56,6 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     // Fulfilled handler for all successful auth mutations that return AuthResponse
     const handleAuthSuccess = (state: AuthState, action: PayloadAction<AuthResponse>) => {
-      console.log('✅ [authSlice] Handling auth success. User:', action.payload.user.email);
       state.user = action.payload.user;
       state.isAuthenticated = true;
       state.isLoading = false;
@@ -67,7 +66,6 @@ const authSlice = createSlice({
 
     // Rejected handler for all failed auth mutations
     const handleAuthFailure = (state: AuthState) => {
-      console.log('❌ [authSlice] Handling auth failure. Clearing user state.');
       state.user = null;
       state.isAuthenticated = false;
       state.isLoading = false;
@@ -81,14 +79,12 @@ const authSlice = createSlice({
       .addMatcher(
         authApi.endpoints.login.matchPending,
         (state) => { 
-          console.log("⏳ [authSlice] login.matchPending: Setting isLoading = true");
           state.isLoading = true; 
         }
       )
       .addMatcher(
         authApi.endpoints.login.matchFulfilled,
         (state, action: PayloadAction<LoginResponse>) => {
-          console.log(`✅ [authSlice] login.matchFulfilled. Payload:`, action.payload);
           // Use type guard to differentiate
           if ('user' in action.payload) {
             // This is a successful standard login (AuthResponse)
@@ -96,14 +92,12 @@ const authSlice = createSlice({
           } else {
             // This is a 2FA required response. Do nothing to auth state.
             // The LoginForm component will handle the redirect.
-            console.log('[authSlice] 2FA required. Auth state not changed.');
           }
         }
       )
       .addMatcher(
         authApi.endpoints.login.matchRejected,
         (state, action) => {
-          console.error("❌ [authSlice] login.matchRejected. Error:", action.error);
           handleAuthFailure(state);
         }
       )
@@ -140,12 +134,10 @@ const authSlice = createSlice({
       // Check Session
       .addMatcher(authApi.endpoints.checkSession.matchPending, (state) => {
         if (!state.isAuthenticated || state.user === null) {
-            console.log("⏳ [authSlice] checkSession.matchPending: No user found, setting isLoading = true");
             state.isLoading = true;
         }
       })
       .addMatcher(authApi.endpoints.checkSession.matchFulfilled, (state, action) => {
-        console.log(`✅ [authSlice] checkSession.matchFulfilled. User:`, action.payload.user?.email);
         state.user = action.payload.user;
         state.isAuthenticated = true;
         state.isLoading = false;
@@ -154,7 +146,6 @@ const authSlice = createSlice({
         }
       })
       .addMatcher(authApi.endpoints.checkSession.matchRejected, (state, action) => {
-          console.log(`❌ [authSlice] checkSession.matchRejected. Clearing user state. Error:`, action.error?.message);
           handleAuthFailure(state);
       })
        // Verify 2FA (Handles the final step of admin login)

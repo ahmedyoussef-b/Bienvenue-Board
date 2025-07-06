@@ -91,8 +91,8 @@ function main() {
         });
         const adminUser2 = yield prisma.user.create({
             data: {
-                email: 'admin2@example.com',
-                username: 'admin2',
+                email: 'admin1@example.com',
+                username: 'admin1',
                 password: hashedPassword,
                 role: client_1.Role.ADMIN,
                 name: 'Admin Secondaire',
