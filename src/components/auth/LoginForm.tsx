@@ -28,6 +28,11 @@ interface ApiErrorData {
   message: string;
 }
 
+interface TwoFactorResponse {
+    twoFactorRequired: boolean;
+    twoFactorToken: string;
+}
+
 function isFetchBaseQueryError(error: unknown): error is FetchBaseQueryError {
   return typeof error === 'object' && error != null && 'status' in error;
 }
@@ -41,16 +46,25 @@ export function LoginForm() {
     resolver: zodResolver(loginSchema),
   });
 
-  const [login, { isLoading, isSuccess, isError, error: loginErrorData }] = useLoginMutation();
+  const [login, { isLoading, isSuccess, isError, error: loginErrorData, data: loginSuccessData }] = useLoginMutation();
   const { toast } = useToast();
   const router = useRouter(); 
 
   useEffect(() => {
-    if (isSuccess) {
-      toast({
-        title: "Connexion réussie",
-        description: "Vous êtes maintenant connecté. Redirection...",
-      });
+    if (isSuccess && loginSuccessData) {
+        if ((loginSuccessData as unknown as TwoFactorResponse).twoFactorRequired) {
+             toast({
+                title: "Vérification Requise",
+                description: "Un code de vérification a été envoyé à votre e-mail.",
+             });
+             const token = (loginSuccessData as unknown as TwoFactorResponse).twoFactorToken;
+             router.push(`/fr/verify-2fa?token=${token}`);
+        } else {
+             toast({
+                title: "Connexion réussie",
+                description: "Vous êtes maintenant connecté. Redirection...",
+            });
+        }
     }
     if (isError && loginErrorData) {
       let title = "Échec de la connexion";
@@ -73,7 +87,7 @@ export function LoginForm() {
         description: description,
       });
     }
-  }, [isSuccess, isError, loginErrorData, toast, router]);
+  }, [isSuccess, isError, loginErrorData, loginSuccessData, toast, router]);
 
   const onSubmit = async (data: LoginFormData) => {
     await login(data);

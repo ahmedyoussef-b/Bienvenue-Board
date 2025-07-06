@@ -22,7 +22,7 @@ export default function LoginPage() {
     }
   }, [isLoading, isAuthenticated, currentUser, router]);
 
-  if (isLoading) {
+  if (isLoading && !isAuthenticated) { // Adjusted loading state check
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Spinner size="lg" />

@@ -43,7 +43,8 @@ export const authApi = createApi({
         method: 'POST',
         body: credentials,
       }),
-      invalidatesTags: ['UserSession'],
+      // We will invalidate tags manually or via the successful checkSession call
+      // to avoid race conditions with the 2FA flow.
     }),
     socialLogin: builder.mutation<AuthResponse, SocialLoginRequest>({
       query: (userInfo) => ({
@@ -72,6 +73,15 @@ export const authApi = createApi({
       query: () => '/api/auth/session',
       providesTags: ['UserSession'],
     }),
+    // New endpoint for 2FA verification - we define it but might not use it directly as a hook
+    verify2FA: builder.mutation<AuthResponse, { token: string; code: string }>({
+        query: (credentials) => ({
+            url: '/api/auth/verify-2fa',
+            method: 'POST',
+            body: credentials,
+        }),
+        invalidatesTags: ['UserSession'],
+    }),
   }),
 });
 
@@ -81,4 +91,5 @@ export const {
   useRegisterMutation,
   useLogoutMutation,
   useCheckSessionQuery,
+  useVerify2FAMutation,
 } = authApi;
