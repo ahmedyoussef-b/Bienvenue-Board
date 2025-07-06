@@ -32,9 +32,6 @@ async function main() {
   if (prisma.teacherConstraint) {
     await prisma.teacherConstraint.deleteMany({});
   }
-  if (prisma.subjectRequirement) {
-    await prisma.subjectRequirement.deleteMany({});
-  }
   if (prisma.scheduleDraft) {
     await prisma.scheduleDraft.deleteMany({});
   }

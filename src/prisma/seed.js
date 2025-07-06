@@ -52,9 +52,6 @@ function main() {
         if (prisma.teacherConstraint) {
             yield prisma.teacherConstraint.deleteMany({});
         }
-        if (prisma.subjectRequirement) {
-            yield prisma.subjectRequirement.deleteMany({});
-        }
         if (prisma.scheduleDraft) {
             yield prisma.scheduleDraft.deleteMany({});
         }

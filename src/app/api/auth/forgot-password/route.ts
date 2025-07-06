@@ -2,6 +2,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import crypto from 'crypto';
+import nodemailer from 'nodemailer';
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,24 +39,41 @@ export async function POST(request: NextRequest) {
     // Construire le lien de réinitialisation
     const resetUrl = `${request.nextUrl.origin}/fr/reset-password?token=${resetToken}`;
     
-    // --- SIMULATION D'ENVOI D'EMAIL ---
-    // Dans une application réelle, vous enverriez un e-mail à l'utilisateur ici.
-    // Pour ce prototype, nous retournons le lien et le jeton.
-    console.log('------------------------------------');
-    console.log('Lien de réinitialisation de mot de passe (normalement envoyé par email):');
-    console.log(resetUrl);
-    console.log('------------------------------------');
+    // --- Configuration pour l'envoi d'e-mail ---
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT),
+      secure: Number(process.env.SMTP_PORT) === 465, // true for 465, false for other ports
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
 
+    const emailHtml = `
+      <p>Bonjour,</p>
+      <p>Vous avez demandé une réinitialisation de votre mot de passe. Cliquez sur le lien ci-dessous pour continuer :</p>
+      <a href="${resetUrl}" target="_blank">Réinitialiser mon mot de passe</a>
+      <p>Ce lien expirera dans 10 minutes.</p>
+      <p>Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer cet e-mail.</p>
+    `;
 
+    // Envoyer l'e-mail
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM,
+      to: user.email,
+      subject: 'Réinitialisation de votre mot de passe SchooLama',
+      html: emailHtml,
+    });
+    
+    // La simulation est maintenant remplacée par l'envoi réel.
+    // Nous ne retournons plus le jeton au client.
     return NextResponse.json({ 
       message: 'Si un compte avec cet email existe, un lien de réinitialisation a été envoyé.',
-      // NOTE : NE PAS retourner le jeton dans une application de production.
-      // C'est uniquement pour faciliter le prototypage.
-      token: resetToken, 
     });
 
   } catch (error) {
     console.error('[API FORGOT_PASSWORD] Erreur:', error);
-    return NextResponse.json({ message: 'Une erreur interne est survenue.' }, { status: 500 });
+    return NextResponse.json({ message: 'Une erreur interne est survenue lors de l\'envoi de l\'email.' }, { status: 500 });
   }
 }
