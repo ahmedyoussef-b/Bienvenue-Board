@@ -1,7 +1,7 @@
 // src/lib/redux/slices/authSlice.ts
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { SafeUser } from '@/types';
-import { authApi } from '../api/authApi';
+import { authApi, type LoginResponse, type AuthResponse } from '../api/authApi';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
 interface AuthState {
@@ -54,8 +54,8 @@ const authSlice = createSlice({
     }
   },
   extraReducers: (builder) => {
-    // Fulfilled handler for all successful auth mutations
-    const handleAuthSuccess = (state: AuthState, action: PayloadAction<{ user: SafeUser }>) => {
+    // Fulfilled handler for all successful auth mutations that return AuthResponse
+    const handleAuthSuccess = (state: AuthState, action: PayloadAction<AuthResponse>) => {
       console.log('✅ [authSlice] Handling auth success. User:', action.payload.user.email);
       state.user = action.payload.user;
       state.isAuthenticated = true;
@@ -87,11 +87,16 @@ const authSlice = createSlice({
       )
       .addMatcher(
         authApi.endpoints.login.matchFulfilled,
-        (state, action) => {
+        (state, action: PayloadAction<LoginResponse>) => {
           console.log(`✅ [authSlice] login.matchFulfilled. Payload:`, action.payload);
-          // Don't set state if 2FA is required, let the verify endpoint handle it
-          if (!(action.payload as any).twoFactorRequired) {
-            handleAuthSuccess(state, action);
+          // Use type guard to differentiate
+          if ('user' in action.payload) {
+            // This is a successful standard login (AuthResponse)
+            handleAuthSuccess(state, action as PayloadAction<AuthResponse>);
+          } else {
+            // This is a 2FA required response. Do nothing to auth state.
+            // The LoginForm component will handle the redirect.
+            console.log('[authSlice] 2FA required. Auth state not changed.');
           }
         }
       )
@@ -151,7 +156,12 @@ const authSlice = createSlice({
       .addMatcher(authApi.endpoints.checkSession.matchRejected, (state, action) => {
           console.log(`❌ [authSlice] checkSession.matchRejected. Clearing user state. Error:`, action.error?.message);
           handleAuthFailure(state);
-      });
+      })
+       // Verify 2FA (Handles the final step of admin login)
+      .addMatcher(
+        authApi.endpoints.verify2FA.matchFulfilled,
+        handleAuthSuccess
+      );
   },
   selectors: {
     selectCurrentUser: (state) => state.user,

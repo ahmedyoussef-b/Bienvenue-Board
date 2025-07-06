@@ -7,6 +7,13 @@ export interface AuthResponse {
   user: SafeUser;
 }
 
+export interface TwoFactorResponse {
+    twoFactorRequired: boolean;
+    twoFactorToken: string;
+}
+
+export type LoginResponse = AuthResponse | TwoFactorResponse;
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -37,14 +44,12 @@ export const authApi = createApi({
   baseQuery: fetchBaseQuery({ baseUrl: '/', credentials: 'include' }),
   tagTypes: ['UserSession'],
   endpoints: (builder) => ({
-    login: builder.mutation<AuthResponse, LoginRequest>({
+    login: builder.mutation<LoginResponse, LoginRequest>({
       query: (credentials) => ({
         url: '/api/auth/login',
         method: 'POST',
         body: credentials,
       }),
-      // We will invalidate tags manually or via the successful checkSession call
-      // to avoid race conditions with the 2FA flow.
     }),
     socialLogin: builder.mutation<AuthResponse, SocialLoginRequest>({
       query: (userInfo) => ({
@@ -73,7 +78,6 @@ export const authApi = createApi({
       query: () => '/api/auth/session',
       providesTags: ['UserSession'],
     }),
-    // New endpoint for 2FA verification - we define it but might not use it directly as a hook
     verify2FA: builder.mutation<AuthResponse, { token: string; code: string }>({
         query: (credentials) => ({
             url: '/api/auth/verify-2fa',
