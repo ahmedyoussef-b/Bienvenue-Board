@@ -1,18 +1,16 @@
 // src/components/wizard/forms/TeachersForm.tsx
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useAppDispatch } from '@/hooks/redux-hooks';
-import { Users, BookOpen, User, RotateCcw } from 'lucide-react';
+import { Users, BookOpen, RotateCcw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { updateTeacherAssignment, clearAllAssignments } from '@/lib/redux/features/teacherAssignmentsSlice';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { setAssignment, clearAllAssignments } from '@/lib/redux/features/teacherAssignmentsSlice';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import SaveDraftButton from '../SaveDraftButton';
 import { WizardData } from '@/types/ wizard-types';
 
@@ -21,34 +19,12 @@ interface TeachersFormProps {
 }
 
 const TeachersForm: React.FC<TeachersFormProps> = ({ wizardData }) => {
-  const { teachers, classes, subjects, teacherAssignments: assignments } = wizardData;
+  const { teachers, classes, subjects, teacherAssignments: assignments, lessonRequirements } = wizardData;
   const dispatch = useAppDispatch();
   const { toast } = useToast();
 
-  const handleClassChange = (
-    teacherId: string, 
-    subjectId: number, 
-    classId: number, 
-    isChecked: boolean
-  ) => {
-    const currentAssignment = assignments.find(a => 
-      a.teacherId === teacherId && a.subjectId === subjectId
-    );
-    
-    const currentClassIds = currentAssignment?.classIds || [];
-    let newClassIds: number[];
-    
-    if (isChecked) {
-      newClassIds = [...currentClassIds, classId];
-    } else {
-      newClassIds = currentClassIds.filter(id => id !== classId);
-    }
-    
-    dispatch(updateTeacherAssignment({ 
-      teacherId, 
-      subjectId, 
-      classIds: newClassIds 
-    }));
+  const handleAssignmentChange = (classId: number, subjectId: number, newTeacherId: string | null) => {
+    dispatch(setAssignment({ classId, subjectId, teacherId: newTeacherId }));
   };
 
   const handleReset = () => {
@@ -59,20 +35,36 @@ const TeachersForm: React.FC<TeachersFormProps> = ({ wizardData }) => {
     });
   };
 
+  const teacherWorkload = useMemo(() => {
+    const workloadMap = new Map<string, number>();
+    teachers.forEach(teacher => {
+        const teacherAssignments = assignments.filter(a => a.teacherId === teacher.id);
+        let totalHours = 0;
+        teacherAssignments.forEach(assignment => {
+            assignment.classIds.forEach(classId => {
+                const req = lessonRequirements.find(r => r.classId === classId && r.subjectId === assignment.subjectId);
+                const subj = subjects.find(s => s.id === assignment.subjectId);
+                totalHours += req ? req.hours : (subj?.weeklyHours || 0);
+            });
+        });
+        workloadMap.set(teacher.id, totalHours);
+    });
+    return workloadMap;
+  }, [assignments, teachers, lessonRequirements, subjects]);
+
   return (
     <div className="space-y-6">
-      <Card className="p-6 sticky top-0 bg-background/90 backdrop-blur-sm z-10">
+      <Card className="p-6">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
             <Users className="text-primary" size={24} />
             <div>
-                <h3 className="text-lg font-semibold">Assigner les Professeurs aux Classes par Matière</h3>
-                <p className="text-sm text-muted-foreground">
-                Définissez quel professeur enseigne quelle matière dans quelles classes.
-                </p>
+              <h3 className="text-lg font-semibold">Assigner les Professeurs</h3>
+              <p className="text-sm text-muted-foreground">
+                Définissez quel professeur enseigne quelle matière dans chaque classe.
+              </p>
             </div>
           </div>
-          
           <div className="flex items-center gap-2 self-end md:self-center">
             <Button onClick={handleReset} variant="outline">
               <RotateCcw className="mr-2 h-4 w-4" />
@@ -81,97 +73,68 @@ const TeachersForm: React.FC<TeachersFormProps> = ({ wizardData }) => {
           </div>
         </div>
       </Card>
+      
+      <Card>
+        <CardContent className="p-2">
+            <ScrollArea className="w-full h-[60vh] whitespace-nowrap">
+                <Table className="min-w-full border-collapse">
+                    <TableHeader className="sticky top-0 bg-background z-10">
+                        <TableRow>
+                            <TableHead className="w-[180px] min-w-[180px] sticky left-0 bg-background z-20">Classe</TableHead>
+                            {subjects.map(subject => (
+                                <TableHead key={subject.id} className="w-[200px] min-w-[200px]">
+                                    <div className="flex items-center gap-2">
+                                        <BookOpen size={14} className="text-muted-foreground" />
+                                        {subject.name}
+                                    </div>
+                                </TableHead>
+                            ))}
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {classes.map(cls => (
+                            <TableRow key={cls.id}>
+                                <TableHead className="sticky left-0 bg-background z-20 font-semibold">{cls.name}</TableHead>
+                                {subjects.map(subject => {
+                                    const competentTeachers = teachers.filter(t => t.subjects.some(s => s.id === subject.id));
+                                    const currentAssignment = assignments.find(a => a.subjectId === subject.id && a.classIds.includes(cls.id));
+                                    const currentTeacherId = currentAssignment?.teacherId || '';
 
-      <Accordion type="multiple" className="w-full space-y-4" defaultValue={subjects.map(s => `subject-${s.id}`)}>
-        {subjects.map(subject => {
-          const teachersForSubject = teachers.filter(t => 
-            t.subjects.some(s => s.id === subject.id)
-          );
-          
-          return (
-            <AccordionItem 
-              value={`subject-${subject.id}`} 
-              key={subject.id} 
-              className="border rounded-lg overflow-hidden bg-card"
-            >
-              <AccordionTrigger className="px-6 py-4 bg-muted/30 hover:bg-muted/50">
-                <div className="flex items-center gap-3">
-                  <BookOpen className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-semibold">{subject.name}</h3>
-                </div>
-              </AccordionTrigger>
-              
-              <AccordionContent className="p-4 md:p-6 space-y-4">
-                {teachersForSubject.length > 0 ? (
-                  teachersForSubject.map(teacher => {
-                    const assignedClassesForSubject = assignments.find(a => 
-                      a.teacherId === teacher.id && a.subjectId === subject.id
-                    )?.classIds || [];
-                    
-                    return (
-                      <Card key={teacher.id} className="p-4">
-                        <CardHeader className="p-0 mb-4">
-                          <CardTitle className="text-base flex items-center gap-2">
-                            <User size={16} />
-                            {teacher.name} {teacher.surname}
-                          </CardTitle>
-                        </CardHeader>
-                        
-                        <CardContent className="p-0">
-                          <Label className="text-xs text-muted-foreground">
-                            Classes à prendre en charge pour cette matière :
-                          </Label>
-                          
-                          <ScrollArea className="h-40 mt-2 border rounded-md p-3">
-                            <div className="space-y-2">
-                              {classes.map(cls => {
-                                const isAssignedToOther = assignments.some(a => 
-                                  a.subjectId === subject.id && 
-                                  a.teacherId !== teacher.id && 
-                                  a.classIds.includes(cls.id)
-                                );
-                                
-                                return (
-                                  <div key={cls.id} className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id={`check-${teacher.id}-${subject.id}-${cls.id}`}
-                                      checked={assignedClassesForSubject.includes(cls.id)}
-                                      onCheckedChange={(checked) => handleClassChange(
-                                        teacher.id, 
-                                        subject.id, 
-                                        cls.id, 
-                                        !!checked
-                                      )}
-                                      disabled={isAssignedToOther}
-                                    />
-                                    <Label 
-                                      htmlFor={`check-${teacher.id}-${subject.id}-${cls.id}`}
-                                      className={cn(
-                                        "text-sm font-normal",
-                                        isAssignedToOther && "text-muted-foreground line-through cursor-not-allowed"
-                                      )}
-                                    >
-                                      {cls.name}
-                                    </Label>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </ScrollArea>
-                        </CardContent>
-                      </Card>
-                    );
-                  })
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Aucun professeur n'est compétent pour cette matière.
-                  </p>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
+                                    return (
+                                        <TableCell key={subject.id} className="p-2">
+                                            {competentTeachers.length > 0 ? (
+                                                <Select
+                                                    value={currentTeacherId}
+                                                    onValueChange={(value) => handleAssignmentChange(cls.id, subject.id, value === 'none' ? null : value)}
+                                                >
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue placeholder="Assigner..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="none">-- Non assigné --</SelectItem>
+                                                        {competentTeachers.map(teacher => {
+                                                            const workload = teacherWorkload.get(teacher.id) || 0;
+                                                            return (
+                                                                <SelectItem key={teacher.id} value={teacher.id}>
+                                                                    {teacher.surname} {teacher.name.charAt(0)}. ({workload}h)
+                                                                </SelectItem>
+                                                            )
+                                                        })}
+                                                    </SelectContent>
+                                                </Select>
+                                            ) : (
+                                                <div className="text-xs text-muted-foreground text-center p-2">Aucun prof.</div>
+                                            )}
+                                        </TableCell>
+                                    )
+                                })}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </ScrollArea>
+        </CardContent>
+      </Card>
       <SaveDraftButton />
     </div>
   );

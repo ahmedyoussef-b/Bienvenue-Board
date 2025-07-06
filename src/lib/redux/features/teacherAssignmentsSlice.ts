@@ -22,34 +22,37 @@ export const teacherAssignmentsSlice = createSlice({
     setAllTeacherAssignments(state, action: PayloadAction<TeacherAssignment[]>) {
       state.items = action.payload;
     },
-    updateTeacherAssignment(state, action: PayloadAction<TeacherAssignment>) {
-      const { teacherId, subjectId, classIds } = action.payload;
+    setAssignment(state, action: PayloadAction<{ classId: number, subjectId: number, teacherId: string | null }>) {
+      const { classId, subjectId, teacherId: newTeacherId } = action.payload;
 
-      // When a class is added to a teacher, remove it from all other teachers for the same subject.
-      // This enforces the "one teacher per subject per class" rule.
-      classIds.forEach(classId => {
-        state.items.forEach(assignment => {
-          if (assignment.subjectId === subjectId && assignment.teacherId !== teacherId) {
-            // Remove the classId from the other teacher's assignment list
-            assignment.classIds = assignment.classIds.filter(id => id !== classId);
-          }
-        });
+      // Find and remove the old assignment for this class/subject combo
+      state.items.forEach(assignment => {
+        if (assignment.subjectId === subjectId && assignment.classIds.includes(classId)) {
+          assignment.classIds = assignment.classIds.filter(id => id !== classId);
+        }
       });
-
-      // Find or create the assignment for the current teacher.
-      const existingIndex = state.items.findIndex(
-        (a) => a.teacherId === teacherId && a.subjectId === subjectId
-      );
-
-      if (existingIndex > -1) {
-        state.items[existingIndex].classIds = classIds;
-      } else {
-        // If it's a new assignment, add it.
-        state.items.push(action.payload);
-      }
-
-      // Clean up any assignments that are now empty.
+      
+      // Clean up any assignments that are now empty
       state.items = state.items.filter(a => a.classIds.length > 0);
+
+      // Add the new assignment
+      if (newTeacherId) {
+        const existingAssignmentIndex = state.items.findIndex(
+          a => a.teacherId === newTeacherId && a.subjectId === subjectId
+        );
+
+        if (existingAssignmentIndex > -1) {
+          // Add class to existing assignment for the new teacher
+          state.items[existingAssignmentIndex].classIds.push(classId);
+        } else {
+          // Create a new assignment for the new teacher
+          state.items.push({
+            teacherId: newTeacherId,
+            subjectId: subjectId,
+            classIds: [classId],
+          });
+        }
+      }
     },
     clearAllAssignments(state) {
         state.items = [];
@@ -60,6 +63,6 @@ export const teacherAssignmentsSlice = createSlice({
   }
 });
 
-export const { setAllTeacherAssignments, updateTeacherAssignment, clearAllAssignments } = teacherAssignmentsSlice.actions;
+export const { setAllTeacherAssignments, setAssignment, clearAllAssignments } = teacherAssignmentsSlice.actions;
 export const { selectTeacherAssignments } = teacherAssignmentsSlice.selectors;
 export default teacherAssignmentsSlice.reducer;
