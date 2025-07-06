@@ -56,6 +56,7 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     // Fulfilled handler for all successful auth mutations
     const handleAuthSuccess = (state: AuthState, action: PayloadAction<{ user: SafeUser }>) => {
+      console.log('✅ [authSlice] Handling auth success. User:', action.payload.user.email);
       state.user = action.payload.user;
       state.isAuthenticated = true;
       state.isLoading = false;
@@ -66,6 +67,7 @@ const authSlice = createSlice({
 
     // Rejected handler for all failed auth mutations
     const handleAuthFailure = (state: AuthState) => {
+      console.log('❌ [authSlice] Handling auth failure. Clearing user state.');
       state.user = null;
       state.isAuthenticated = false;
       state.isLoading = false;
@@ -78,15 +80,27 @@ const authSlice = createSlice({
       // Login, Register, SocialLogin
       .addMatcher(
         authApi.endpoints.login.matchPending,
-        (state) => { state.isLoading = true; }
+        (state) => { 
+          console.log("⏳ [authSlice] login.matchPending: Setting isLoading = true");
+          state.isLoading = true; 
+        }
       )
       .addMatcher(
         authApi.endpoints.login.matchFulfilled,
-        handleAuthSuccess
+        (state, action) => {
+          console.log(`✅ [authSlice] login.matchFulfilled. Payload:`, action.payload);
+          // Don't set state if 2FA is required, let the verify endpoint handle it
+          if (!(action.payload as any).twoFactorRequired) {
+            handleAuthSuccess(state, action);
+          }
+        }
       )
       .addMatcher(
         authApi.endpoints.login.matchRejected,
-        handleAuthFailure
+        (state, action) => {
+          console.error("❌ [authSlice] login.matchRejected. Error:", action.error);
+          handleAuthFailure(state);
+        }
       )
       .addMatcher(
         authApi.endpoints.register.matchPending,
@@ -121,10 +135,12 @@ const authSlice = createSlice({
       // Check Session
       .addMatcher(authApi.endpoints.checkSession.matchPending, (state) => {
         if (!state.isAuthenticated || state.user === null) {
+            console.log("⏳ [authSlice] checkSession.matchPending: No user found, setting isLoading = true");
             state.isLoading = true;
         }
       })
       .addMatcher(authApi.endpoints.checkSession.matchFulfilled, (state, action) => {
+        console.log(`✅ [authSlice] checkSession.matchFulfilled. User:`, action.payload.user?.email);
         state.user = action.payload.user;
         state.isAuthenticated = true;
         state.isLoading = false;
@@ -132,7 +148,10 @@ const authSlice = createSlice({
           localStorage.setItem('authUser', JSON.stringify(action.payload.user));
         }
       })
-      .addMatcher(authApi.endpoints.checkSession.matchRejected, handleAuthFailure);
+      .addMatcher(authApi.endpoints.checkSession.matchRejected, (state, action) => {
+          console.log(`❌ [authSlice] checkSession.matchRejected. Clearing user state. Error:`, action.error?.message);
+          handleAuthFailure(state);
+      });
   },
   selectors: {
     selectCurrentUser: (state) => state.user,

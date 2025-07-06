@@ -14,16 +14,20 @@ const JWT_ACCESS_TOKEN_EXPIRATION_TIME = process.env.JWT_ACCESS_TOKEN_EXPIRATION
 const JWT_2FA_TOKEN_EXPIRATION_TIME = '5m';
 
 export const POST = async (req: NextRequest) => {
+  console.log("➡️ [API] POST /api/auth/login: Request received.");
+
   if (!JWT_SECRET_KEY) {
-    console.error('Login failed: JWT_SECRET_KEY is not defined.');
+    console.error('❌ [API] Login failed: JWT_SECRET_KEY is not defined.');
     return NextResponse.json({ message: 'Internal server configuration error' }, { status: 500 });
   }
 
   try {
     const body = await req.json();
     const { email, password } = body;
+    console.log(`[API] Attempting login for email: ${email}`);
 
     if (!email || !password) {
+      console.log("[API] Login failed: Email or password not provided.");
       return NextResponse.json({ message: 'Email and password are required' }, { status: 400 });
     }
 
@@ -32,17 +36,24 @@ export const POST = async (req: NextRequest) => {
     });
 
     if (!user || !user.password) {
+      console.log(`[API] Login failed: User not found or no password set for ${email}.`);
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
+    console.log(`[API] User found in DB: ${user.id}`);
+
 
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
+      console.log(`[API] Login failed: Invalid password for user ${email}.`);
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
+    console.log(`[API] Password match successful for user ${email}.`);
+
 
     // --- 2FA Logic for Admins ---
     if (user.role === AppRole.ADMIN) {
+      console.log(`[API] Admin user detected (${email}). Initiating 2FA flow.`);
       const twoFactorCode = crypto.randomInt(100000, 1000000).toString();
       const twoFactorCodeHashed = await bcrypt.hash(twoFactorCode, 10);
 
@@ -51,6 +62,8 @@ export const POST = async (req: NextRequest) => {
         JWT_SECRET_KEY,
         { expiresIn: JWT_2FA_TOKEN_EXPIRATION_TIME }
       );
+      console.log(`[API] Generated 2FA token for admin ${email}.`);
+
 
       try {
           // Send email using nodemailer
@@ -70,13 +83,15 @@ export const POST = async (req: NextRequest) => {
             subject: 'Votre code de connexion SchooLama',
             html: `<p>Votre code de vérification est : <strong>${twoFactorCode}</strong></p><p>Il expirera dans 5 minutes.</p>`,
           });
+          console.log(`[API] 2FA email sent successfully to ${email}.`);
       } catch(emailError) {
           console.error('*************************************************************************************');
-          console.error('** Échec de l\'envoi de l\'e-mail 2FA. Vérifiez la configuration SMTP dans .env. **');
-          console.error(`** Code de secours pour ${user.email}: ${twoFactorCode} **`);
+          console.error('** ❌ [API] Échec de l\'envoi de l\'e-mail 2FA. Vérifiez la configuration SMTP dans .env. **');
+          console.error(`** 🔑 [API] Code de secours pour ${user.email}: ${twoFactorCode} **`);
           console.error('*************************************************************************************');
       }
-
+      
+      console.log(`[API] Returning 2FA required response to client.`);
       return NextResponse.json({
         twoFactorRequired: true,
         twoFactorToken: twoFactorToken,
@@ -84,11 +99,13 @@ export const POST = async (req: NextRequest) => {
     }
 
     // --- Standard Login for other roles ---
+    console.log(`[API] Standard login for user ${email}. Generating session token.`);
     const finalName = user.name || user.username || user.email;
     const userRole = user.role as AppRole;
     
     const tokenPayload = { userId: user.id, role: userRole, email: user.email, name: finalName };
     const token = jwt.sign(tokenPayload, JWT_SECRET_KEY, { expiresIn: JWT_ACCESS_TOKEN_EXPIRATION_TIME });
+    console.log(`[API] Session token generated for ${email}.`);
 
     const { password: _, ...userScalars } = user;
     const safeUserResponse: SafeUser = { ...userScalars, name: finalName, role: userRole };
@@ -102,11 +119,11 @@ export const POST = async (req: NextRequest) => {
       path: '/',
       sameSite: 'lax',
     });
-
+    console.log(`[API] Session cookie set for ${email}. Login complete.`);
     return response;
 
   } catch (error) {
-    console.error('Unexpected error during login:', error);
+    console.error('❌ [API] Unexpected error during login:', error);
     if (error instanceof PrismaClientKnownRequestError) {
       return NextResponse.json({ message: `Database error: ${error.message}` }, { status: 500 });
     }
