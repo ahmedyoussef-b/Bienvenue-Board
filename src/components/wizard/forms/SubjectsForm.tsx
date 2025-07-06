@@ -3,8 +3,8 @@
 
 import React, { useState } from 'react';
 import { useAppDispatch } from '@/hooks/redux-hooks';
-import { BookOpen, Hourglass, Trash2, Star, Plus } from 'lucide-react';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { BookOpen, Hourglass, Trash2, Star, Plus, Copy } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -65,10 +65,6 @@ const SubjectsForm: React.FC<SubjectsFormProps> = ({ wizardData }) => {
     setIsAdding(false);
   };
 
-  const handleHoursChange = (classId: number, subjectId: number, hours: number) => {
-    dispatch(setRequirement({ classId, subjectId, hours }));
-  };
-
   const handleDeleteSubject = (id: number) => {
     setDeletingId(id);
     dispatch(localDeleteSubject(id));
@@ -79,7 +75,38 @@ const SubjectsForm: React.FC<SubjectsFormProps> = ({ wizardData }) => {
     setDeletingId(null);
   };
 
-  // Simplified getRequirement to match logic used elsewhere
+  const handleHoursChange = (classId: number, subjectId: number, hours: number) => {
+    dispatch(setRequirement({ classId, subjectId, hours }));
+  };
+
+  const handleApplyToGrade = (sourceClassId: number) => {
+    const sourceClass = classes.find(c => c.id === sourceClassId);
+    if (!sourceClass || !sourceClass.gradeId) return;
+
+    const targetClasses = classes.filter(c => c.gradeId === sourceClass.gradeId && c.id !== sourceClassId);
+    if (targetClasses.length === 0) {
+        toast({ title: "Aucune autre classe", description: "Il n'y a pas d'autres classes dans ce niveau à configurer." });
+        return;
+    }
+
+    subjects.forEach(subject => {
+        const sourceRequirementHours = getRequirement(sourceClassId, subject.id);
+        
+        targetClasses.forEach(targetClass => {
+            dispatch(setRequirement({
+                classId: targetClass.id,
+                subjectId: subject.id,
+                hours: sourceRequirementHours,
+            }));
+        });
+    });
+
+    toast({
+        title: "Configuration appliquée",
+        description: `Les exigences horaires de la classe ${sourceClass.name} ont été appliquées à ${targetClasses.length} autre(s) classe(s) du même niveau.`
+    });
+  };
+
   const getRequirement = (classId: number, subjectId: number): number => {
       const specificReq = lessonRequirements.find(r => 
           r.classId === classId && r.subjectId === subjectId
@@ -87,7 +114,6 @@ const SubjectsForm: React.FC<SubjectsFormProps> = ({ wizardData }) => {
       return specificReq?.hours ?? subjects.find(s => s.id === subjectId)?.weeklyHours ?? 0;
   };
 
-  // Simplified isUsingDefault to match
   const isUsingDefault = (classId: number, subjectId: number): boolean => {
       return !lessonRequirements.some(r => r.classId === classId && r.subjectId === subjectId);
   };
@@ -160,6 +186,29 @@ const SubjectsForm: React.FC<SubjectsFormProps> = ({ wizardData }) => {
             {isAdding ? 'Ajout en cours...' : 'Ajouter au catalogue'}
           </Button>
         </div>
+        
+        {subjects.length > 0 && (
+          <>
+            <hr className="my-6" />
+            <h4 className="text-md font-semibold text-muted-foreground mb-4">Matières existantes</h4>
+            <div className="space-y-2">
+              {subjects.map(subject => (
+                <div key={subject.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+                  <span className="font-medium">{subject.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteSubject(subject.id)}
+                    className="text-destructive hover:text-destructive/90"
+                    disabled={deletingId === subject.id}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </Card>
 
       <Card className="p-6">
@@ -189,12 +238,21 @@ const SubjectsForm: React.FC<SubjectsFormProps> = ({ wizardData }) => {
                 
                 <AccordionContent>
                   <Card className="p-0">
+                    <div className="p-4 flex justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleApplyToGrade(cls.id)}
+                      >
+                        <Copy className="mr-2 h-4 w-4" />
+                        Appliquer à tout le niveau {cls.grade?.level}
+                      </Button>
+                    </div>
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Matière</TableHead>
                           <TableHead className="w-[150px] text-right">Heures/semaine</TableHead>
-                          <TableHead className="w-[80px] text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       
@@ -202,7 +260,6 @@ const SubjectsForm: React.FC<SubjectsFormProps> = ({ wizardData }) => {
                         {subjects.map(subject => {
                           const requirement = getRequirement(cls.id, subject.id);
                           const isDefaulted = isUsingDefault(cls.id, subject.id);
-                          const isCurrentlyDeleting = deletingId === subject.id;
                           
                           return (
                             <TableRow key={subject.id}>
@@ -230,22 +287,6 @@ const SubjectsForm: React.FC<SubjectsFormProps> = ({ wizardData }) => {
                                     : ''
                                   }
                                 />
-                              </TableCell>
-                              
-                              <TableCell className="text-right">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeleteSubject(subject.id)}
-                                  className="text-destructive hover:text-destructive/90"
-                                  disabled={isCurrentlyDeleting}
-                                >
-                                  {isCurrentlyDeleting ? (
-                                    <Loader2 size={16} className="animate-spin" />
-                                  ) : (
-                                    <Trash2 size={16} />
-                                  )}
-                                </Button>
                               </TableCell>
                             </TableRow>
                           );
