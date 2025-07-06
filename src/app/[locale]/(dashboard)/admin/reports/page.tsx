@@ -1,43 +1,59 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, BarChart3, Clock, Users, TrendingUp } from 'lucide-react';
+import { ArrowLeft, BarChart3, Clock, Users, TrendingUp, Loader2 } from 'lucide-react';
 import { useAppSelector } from '@/hooks/redux-hooks';
 import SessionReportCard from '@/components/chatroom/reports/SessionReportCard';
 import { selectCurrentUser } from '@/lib/redux/slices/authSlice';
 import { Role } from '@/types';
+import type { SessionReport } from '@/lib/redux/slices/reportSlice';
 
 export default function AdminReportsPage() {
   const router = useRouter();
   const user = useAppSelector(selectCurrentUser);
-  // Note: The report data is currently client-side and scoped to the user who ran the session.
-  // For an admin, this slice will be empty unless a future update centralizes this data.
-  // The page correctly handles this by showing an empty state.
-  const { sessions, loading } = useAppSelector(state => state.reports);
+  const [reports, setReports] = useState<SessionReport[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user || user.role !== Role.ADMIN) {
       router.replace('/fr');
       return;
     }
+
+    async function fetchReports() {
+      setLoading(true);
+      try {
+        const response = await fetch('/api/chatroom/reports');
+        if (response.ok) {
+          const data = await response.json();
+          setReports(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch reports:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchReports();
+
   }, [user, router]);
 
   if (!user || user.role !== Role.ADMIN) {
     return <div>Accès non autorisé</div>;
   }
 
-  // Stats will be 0, which is correct for an admin with no local session data.
-  const totalSessions = sessions.length;
-  const activeSessions = sessions.filter(s => s.status === 'active').length;
-  const completedSessions = sessions.filter(s => s.status === 'completed').length;
-  const totalParticipants = sessions.reduce((sum, s) => sum + s.participants.length, 0);
+  const totalSessions = reports.length;
+  const activeSessions = reports.filter(s => s.status === 'ACTIVE').length;
+  const completedSessions = reports.filter(s => s.status === 'ENDED').length;
+  const totalParticipants = reports.reduce((sum, s) => sum + s.participants.length, 0);
   const averageSessionDuration = totalSessions > 0
-    ? sessions.reduce((sum, s) => sum + s.duration, 0) / totalSessions
+    ? reports.reduce((sum, s) => sum + s.duration, 0) / totalSessions
     : 0;
 
   const formatDuration = (seconds: number) => {
@@ -88,7 +104,6 @@ export default function AdminReportsPage() {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Participants totaux</CardTitle>
@@ -101,7 +116,6 @@ export default function AdminReportsPage() {
               </p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Durée moyenne</CardTitle>
@@ -114,8 +128,7 @@ export default function AdminReportsPage() {
               </p>
             </CardContent>
           </Card>
-
-          <Card>
+           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Engagement</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -136,27 +149,27 @@ export default function AdminReportsPage() {
           <CardHeader>
             <CardTitle>Historique des Sessions</CardTitle>
             <CardDescription>
-              Liste détaillée de toutes les sessions. (Note: les données sont actuellement locales au navigateur du professeur et ne sont pas encore centralisées.)
+              Liste détaillée de toutes les sessions.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            ) : sessions.length === 0 ? (
+            ) : reports.length === 0 ? (
               <div className="text-center py-8">
                 <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                   Aucun rapport de session disponible
                 </h3>
                 <p className="text-gray-500">
-                  Les rapports des sessions créées par les professeurs apparaîtront ici une fois qu'un système de persistance des données sera mis en place.
+                  Les rapports des sessions créées par les professeurs apparaîtront ici.
                 </p>
               </div>
             ) : (
               <div className="grid gap-6">
-                {sessions.map((session) => (
+                {reports.map((session) => (
                   <SessionReportCard key={session.id} session={session} />
                 ))}
               </div>
