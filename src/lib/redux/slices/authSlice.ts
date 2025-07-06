@@ -1,4 +1,4 @@
-
+// src/lib/redux/slices/authSlice.ts
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { SafeUser } from '@/types';
 import { authApi } from '../api/authApi';
@@ -54,67 +54,70 @@ const authSlice = createSlice({
     }
   },
   extraReducers: (builder) => {
+    // Fulfilled handler for all successful auth mutations
+    const handleAuthSuccess = (state: AuthState, action: PayloadAction<{ user: SafeUser }>) => {
+      state.user = action.payload.user;
+      state.isAuthenticated = true;
+      state.isLoading = false;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('authUser', JSON.stringify(action.payload.user));
+      }
+    };
+
+    // Rejected handler for all failed auth mutations
+    const handleAuthFailure = (state: AuthState) => {
+      state.user = null;
+      state.isAuthenticated = false;
+      state.isLoading = false;
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('authUser');
+      }
+    };
+    
     builder
-      // Login
-      .addMatcher(authApi.endpoints.login.matchPending, (state) => {
-        state.isLoading = true;
-      })
-      .addMatcher(authApi.endpoints.login.matchFulfilled, (state, action) => {
-        state.user = action.payload.user;
-        state.isAuthenticated = true;
-        state.isLoading = false;
-        if (typeof window !== 'undefined') { // Store user in localStorage
-          localStorage.setItem('authUser', JSON.stringify(action.payload.user));
-        }
-      })
-      .addMatcher(authApi.endpoints.login.matchRejected, (state, action) => {
-        state.user = null;
-        state.isAuthenticated = false;
-        state.isLoading = false;
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('authUser');
-        }
-      })
-      // Register
-      .addMatcher(authApi.endpoints.register.matchPending, (state) => {
-        state.isLoading = true;
-      })
-      .addMatcher(authApi.endpoints.register.matchFulfilled, (state, action) => {
-        state.user = action.payload.user;
-        state.isAuthenticated = true;
-        state.isLoading = false;
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('authUser', JSON.stringify(action.payload.user));
-        }
-      })
-      .addMatcher(authApi.endpoints.register.matchRejected, (state, action) => {
-        state.user = null;
-        state.isAuthenticated = false;
-        state.isLoading = false;
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('authUser');
-        }
-      })
+      // Login, Register, SocialLogin
+      .addMatcher(
+        authApi.endpoints.login.matchPending,
+        (state) => { state.isLoading = true; }
+      )
+      .addMatcher(
+        authApi.endpoints.login.matchFulfilled,
+        handleAuthSuccess
+      )
+      .addMatcher(
+        authApi.endpoints.login.matchRejected,
+        handleAuthFailure
+      )
+      .addMatcher(
+        authApi.endpoints.register.matchPending,
+        (state) => { state.isLoading = true; }
+      )
+      .addMatcher(
+        authApi.endpoints.register.matchFulfilled,
+        handleAuthSuccess
+      )
+      .addMatcher(
+        authApi.endpoints.register.matchRejected,
+        handleAuthFailure
+      )
+       .addMatcher(
+        authApi.endpoints.socialLogin.matchPending,
+        (state) => { state.isLoading = true; }
+      )
+      .addMatcher(
+        authApi.endpoints.socialLogin.matchFulfilled,
+        handleAuthSuccess
+      )
+      .addMatcher(
+        authApi.endpoints.socialLogin.matchRejected,
+        handleAuthFailure
+      )
       // Logout
       .addMatcher(authApi.endpoints.logout.matchPending, (state) => {
         state.isLoading = true;
       })
-      .addMatcher(authApi.endpoints.logout.matchFulfilled, (state) => {
-        state.user = null;
-        state.isAuthenticated = false;
-        state.isLoading = false;
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('authUser');
-        }
-      })
-      .addMatcher(authApi.endpoints.logout.matchRejected, (state, action) => {
-        state.user = null;
-        state.isAuthenticated = false;
-        state.isLoading = false;
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('authUser');
-        }
-      })
+      .addMatcher(authApi.endpoints.logout.matchFulfilled, handleAuthFailure)
+      .addMatcher(authApi.endpoints.logout.matchRejected, handleAuthFailure) // Also handle failure case for logout
       // Check Session
       .addMatcher(authApi.endpoints.checkSession.matchPending, (state) => {
         if (!state.isAuthenticated || state.user === null) {
@@ -129,14 +132,7 @@ const authSlice = createSlice({
           localStorage.setItem('authUser', JSON.stringify(action.payload.user));
         }
       })
-      .addMatcher(authApi.endpoints.checkSession.matchRejected, (state, action) => {
-        state.user = null;
-        state.isAuthenticated = false;
-        state.isLoading = false;
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('authUser');
-        }
-      });
+      .addMatcher(authApi.endpoints.checkSession.matchRejected, handleAuthFailure);
   },
   selectors: {
     selectCurrentUser: (state) => state.user,

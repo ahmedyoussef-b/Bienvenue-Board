@@ -1,6 +1,6 @@
-
+// src/lib/redux/api/authApi.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import type { SafeUser, Role } from '@/types/index'; // Use Role from centralized types
+import type { SafeUser, Role } from '@/types/index';
 
 export interface AuthResponse {
   message: string;
@@ -13,8 +13,15 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest extends LoginRequest {
-  role: Role; // Use Role from centralized types
+  role: Role;
   name?: string;
+}
+
+export interface SocialLoginRequest {
+  email: string;
+  name: string;
+  imgUrl: string | null;
+  role: Role | null;
 }
 
 export interface SessionResponse {
@@ -31,13 +38,19 @@ export const authApi = createApi({
   tagTypes: ['UserSession'],
   endpoints: (builder) => ({
     login: builder.mutation<AuthResponse, LoginRequest>({
-      query: (credentials) => {
-        return {
-          url: '/api/auth/login',
-          method: 'POST',
-          body: credentials,
-        };
-      },
+      query: (credentials) => ({
+        url: '/api/auth/login',
+        method: 'POST',
+        body: credentials,
+      }),
+      invalidatesTags: ['UserSession'],
+    }),
+    socialLogin: builder.mutation<AuthResponse, SocialLoginRequest>({
+      query: (userInfo) => ({
+        url: '/api/auth/social-login',
+        method: 'POST',
+        body: userInfo,
+      }),
       invalidatesTags: ['UserSession'],
     }),
     register: builder.mutation<AuthResponse, RegisterRequest>({
@@ -64,6 +77,7 @@ export const authApi = createApi({
 
 export const {
   useLoginMutation,
+  useSocialLoginMutation,
   useRegisterMutation,
   useLogoutMutation,
   useCheckSessionQuery,

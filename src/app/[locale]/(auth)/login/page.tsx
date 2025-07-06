@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux';
 import { selectIsAuthenticated, selectCurrentUser, selectIsAuthLoading } from '@/lib/redux/slices/authSlice';
 import { useEffect } from 'react';
 import { Spinner } from '@/components/ui/spinner';
+import SocialSignInButtons from '@/components/auth/SocialSignInButtons';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,7 +33,20 @@ export default function LoginPage() {
   if (!isAuthenticated) {
     return (
       <AuthLayout title="Content de vous revoir !" description="Connectez-vous pour accéder à votre compte.">
-        <LoginForm />
+        <div className="space-y-6">
+            <LoginForm />
+            <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                        Ou continuer avec
+                    </span>
+                </div>
+            </div>
+            <SocialSignInButtons />
+        </div>
       </AuthLayout>
     );
   }
