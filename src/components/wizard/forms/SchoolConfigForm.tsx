@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { updateSchoolConfig, selectSchoolConfig } from '@/lib/redux/features/schoolConfigSlice';
 import { Loader2 } from 'lucide-react';
-import SaveDraftButton from '../SaveDraftButton';
+import ScenarioManager from '../ScenarioManager';
 
 const SchoolConfigForm: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -147,7 +147,7 @@ const SchoolConfigForm: React.FC = () => {
           <p><strong>Jours de cours:</strong> {data.schoolDays.length} jour(s)</p>
         </div>
       </Card>
-      <SaveDraftButton />
+      <ScenarioManager />
     </div>
   );
 };

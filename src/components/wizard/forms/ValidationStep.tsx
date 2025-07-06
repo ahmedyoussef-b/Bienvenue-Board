@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { setInitialSchedule } from '@/lib/redux/features/schedule/scheduleSlice';
 import { generateSchedule, generateTimeSlots } from '@/lib/schedule-utils';
 import { useToast } from '@/hooks/use-toast';
+import ScenarioManager from '../ScenarioManager';
 import { WizardData } from '@/types/ wizard-types';
 
 interface ValidationStepProps {
@@ -256,6 +257,7 @@ const ValidationStep: React.FC<ValidationStepProps> = ({
           </div>
         )}
       </Card>
+      <ScenarioManager />
     </div>
   );
 };

@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { setAssignment, clearAllAssignments } from '@/lib/redux/features/teacherAssignmentsSlice';
 import { useToast } from '@/hooks/use-toast';
-import SaveDraftButton from '../SaveDraftButton';
+import ScenarioManager from '../ScenarioManager';
 import { WizardData } from '@/types/ wizard-types';
 
 interface TeachersFormProps {
@@ -168,7 +168,7 @@ const TeachersForm: React.FC<TeachersFormProps> = ({ wizardData }) => {
             </ScrollArea>
         </CardContent>
       </Card>
-      <SaveDraftButton />
+      <ScenarioManager />
     </div>
   );
 };

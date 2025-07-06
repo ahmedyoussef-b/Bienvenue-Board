@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils';
 import { localAddSubject, localDeleteSubject } from '@/lib/redux/features/subjects/subjectsSlice';
 import { setRequirement } from '@/lib/redux/features/lessonRequirements/lessonRequirementsSlice';
 import { useToast } from '@/hooks/use-toast';
-import SaveDraftButton from '../SaveDraftButton';
+import ScenarioManager from '../ScenarioManager';
 import { WizardData, Subject } from '@/types/ wizard-types';
 
 interface SubjectsFormProps {
@@ -326,7 +326,7 @@ const SubjectsForm: React.FC<SubjectsFormProps> = ({ wizardData }) => {
             </Accordion>
             )}
         </Card>
-        <SaveDraftButton />
+        <ScenarioManager />
       </div>
 
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>

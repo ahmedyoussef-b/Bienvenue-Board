@@ -1,82 +1,75 @@
-// src/app/api/schedule-draft/route.ts
+// src/app/api/schedule-drafts/route.ts
 import { NextResponse, type NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from '@/lib/auth-utils';
-import { Role } from '@/types';
-import { Prisma } from '@prisma/client';
+import { z } from 'zod';
+
+const createDraftSchema = z.object({
+  name: z.string().min(1, 'Le nom du scénario est requis.'),
+  description: z.string().optional(),
+});
 
 export async function GET(request: NextRequest) {
     const session = await getServerSession();
-
-    if (!session || session.role !== Role.ADMIN) {
+    if (!session?.userId) {
         return NextResponse.json({ message: 'Non autorisé' }, { status: 401 });
-    }
-    
-    if (!prisma.scheduleDraft) {
-        console.warn('[API/schedule-draft GET] ScheduleDraft model not found on Prisma client.');
-        return new NextResponse(null, { status: 204 });
     }
 
     try {
-        const draft = await prisma.scheduleDraft.findUnique({
+        const drafts = await prisma.scheduleDraft.findMany({
             where: { userId: session.userId },
+            orderBy: { updatedAt: 'desc' },
         });
-
-        if (!draft) {
-             return new NextResponse(null, { status: 204 });
-        }
-        
-        return NextResponse.json(draft, { status: 200 });
-
+        return NextResponse.json(drafts, { status: 200 });
     } catch (error) {
-        console.error('[API/schedule-draft GET] Error:', error);
-        return NextResponse.json({ message: 'Erreur interne du serveur lors de la récupération du brouillon.' }, { status: 500 });
+        console.error('[API/schedule-drafts GET] Error:', error);
+        return NextResponse.json({ message: 'Erreur interne du serveur.' }, { status: 500 });
     }
 }
 
 export async function POST(request: NextRequest) {
     const session = await getServerSession();
-    
-    if (!session || session.role !== Role.ADMIN) {
+    if (!session?.userId) {
         return NextResponse.json({ message: 'Non autorisé' }, { status: 401 });
-    }
-
-    if (!prisma.scheduleDraft) {
-        return NextResponse.json({ message: 'Service de brouillon non disponible (modèle non trouvé).' }, { status: 503 });
     }
 
     try {
         const body = await request.json();
-        const { userId } = session;
+        const validation = createDraftSchema.safeParse(body);
 
-        const draftData = {
-            userId: userId,
-            schoolConfig: body.schoolConfig,
-            classes: body.classes,
-            subjects: body.subjects,
-            teachers: body.teachers,
-            classrooms: body.classrooms,
-            grades: body.grades,
-            lessonRequirements: body.lessonRequirements,
-            teacherConstraints: body.teacherConstraints,
-            subjectRequirements: body.subjectRequirements,
-            teacherAssignments: body.teacherAssignments,
-            schedule: body.schedule,
-        };
-
-        const savedDraft = await prisma.scheduleDraft.upsert({
-            where: { userId: userId },
-            update: draftData,
-            create: draftData,
-        });
-        
-        return NextResponse.json({ message: 'Brouillon sauvegardé avec succès', updatedAt: savedDraft.updatedAt }, { status: 200 });
-
-    } catch (error) {
-        console.error('[API/schedule-draft POST] Error:', error);
-        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021') {
-            return NextResponse.json({ message: 'Service de brouillon non disponible (table non trouvée).' }, { status: 503 });
+        if (!validation.success) {
+            return NextResponse.json({ message: 'Données invalides', errors: validation.error.flatten().fieldErrors }, { status: 400 });
         }
-        return NextResponse.json({ message: 'Erreur lors de la sauvegarde du brouillon.' }, { status: 500 });
+
+        const { name, description } = validation.data;
+        const { schoolConfig, ...initialData } = body.initialData || {};
+
+        const newDraft = await prisma.scheduleDraft.create({
+            data: {
+                userId: session.userId,
+                name,
+                description,
+                isActive: false, // New drafts are not active by default
+                schoolConfig: schoolConfig || {},
+                classes: initialData.classes || [],
+                subjects: initialData.subjects || [],
+                teachers: initialData.teachers || [],
+                classrooms: initialData.classrooms || [],
+                grades: initialData.grades || [],
+                lessonRequirements: initialData.lessonRequirements || [],
+                teacherConstraints: initialData.teacherConstraints || [],
+                subjectRequirements: initialData.subjectRequirements || [],
+                teacherAssignments: initialData.teacherAssignments || [],
+                schedule: initialData.schedule || [],
+            },
+        });
+
+        return NextResponse.json(newDraft, { status: 201 });
+    } catch (error: any) {
+        console.error('[API/schedule-drafts POST] Error:', error);
+        if (error.code === 'P2002') {
+             return NextResponse.json({ message: 'Un scénario avec ce nom existe déjà.' }, { status: 409 });
+        }
+        return NextResponse.json({ message: 'Erreur lors de la création du scénario.' }, { status: 500 });
     }
 }

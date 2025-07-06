@@ -15,7 +15,7 @@ import { addTeacherConstraint, removeTeacherConstraint } from '@/lib/redux/featu
 import { setSubjectRequirement, setSubjectTimePreference } from '@/lib/redux/features/subjectRequirementsSlice';
 import { dayLabels, labSubjectKeywords } from '@/lib/wizard-utils';
 import type { Day, TeacherConstraint } from '@/types';
-import SaveDraftButton from '../SaveDraftButton';
+import ScenarioManager from '../ScenarioManager';
 import { WizardData } from '@/types/ wizard-types';
 
 interface ConstraintsFormProps {
@@ -358,7 +358,7 @@ const ConstraintsForm: React.FC<ConstraintsFormProps> = ({ wizardData }) => {
         </Card>
       </TabsContent>
     </Tabs>
-    <SaveDraftButton />
+    <ScenarioManager />
     </div>
   );
 };
