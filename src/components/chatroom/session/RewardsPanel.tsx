@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -15,15 +14,7 @@ import { Trophy, Award, Star, Users, Gift, Plus, Medal, Crown, Target, Zap, Hear
 import { useAppDispatch, useAppSelector } from '@/hooks/redux-hooks';
 import { awardReward } from '@/lib/redux/slices/sessionSlice';
 import { addNotification } from '@/lib/redux/slices/notificationSlice';
-
-const BADGE_TEMPLATES = [
-  { type: 'participation', name: 'Participant actif', description: 'Pour une participation remarquable', icon: '🙋' },
-  { type: 'correct_answer', name: 'Expert', description: 'Pour des réponses correctes', icon: '🎯' },
-  { type: 'helpful', name: 'Entraide', description: 'Pour avoir aidé ses camarades', icon: '🤝' },
-  { type: 'creative', name: 'Créatif', description: 'Pour des idées originales', icon: '💡' },
-  { type: 'leader', name: 'Leader', description: 'Pour avoir pris des initiatives', icon: '👑' },
-  { type: 'consistent', name: 'Persévérant', description: 'Pour la régularité', icon: '⭐' },
-];
+import { BADGE_TEMPLATES } from '@/lib/constants';
 
 interface RewardsPanelProps {
   isTeacher?: boolean;

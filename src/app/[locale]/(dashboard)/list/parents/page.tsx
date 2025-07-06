@@ -3,7 +3,7 @@ import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
-import { ITEM_PER_PAGE } from "@/lib/settings";
+import { ITEM_PER_PAGE } from "@/lib/constants";
 import { type Parent, type Student, type User, Role as AppRole } from "@/types/index";
 import Image from "next/image";
 import Link from "next/link";

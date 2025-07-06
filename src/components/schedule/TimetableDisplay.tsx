@@ -16,8 +16,7 @@ import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { generateTimeSlots, mergeConsecutiveLessons, calculateAvailableSlots } from '@/lib/schedule-utils';
 import { ScrollArea } from '../ui/scroll-area';
-
-const dayLabels: Record<Day, string> = { MONDAY: 'Lundi', TUESDAY: 'Mardi', WEDNESDAY: 'Mercredi', THURSDAY: 'Jeudi', FRIDAY: 'Vendredi', SATURDAY: 'Samedi', SUNDAY: 'Dimanche' };
+import { dayLabels, subjectColors } from '@/lib/constants';
 
 const formatTimeSimple = (date: string | Date): string => {
     const d = new Date(date);
@@ -30,7 +29,6 @@ const timeToMinutes = (time: string): number => {
     return hours * 60 + minutes;
 };
 
-const subjectColors = ['bg-primary/20', 'bg-secondary/20', 'bg-accent/20', 'bg-chart-1/20', 'bg-chart-2/20', 'bg-chart-3/20', 'bg-chart-4/20', 'bg-chart-5/20'];
 const getSubjectColorClass = (subjectId: number, subjects: Subject[]): string => {
     if (!subjects || !Array.isArray(subjects)) return 'bg-muted';
     const index = subjects.findIndex((s: Subject) => s.id === subjectId);

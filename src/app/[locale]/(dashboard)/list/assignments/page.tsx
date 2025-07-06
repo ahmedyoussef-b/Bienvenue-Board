@@ -1,10 +1,9 @@
-
 // src/app/[locale]/(dashboard)/list/assignments/page.tsx
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import { ITEM_PER_PAGE } from "@/lib/settings";
+import { ITEM_PER_PAGE } from "@/lib/constants";
 import { type Assignment, type Subject, type Class, type Teacher } from "@/types/index"; 
 import Image from "next/image";
 import { getServerSession } from "@/lib/auth-utils";

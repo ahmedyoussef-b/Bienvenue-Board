@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { ThumbsUp, ThumbsDown, Laugh, Heart, HelpCircle, Lightbulb } from 'lucid
 import { useAppDispatch, useAppSelector } from '@/hooks/redux-hooks';
 import { sendReaction, clearReactions } from '@/lib/redux/slices/sessionSlice';
 import { addNotification } from '@/lib/redux/slices/notificationSlice';
+import { reactionLabels } from '@/lib/constants';
 
 interface ReactionsPanelProps {
   studentId?: string;
@@ -23,15 +23,6 @@ const reactionIcons = {
   laugh: Laugh,
   understood: Lightbulb,
   confused: HelpCircle,
-};
-
-const reactionLabels = {
-  thumbs_up: 'J\'aime',
-  thumbs_down: 'Je n\'aime pas',
-  heart: 'J\'adore',
-  laugh: 'Drôle',
-  understood: 'Compris !',
-  confused: 'Confus(e)',
 };
 
 export default function ReactionsPanel({ studentId, studentName, isTeacher = false }: ReactionsPanelProps) {

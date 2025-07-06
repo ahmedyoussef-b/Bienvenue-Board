@@ -7,11 +7,11 @@ import jwt, { type SignOptions, type Secret } from 'jsonwebtoken';
 import type { SafeUser } from '@/types/index';
 import { Role } from "@prisma/client"; // Role enum from Prisma
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { SESSION_COOKIE_NAME } from '@/lib/constants';
 
 
 const JWT_SECRET_KEY_VALUE = process.env.JWT_SECRET_KEY;
 const HASH_ROUNDS = 10;
-const SESSION_COOKIE_NAME = 'appSessionToken';
 
 export async function POST(req: NextRequest) {
   if (!JWT_SECRET_KEY_VALUE) {

@@ -1,7 +1,4 @@
-
 import { Role } from "@/types/index"; // Use Role type from centralized source
-
-export const ITEM_PER_PAGE = 10;
 
 // Define RouteAccessMap using string literals that are compatible with the Role type.
 // Role type (from @/types/index.ts, sourced from @prisma/client) is a union of string literals.

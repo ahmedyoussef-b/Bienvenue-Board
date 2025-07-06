@@ -5,9 +5,9 @@ import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
 import type { Role as AppRole, SafeUser, JwtPayload } from "@/types/index";
+import { SESSION_COOKIE_NAME } from '@/lib/constants';
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
-const SESSION_COOKIE_NAME = 'appSessionToken';
 
 export async function GET(req: NextRequest) {
   if (!JWT_SECRET_KEY) {

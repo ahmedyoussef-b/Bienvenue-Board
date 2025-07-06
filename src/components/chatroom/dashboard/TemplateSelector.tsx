@@ -1,4 +1,3 @@
-
 // src/components/chatroom/dashboard/TemplateSelector.tsx
 'use client';
 
@@ -7,24 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Brain, BarChart3, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { SessionTemplate } from '@/lib/redux/slices/sessionSlice';
-
-// Hardcoding templates here for demo purposes. In a real app, this would come from props or a Redux store.
-const SESSION_TEMPLATES: SessionTemplate[] = [
-  {
-    id: 'template_math_7',
-    name: 'Révision Maths 7ème',
-    description: 'Un quiz rapide sur les fractions et un sondage sur la géométrie.',
-    quizzes: [{ title: 'Quiz sur les Fractions', questions: [] }],
-    polls: [{ question: 'Quelle est votre figure géométrique préférée ?', options: [] }],
-  },
-  {
-    id: 'template_hist_8',
-    name: 'Contrôle Histoire 8ème',
-    description: 'Un sondage sur la révolution et un quiz sur les dates clés.',
-    quizzes: [{ title: 'Dates Clés', questions: [] }],
-    polls: [],
-  },
-];
+import { SESSION_TEMPLATES } from '@/lib/constants';
 
 interface TemplateSelectorProps {
   selectedTemplateId: string | null;

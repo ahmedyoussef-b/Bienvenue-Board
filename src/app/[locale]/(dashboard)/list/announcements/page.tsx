@@ -3,7 +3,7 @@ import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import { ITEM_PER_PAGE } from "@/lib/settings";
+import { ITEM_PER_PAGE } from "@/lib/constants";
 import Image from "next/image";
 import Link from 'next/link';
 import { getServerSession } from "@/lib/auth-utils";

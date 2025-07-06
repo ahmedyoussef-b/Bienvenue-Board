@@ -1,7 +1,7 @@
-
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { arrayMove } from '@dnd-kit/sortable';
 import type { SafeUser } from '@/types';
+import { SESSION_TEMPLATES } from '@/lib/constants';
 
 // Centralized type definitions
 export interface Badge {
@@ -152,61 +152,6 @@ export interface SessionTemplate {
   quizzes: Omit<Quiz, 'id' | 'startTime' | 'isActive' | 'currentQuestionIndex' | 'answers' | 'timeRemaining'>[];
   polls: Omit<Poll, 'id' | 'createdAt' | 'isActive' | 'totalVotes' | 'options'> & { options: string[] }[];
 }
-
-const SESSION_TEMPLATES: SessionTemplate[] = [
-  {
-    id: 'template_math_7',
-    name: 'Révision Maths 7ème',
-    description: 'Un quiz rapide sur les fractions et un sondage sur la géométrie.',
-    quizzes: [
-      {
-        title: 'Quiz sur les Fractions',
-        questions: [
-          {
-            id: 'q1',
-            question: 'Que vaut 1/2 + 1/4 ?',
-            options: ['3/4', '2/6', '1/8', '1/2'],
-            correctAnswer: 0,
-            timeLimit: 30,
-          },
-          {
-            id: 'q2',
-            question: 'Simplifiez 10/20.',
-            options: ['1/2', '2/4', '5/10', 'Toutes ces réponses'],
-            correctAnswer: 3,
-            timeLimit: 20,
-          }
-        ]
-      }
-    ],
-    polls: [
-      {
-        question: 'Quelle est votre figure géométrique préférée ?',
-        options: ['Cercle', 'Carré', 'Triangle', 'Hexagone'],
-      }
-    ]
-  },
-  {
-    id: 'template_hist_8',
-    name: 'Contrôle Histoire 8ème',
-    description: 'Un sondage sur la révolution et un quiz sur les dates clés.',
-    quizzes: [
-       {
-        title: 'Dates Clés',
-        questions: [
-          {
-            id: 'q1',
-            question: 'Année de la chute de Rome ?',
-            options: ['476', '1453', '1789', '1914'],
-            correctAnswer: 0,
-            timeLimit: 25,
-          }
-        ]
-      }
-    ],
-    polls: [],
-  }
-];
 
 interface SessionState {
   classes: ClassRoom[];

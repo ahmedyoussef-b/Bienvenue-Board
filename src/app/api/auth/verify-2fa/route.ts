@@ -4,10 +4,10 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from "@/lib/prisma";
 import { SafeUser, Role as AppRole } from '@/types/index';
+import { SESSION_COOKIE_NAME } from '@/lib/constants';
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 const JWT_ACCESS_TOKEN_EXPIRATION_TIME = process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME || '1h';
-const SESSION_COOKIE_NAME = 'appSessionToken';
 
 export async function POST(req: NextRequest) {
   if (!JWT_SECRET_KEY) {
@@ -72,4 +72,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: 'An unexpected error occurred' }, { status: 500 });
   }
 }
-```

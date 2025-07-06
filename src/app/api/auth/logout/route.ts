@@ -1,8 +1,6 @@
-
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-
-const SESSION_COOKIE_NAME = 'appSessionToken';
+import { SESSION_COOKIE_NAME } from '@/lib/constants';
 
 export async function POST(req: NextRequest) {
   try {

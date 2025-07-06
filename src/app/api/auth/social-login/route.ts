@@ -4,10 +4,10 @@ import jwt from 'jsonwebtoken';
 import prisma from "@/lib/prisma";
 import { Role } from "@prisma/client";
 import type { SafeUser, Role as AppRole } from '@/types/index';
+import { SESSION_COOKIE_NAME } from '@/lib/constants';
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 const EFFECTIVE_JWT_EXPIRATION_TIME = process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME || '1h';
-const SESSION_COOKIE_NAME = 'appSessionToken';
 
 export async function POST(req: NextRequest) {
   if (!JWT_SECRET_KEY) {

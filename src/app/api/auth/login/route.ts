@@ -7,11 +7,11 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { SafeUser, Role as AppRole } from '@/types/index';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
+import { SESSION_COOKIE_NAME } from '@/lib/constants';
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 const JWT_ACCESS_TOKEN_EXPIRATION_TIME = process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME || '1h';
 const JWT_2FA_TOKEN_EXPIRATION_TIME = '5m';
-const SESSION_COOKIE_NAME = 'appSessionToken';
 
 export const POST = async (req: NextRequest) => {
   if (!JWT_SECRET_KEY) {
@@ -106,4 +106,3 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json({ message: 'An unexpected error occurred during login' }, { status: 500 });
   }
 };
-```

@@ -20,7 +20,6 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 // Redux Actions
 import { setAllSubjects } from '@/lib/redux/features/subjects/subjectsSlice';
 import { setAllClasses } from '@/lib/redux/features/classes/classesSlice';
-import { setAllTeachers } from '@/lib/redux/features/teachers/teachersSlice';
 import { type Grade, type TeacherWithDetails, type Subject, type ClassWithGrade, UserSex } from '@/types'; 
 
 // Schemas for validation

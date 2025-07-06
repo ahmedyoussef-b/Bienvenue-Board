@@ -6,7 +6,7 @@ import prisma from "@/lib/prisma";
 import { type Teacher, type Subject, type User, type Class, Role as AppRole } from "@/types/index";
 import Image from "next/image";
 import Link from "next/link";
-import { ITEM_PER_PAGE } from "@/lib/settings";
+import { ITEM_PER_PAGE } from "@/lib/constants";
 import { getServerSession } from "@/lib/auth-utils";
 import { Prisma } from "@prisma/client";
 import UserEntityCard, { type TeacherCardData } from '@/components/UserEntityCard';

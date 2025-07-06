@@ -13,7 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { addTeacherConstraint, removeTeacherConstraint } from '@/lib/redux/features/teacherConstraintsSlice';
 import { setSubjectRequirement, setSubjectTimePreference } from '@/lib/redux/features/subjectRequirementsSlice';
-import { dayLabels, labSubjectKeywords } from '@/lib/wizard-utils';
+import { dayLabels, labSubjectKeywords } from '@/lib/constants';
 import type { Day, TeacherConstraint } from '@/types';
 import ScenarioManager from '../ScenarioManager';
 import { WizardData } from '@/types/ wizard-types';

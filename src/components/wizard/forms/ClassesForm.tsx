@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { localAddClass, localDeleteClass } from '@/lib/redux/features/classes/classesSlice';
 import { useToast } from '@/hooks/use-toast';
-import { sectionOptions } from '@/lib/wizard-utils';
+import { sectionOptions } from '@/lib/constants';
 import ScenarioManager from '../ScenarioManager';
 import { WizardData } from '@/types/ wizard-types';
 
