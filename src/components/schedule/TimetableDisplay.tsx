@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Download, Printer, Trash2, Building, BookOpen } from 'lucide-react';
-import type { WizardData, Lesson, Subject } from '@/types';
+import type { WizardData, Lesson, Subject, ClassWithGrade } from '@/types';
 import { Day } from '@prisma/client';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { useAppDispatch } from '@/hooks/redux-hooks';
@@ -52,28 +52,29 @@ const RoomSelectorPopover: React.FC<{
     const availableRooms = useMemo(() => {
         if (!wizardData?.rooms || !Array.isArray(fullSchedule) || !lesson) return [];
         
-        // Use the actual lesson's start and end time for accurate conflict detection
+        // Find the class associated with the lesson to get its student count.
+        const lessonClass = wizardData.classes.find(c => c.id === lesson.classId);
+        const studentCount = lessonClass?._count.students || 0;
+
         const lessonStartMinutes = timeToMinutes(formatTimeSimple(lesson.startTime));
         const lessonEndMinutes = timeToMinutes(formatTimeSimple(lesson.endTime));
 
         const occupiedRoomIds = new Set(
             fullSchedule
-                // 1. Exclude the current lesson from the conflict check
                 .filter(l => l.id !== lesson.id) 
-                // 2. Only consider lessons on the same day that have a room assigned
                 .filter(l => l.classroomId != null && l.day === day)
-                // 3. Check for time overlap
                 .filter(l => {
                     const otherLessonStart = timeToMinutes(formatTimeSimple(l.startTime));
                     const otherLessonEnd = timeToMinutes(formatTimeSimple(l.endTime));
-                    // Standard overlap check: (StartA < EndB) and (EndA > StartB)
                     return lessonStartMinutes < otherLessonEnd && lessonEndMinutes > otherLessonStart;
                 })
-                // 4. Collect the IDs of the occupied rooms
                 .map(l => l.classroomId!)
         );
-        // 5. Return all rooms that are not in the occupied set
-        return wizardData.rooms.filter(room => !occupiedRoomIds.has(room.id));
+        
+        // Filter rooms by being unoccupied AND having enough capacity for the students.
+        return wizardData.rooms.filter(room => 
+            !occupiedRoomIds.has(room.id) && room.capacity >= studentCount
+        );
     }, [day, fullSchedule, wizardData, lesson]);
     
     const handleRoomChange = (newRoomId: number | null) => {
