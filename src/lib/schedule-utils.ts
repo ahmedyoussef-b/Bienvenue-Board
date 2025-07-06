@@ -159,6 +159,14 @@ export const mergeConsecutiveLessons = (lessons: PrismaLesson[], wizardData: Wiz
     return finalMergedLessons;
 };
 
+// Helper for time conversion
+const timeToMinutes = (time: string): number => {
+    if (typeof time !== 'string' || !time.includes(':')) return 0;
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+};
+
+
 /**
  * NEW: Calculates a fitness score for placing a lesson in a specific slot.
  * Higher scores are better. A negative score indicates a hard conflict.
