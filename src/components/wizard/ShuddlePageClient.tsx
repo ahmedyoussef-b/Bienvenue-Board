@@ -20,7 +20,7 @@ import ScheduleEditor from '../schedule/ScheduleEditor';
 import useWizardData from '@/hooks/useWizardData';
 import useWizardSteps from '@/hooks/useWizardSteps';
 import { selectSchedule, selectScheduleStatus } from '@/lib/redux/features/schedule/scheduleSlice';
-import { selectActiveDraft, selectDraftStatus, createDraft, updateActiveDraft } from '@/lib/redux/features/scheduleDraftSlice';
+import { selectActiveDraft, selectDraftStatus, createDraft, updateActiveDraft, selectSaveStatus } from '@/lib/redux/features/scheduleDraftSlice';
 import { useToast } from '@/hooks/use-toast';
 
 const ShuddlePageClient: React.FC = () => {
@@ -33,28 +33,25 @@ const ShuddlePageClient: React.FC = () => {
     const draftStatus = useAppSelector(selectDraftStatus);
     const schedule = useAppSelector(selectSchedule);
     const scheduleStatus = useAppSelector(selectScheduleStatus);
+    const saveStatus = useAppSelector(selectSaveStatus);
 
     // Custom hooks
     const wizardData = useWizardData();
     const { steps, currentStep, progress, handleNext, handlePrevious, handleStepClick } = useWizardSteps();
     
-    // Autosave with debounce
-    const debouncedAutosave = useDebouncedCallback(() => {
-        if (activeDraft) {
+    // Debounced autosave
+    const debouncedSave = useDebouncedCallback(() => {
+        if (draftStatus === 'succeeded' && activeDraft) {
             dispatch(updateActiveDraft());
-            toast({
-                title: 'Sauvegarde automatique',
-                description: `Les modifications du scénario "${activeDraft.name}" ont été enregistrées.`,
-            });
         }
     }, 2000); // Autosave 2 seconds after the last change
 
     useEffect(() => {
-        // Trigger autosave whenever wizard data changes, but not on initial load
+        // We only want to autosave when not loading and a draft is active
         if (draftStatus === 'succeeded' && activeDraft) {
-            debouncedAutosave();
+            debouncedSave();
         }
-    }, [wizardData, debouncedAutosave, draftStatus, activeDraft]);
+    }, [wizardData, activeDraft?.name, activeDraft?.description, debouncedSave, draftStatus, activeDraft]);
 
     // Set initial mode based on schedule data
     useEffect(() => {
@@ -93,6 +90,7 @@ const ShuddlePageClient: React.FC = () => {
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold text-foreground truncate pr-4">
                        Scénario: <span className="text-primary">{activeDraft?.name || 'Nouveau Scénario'}</span>
+                       {saveStatus === 'loading' && <Loader2 className="inline-block ml-2 h-4 w-4 animate-spin" />}
                     </h2>
                     <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
                         {Math.round(progress)}% complété
