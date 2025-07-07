@@ -1,6 +1,6 @@
 // src/lib/redux/slices/authSlice.ts
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { SafeUser } from '@/types/index';
+import type { SafeUser, Role } from '@/types/index';
 import { authApi, type LoginResponse, type AuthResponse } from '../api/authApi';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
@@ -79,13 +79,6 @@ const authSlice = createSlice({
     builder
       // Login, Register, SocialLogin
       .addMatcher(
-        authApi.endpoints.login.matchPending,
-        (state) => { 
-          console.log("⏳ [authSlice] login.matchPending: Setting isLoading = true");
-          state.isLoading = true; 
-        }
-      )
-      .addMatcher(
         authApi.endpoints.login.matchFulfilled,
         (state, action: PayloadAction<LoginResponse>) => {
           console.log("✅ [authSlice] login.matchFulfilled. Payload:", action.payload);
@@ -93,7 +86,6 @@ const authSlice = createSlice({
             handleAuthSuccess(state, action as PayloadAction<AuthResponse>);
           } else {
             console.log("[authSlice] 2FA required. Auth state not changed.");
-            state.isLoading = false;
           }
         }
       )
@@ -105,10 +97,6 @@ const authSlice = createSlice({
         }
       )
       .addMatcher(
-        authApi.endpoints.register.matchPending,
-        (state) => { state.isLoading = true; }
-      )
-      .addMatcher(
         authApi.endpoints.register.matchFulfilled,
         handleAuthSuccess
       )
@@ -117,10 +105,6 @@ const authSlice = createSlice({
         handleAuthFailure
       )
        .addMatcher(
-        authApi.endpoints.socialLogin.matchPending,
-        (state) => { state.isLoading = true; }
-      )
-      .addMatcher(
         authApi.endpoints.socialLogin.matchFulfilled,
         handleAuthSuccess
       )
@@ -129,10 +113,6 @@ const authSlice = createSlice({
         handleAuthFailure
       )
       // Logout
-      .addMatcher(authApi.endpoints.logout.matchPending, (state) => {
-        console.log("⏳ [authSlice] logout.matchPending: Setting isLoading = true");
-        state.isLoading = true;
-      })
       .addMatcher(authApi.endpoints.logout.matchFulfilled, (state) => {
          console.log("✅ [authSlice] logout.matchFulfilled. Clearing user state.");
          handleAuthFailure(state);
@@ -162,13 +142,6 @@ const authSlice = createSlice({
         handleAuthFailure(state);
       })
        // Verify 2FA
-      .addMatcher(
-        authApi.endpoints.verify2FA.matchPending,
-        (state) => {
-          console.log("⏳ [authSlice] verify2FA.matchPending: Setting isLoading = true");
-          state.isLoading = true;
-        }
-      )
       .addMatcher(
         authApi.endpoints.verify2FA.matchFulfilled,
         (state, action) => {
