@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  allowedDevOrigins: ["https://3000-firebase-studio-1751587093894.cluster-6frnii43o5blcu522sivebzpii.cloudworkstations.dev"],
   experimental: {
   },
   /* config options here */
