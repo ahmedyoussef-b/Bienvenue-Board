@@ -85,7 +85,14 @@ export const teachersSlice = createSlice({
     setAllTeachers(state, action: PayloadAction<TeacherWithDetails[]>) {
       state.items = action.payload;
       state.status = 'succeeded';
-    }
+    },
+    localAddTeacher(state, action: PayloadAction<TeacherWithDetails>) {
+        state.items.push(action.payload);
+        state.items.sort((a,b) => (a.surname || '').localeCompare(b.surname || '') || (a.name || '').localeCompare(b.name || ''));
+    },
+    localDeleteTeacher(state, action: PayloadAction<string>) {
+        state.items = state.items.filter(t => t.id !== action.payload);
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -119,6 +126,6 @@ export const teachersSlice = createSlice({
   }
 });
 
-export const { setAllTeachers } = teachersSlice.actions;
+export const { setAllTeachers, localAddTeacher, localDeleteTeacher } = teachersSlice.actions;
 export const { selectAllProfesseurs, getProfesseursStatus, getProfesseursError } = teachersSlice.selectors;
 export default teachersSlice.reducer;

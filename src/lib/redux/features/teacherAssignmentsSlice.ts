@@ -56,13 +56,17 @@ export const teacherAssignmentsSlice = createSlice({
     },
     clearAllAssignments(state) {
         state.items = [];
-    }
+    },
+    removeAssignmentsForTeacher(state, action: PayloadAction<string>) {
+      const teacherId = action.payload;
+      state.items = state.items.filter(a => a.teacherId !== teacherId);
+    },
   },
   selectors: {
     selectTeacherAssignments: (state) => state.items,
   }
 });
 
-export const { setAllTeacherAssignments, setAssignment, clearAllAssignments } = teacherAssignmentsSlice.actions;
+export const { setAllTeacherAssignments, setAssignment, clearAllAssignments, removeAssignmentsForTeacher } = teacherAssignmentsSlice.actions;
 export const { selectTeacherAssignments } = teacherAssignmentsSlice.selectors;
 export default teacherAssignmentsSlice.reducer;
