@@ -1,8 +1,10 @@
 // src/app/[locale]/(auth)/verify-2fa/page.tsx
 "use client";
 
-import React, { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { Suspense, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useSelector } from 'react-redux';
+import { selectIsAuthenticated, selectCurrentUser, selectIsAuthLoading } from '@/lib/redux/slices/authSlice';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,6 +28,29 @@ function Verify2FAContent() {
 }
 
 export default function Verify2FAPage() {
+  const router = useRouter();
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const currentUser = useSelector(selectCurrentUser);
+  const isLoading = useSelector(selectIsAuthLoading);
+
+  useEffect(() => {
+    // Redirect if the user becomes authenticated
+    if (!isLoading && isAuthenticated && currentUser) {
+      const rolePath = currentUser.role.toLowerCase();
+      router.replace(`/fr/${rolePath}`); 
+    }
+  }, [isLoading, isAuthenticated, currentUser, router]);
+
+  // If the user is already authenticated and somehow lands here, show a redirecting message.
+  if (isAuthenticated) {
+     return (
+        <div className="flex items-center justify-center min-h-screen bg-background">
+          <Spinner size="lg" />
+          <p className="ml-2">Redirection...</p> 
+        </div>
+      );
+  }
+
   return (
     <AuthLayout
       title="Vérification en deux étapes"
