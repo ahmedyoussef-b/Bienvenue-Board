@@ -11,7 +11,6 @@ const EFFECTIVE_JWT_EXPIRATION_TIME = process.env.JWT_ACCESS_TOKEN_EXPIRATION_TI
 
 export async function POST(req: NextRequest) {
   if (!JWT_SECRET_KEY) {
-    console.error('Login failed: JWT_SECRET_KEY is not defined.');
     return NextResponse.json({ message: 'Internal server configuration error' }, { status: 500 });
   }
 
@@ -79,9 +78,12 @@ export async function POST(req: NextRequest) {
     const safeUserResponse: SafeUser = { ...user, name: user.name || user.email };
     
     const response = NextResponse.json({ message: 'Connexion réussie', user: safeUserResponse }, { status: 200 });
-    response.cookies.set(SESSION_COOKIE_NAME, token, {
+    
+    response.cookies.set({
+      name: SESSION_COOKIE_NAME,
+      value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       maxAge: 60 * 60 * 24, // 1 day
       path: '/',
       sameSite: 'lax',
@@ -90,7 +92,6 @@ export async function POST(req: NextRequest) {
     return response;
 
   } catch (error) {
-    console.error('[SOCIAL_LOGIN_API_ERROR]', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

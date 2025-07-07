@@ -15,7 +15,6 @@ const HASH_ROUNDS = 10;
 
 export async function POST(req: NextRequest) {
   if (!JWT_SECRET_KEY_VALUE) {
-    console.error('JWT_SECRET_KEY is not defined in environment variables.');
     return NextResponse.json({ message: 'Internal server error: JWT secret missing' }, { status: 500 });
   }
 
@@ -99,9 +98,11 @@ export async function POST(req: NextRequest) {
 
     const response = NextResponse.json({ message: 'User registered successfully', user: safeUserResponse }, { status: 201 });
 
-    response.cookies.set(SESSION_COOKIE_NAME, token, {
+    response.cookies.set({
+      name: SESSION_COOKIE_NAME,
+      value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       maxAge: 60 * 60 * 24, // 1 day
       path: '/',
       sameSite: 'lax',
@@ -110,7 +111,6 @@ export async function POST(req: NextRequest) {
     return response;
 
   } catch (error) {
-    console.error('[REGISTER_API_ERROR]', error);
     if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
         return NextResponse.json({ message: 'Email or username already exists.' }, { status: 409 });
     }

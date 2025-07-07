@@ -6,14 +6,18 @@ export async function POST(req: NextRequest) {
   try {
     const response = NextResponse.json({ message: 'Logout successful' }, { status: 200 });
 
-    response.cookies.set(SESSION_COOKIE_NAME, '', {
+    response.cookies.set({
+      name: SESSION_COOKIE_NAME,
+      value: '',
+      httpOnly: true,
+      secure: true,
       maxAge: -1,
       path: '/',
+      sameSite: 'lax',
     });
 
     return response;
   } catch (error) {
-    console.error('[LOGOUT_API_ERROR]', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

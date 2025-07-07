@@ -85,21 +85,14 @@ const authSlice = createSlice({
       .addMatcher(
         authApi.endpoints.login.matchFulfilled,
         (state, action: PayloadAction<LoginResponse>) => {
-          // Use type guard to differentiate
           if ('user' in action.payload) {
-            // This is a successful standard login (AuthResponse)
             handleAuthSuccess(state, action as PayloadAction<AuthResponse>);
-          } else {
-            // This is a 2FA required response. Do nothing to auth state.
-            // The LoginForm component will handle the redirect.
           }
         }
       )
       .addMatcher(
         authApi.endpoints.login.matchRejected,
-        (state, action) => {
-          handleAuthFailure(state);
-        }
+        handleAuthFailure
       )
       .addMatcher(
         authApi.endpoints.register.matchPending,
@@ -145,9 +138,7 @@ const authSlice = createSlice({
           localStorage.setItem('authUser', JSON.stringify(action.payload.user));
         }
       })
-      .addMatcher(authApi.endpoints.checkSession.matchRejected, (state, action) => {
-          handleAuthFailure(state);
-      })
+      .addMatcher(authApi.endpoints.checkSession.matchRejected, handleAuthFailure)
        // Verify 2FA (Handles the final step of admin login)
       .addMatcher(
         authApi.endpoints.verify2FA.matchFulfilled,

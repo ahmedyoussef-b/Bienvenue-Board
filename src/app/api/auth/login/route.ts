@@ -15,7 +15,6 @@ const JWT_2FA_TOKEN_EXPIRATION_TIME = '5m';
 
 export const POST = async (req: NextRequest) => {
   if (!JWT_SECRET_KEY) {
-    console.error('❌ [API] Login failed: JWT_SECRET_KEY is not defined.');
     return NextResponse.json({ message: 'Internal server configuration error' }, { status: 500 });
   }
 
@@ -41,7 +40,6 @@ export const POST = async (req: NextRequest) => {
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
 
-    // --- 2FA Logic for Admins ---
     if (user.role === AppRole.ADMIN) {
       const twoFactorCode = crypto.randomInt(100000, 1000000).toString();
       const twoFactorCodeHashed = await bcrypt.hash(twoFactorCode, 10);
@@ -70,10 +68,7 @@ export const POST = async (req: NextRequest) => {
             html: `<p>Votre code de vérification est : <strong>${twoFactorCode}</strong></p><p>Il expirera dans 5 minutes.</p>`,
           });
       } catch(emailError) {
-          console.error('*************************************************************************************');
-          console.error('** ❌ [API] Échec de l\'envoi de l\'e-mail 2FA. Vérifiez la configuration SMTP dans .env. **');
           console.error(`** 🔑 [API] Code de secours pour ${user.email}: ${twoFactorCode} **`);
-          console.error('*************************************************************************************');
       }
       
       return NextResponse.json({
@@ -82,7 +77,6 @@ export const POST = async (req: NextRequest) => {
       }, { status: 200 });
     }
 
-    // --- Standard Login for other roles ---
     const finalName = user.name || user.username || user.email;
     const userRole = user.role as AppRole;
     
@@ -94,9 +88,11 @@ export const POST = async (req: NextRequest) => {
     
     const response = NextResponse.json({ token, user: safeUserResponse }, { status: 200 });
     
-    response.cookies.set(SESSION_COOKIE_NAME, token, {
+    response.cookies.set({
+      name: SESSION_COOKIE_NAME,
+      value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       maxAge: 60 * 60 * 24, // 1 day
       path: '/',
       sameSite: 'lax',
@@ -104,7 +100,6 @@ export const POST = async (req: NextRequest) => {
     return response;
 
   } catch (error) {
-    console.error('❌ [API] Unexpected error during login:', error);
     if (error instanceof PrismaClientKnownRequestError) {
       return NextResponse.json({ message: `Database error: ${error.message}` }, { status: 500 });
     }
