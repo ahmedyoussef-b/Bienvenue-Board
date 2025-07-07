@@ -1,7 +1,7 @@
 // src/app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import jwt, { type SignOptions, type Secret } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import prisma from "@/lib/prisma";
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { SafeUser, Role as AppRole } from '@/types/index';
@@ -15,6 +15,7 @@ const JWT_2FA_TOKEN_EXPIRATION_TIME = '5m';
 
 export const POST = async (req: NextRequest) => {
   if (!JWT_SECRET_KEY) {
+    console.error("Authentication failed: JWT_SECRET_KEY is not defined.");
     return NextResponse.json({ message: 'Internal server configuration error' }, { status: 500 });
   }
 
@@ -31,44 +32,48 @@ export const POST = async (req: NextRequest) => {
     });
 
     if (!user || !user.password) {
+      console.log(`[API] Login failed: User not found or no password set for ${email}.`);
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
+      console.log(`[API] Login failed: Password mismatch for ${email}.`);
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
-
+    
+    // Admin 2FA Flow
     if (user.role === AppRole.ADMIN) {
       const twoFactorCode = crypto.randomInt(100000, 1000000).toString();
       const twoFactorCodeHashed = await bcrypt.hash(twoFactorCode, 10);
-
+      
       const twoFactorToken = jwt.sign(
         { userId: user.id, twoFactorCodeHash: twoFactorCodeHashed },
         JWT_SECRET_KEY,
         { expiresIn: JWT_2FA_TOKEN_EXPIRATION_TIME }
       );
-
+      
       try {
-          const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: Number(process.env.SMTP_PORT),
-            secure: Number(process.env.SMTP_PORT) === 465,
-            auth: {
-              user: process.env.SMTP_USER,
-              pass: process.env.SMTP_PASS,
-            },
-          });
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: Number(process.env.SMTP_PORT),
+          secure: Number(process.env.SMTP_PORT) === 465,
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+        });
 
-          await transporter.sendMail({
-            from: process.env.EMAIL_FROM,
-            to: user.email,
-            subject: 'Votre code de connexion SchooLama',
-            html: `<p>Votre code de vérification est : <strong>${twoFactorCode}</strong></p><p>Il expirera dans 5 minutes.</p>`,
-          });
+        await transporter.sendMail({
+          from: process.env.EMAIL_FROM,
+          to: user.email,
+          subject: 'Votre code de connexion SchooLama',
+          html: `<p>Votre code de vérification est : <strong>${twoFactorCode}</strong></p><p>Il expirera dans 5 minutes.</p>`,
+        });
       } catch(emailError) {
-          console.error(`** 🔑 [API] Code de secours pour ${user.email}: ${twoFactorCode} **`);
+        // Log a fallback code if email sending fails, for development convenience
+        console.error(`** 🔑 [API] Fallback 2FA code for ${user.email}: ${twoFactorCode} **`);
       }
       
       return NextResponse.json({
@@ -77,6 +82,7 @@ export const POST = async (req: NextRequest) => {
       }, { status: 200 });
     }
 
+    // Standard User Login
     const finalName = user.name || user.username || user.email;
     const userRole = user.role as AppRole;
     
@@ -100,6 +106,7 @@ export const POST = async (req: NextRequest) => {
     return response;
 
   } catch (error) {
+    console.error('[API] Unexpected error during login:', error);
     if (error instanceof PrismaClientKnownRequestError) {
       return NextResponse.json({ message: `Database error: ${error.message}` }, { status: 500 });
     }

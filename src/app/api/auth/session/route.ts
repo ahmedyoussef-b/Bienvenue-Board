@@ -11,18 +11,15 @@ const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 export async function GET(req: NextRequest) {
   if (!JWT_SECRET_KEY) {
+    console.error("Session check failed: JWT_SECRET_KEY is not defined.");
     return NextResponse.json({ message: 'Internal server configuration error' }, { status: 500 });
   }
 
   try {
     const cookieStore = cookies();
-    const allCookies = cookieStore.getAll();
-    console.log('➡️ [API /session] All cookies received by server:', allCookies); // NEW LOG
-    
     const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
     if (!token) {
-      console.log('➡️ [API /session] No session token cookie found.'); // NEW LOG
       return NextResponse.json({ message: 'No active session token found' }, { status: 401 });
     }
 
@@ -30,7 +27,7 @@ export async function GET(req: NextRequest) {
     try {
       decoded = jwt.verify(token, JWT_SECRET_KEY) as JwtPayload;
     } catch (error: any) {
-      console.log('➡️ [API /session] Token verification failed. Clearing cookie.'); // NEW LOG
+      console.error('Invalid or expired session token:', error.message);
       const clearResponse = NextResponse.json({ message: 'Invalid or expired session token' }, { status: 401 });
       clearResponse.cookies.set(SESSION_COOKIE_NAME, '', { maxAge: -1, path: '/' });
       return clearResponse;
@@ -56,10 +53,10 @@ export async function GET(req: NextRequest) {
       role: user.role as AppRole,
     };
     
-    console.log('➡️ [API /session] ✅ Session is valid. Returning user:', safeUser.email); // NEW LOG
     return NextResponse.json({ user: safeUser }, { status: 200 });
 
   } catch (error: any) {
+    console.error("Internal server error during session check:", error);
     return NextResponse.json({ message: 'Internal server error during session check' }, { status: 500 });
   }
 }

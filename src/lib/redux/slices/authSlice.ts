@@ -86,6 +86,9 @@ const authSlice = createSlice({
         (state, action: PayloadAction<LoginResponse>) => {
           if ('user' in action.payload) {
             handleAuthSuccess(state, action as PayloadAction<AuthResponse>);
+          } else {
+            // Handle 2FA required case: do nothing, let the UI handle redirection
+            state.isLoading = false;
           }
         }
       )
