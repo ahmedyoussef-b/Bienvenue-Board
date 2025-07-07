@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
 import { localAddClassroom, localDeleteClassroom } from '@/lib/redux/features/classrooms/classroomsSlice';
 import { useToast } from '@/hooks/use-toast';
-import ScenarioManager from '../ScenarioManager';
 import { WizardData } from '@/types/ wizard-types';
 
 interface ClassroomsFormProps {
@@ -200,7 +199,6 @@ const ClassroomsForm: React.FC<ClassroomsFormProps> = ({ wizardData }) => {
           </div>
         </Card>
       )}
-      <ScenarioManager />
     </div>
   );
 };

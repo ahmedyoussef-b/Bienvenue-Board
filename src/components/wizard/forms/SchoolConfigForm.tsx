@@ -2,16 +2,16 @@
 'use client';
 
 import React from 'react';
-import { useAppDispatch } from '@/hooks/redux-hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks/redux-hooks';
 import { School, Clock, Calendar } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { updateSchoolConfig } from '@/lib/redux/features/schoolConfigSlice';
+import { updateSchoolConfig, selectSchoolConfig } from '@/lib/redux/features/schoolConfigSlice';
+import { updateActiveDraftDetails, selectActiveDraft } from '@/lib/redux/features/scheduleDraftSlice';
 import { Loader2 } from 'lucide-react';
-import ScenarioManager from '../ScenarioManager';
 import ImportConfigDialog from './ImportConfigDialog';
 import { WizardData } from '@/types/ wizard-types';
 
@@ -21,10 +21,15 @@ interface SchoolConfigFormProps {
 
 const SchoolConfigForm: React.FC<SchoolConfigFormProps> = ({ wizardData }) => {
   const dispatch = useAppDispatch();
-  const data = wizardData.school;
+  const data = useAppSelector(selectSchoolConfig);
+  const activeDraft = useAppSelector(selectActiveDraft);
 
-  const handleInputChange = (field: keyof typeof data, value: any) => {
+  const handleSchoolConfigChange = (field: keyof typeof data, value: any) => {
     dispatch(updateSchoolConfig({ [field]: value }));
+  };
+  
+  const handleDraftDetailsChange = (field: 'name' | 'description', value: string) => {
+    dispatch(updateActiveDraftDetails({ [field]: value }));
   };
   
   const dayOptions = [
@@ -40,10 +45,10 @@ const SchoolConfigForm: React.FC<SchoolConfigFormProps> = ({ wizardData }) => {
     const newDays = checked 
       ? [...data.schoolDays, dayId]
       : data.schoolDays.filter(day => day !== dayId);
-    handleInputChange('schoolDays', newDays);
+    handleSchoolConfigChange('schoolDays', newDays);
   };
 
-  if (!data) return (
+  if (!data || !activeDraft) return (
     <div className="flex items-center justify-center h-40">
       <Loader2 className="h-8 w-8 animate-spin text-primary" />
     </div>
@@ -57,15 +62,35 @@ const SchoolConfigForm: React.FC<SchoolConfigFormProps> = ({ wizardData }) => {
       <Card className="p-6">
         <div className="flex items-center space-x-2 mb-4">
           <School className="text-primary" size={20} />
-          <h3 className="text-lg font-semibold">Informations de l'établissement</h3>
+          <h3 className="text-lg font-semibold">Configuration du scénario et de l'établissement</h3>
         </div>
         <div className="space-y-4">
           <div>
+            <Label htmlFor="scenarioName">Nom du scénario</Label>
+            <Input 
+              id="scenarioName" 
+              value={activeDraft.name} 
+              onChange={(e) => handleDraftDetailsChange('name', e.target.value)} 
+              placeholder="Année scolaire 2024-2025" 
+              className="mt-1" 
+            />
+          </div>
+           <div>
+            <Label htmlFor="scenarioDesc">Description du scénario (Optionnel)</Label>
+            <Input 
+              id="scenarioDesc" 
+              value={activeDraft.description || ''} 
+              onChange={(e) => handleDraftDetailsChange('description', e.target.value)} 
+              placeholder="Configuration principale avec contraintes..." 
+              className="mt-1" 
+            />
+          </div>
+           <div>
             <Label htmlFor="schoolName">Nom de l'établissement</Label>
             <Input 
               id="schoolName" 
               value={data.name} 
-              onChange={(e) => handleInputChange('name', e.target.value)} 
+              onChange={(e) => handleSchoolConfigChange('name', e.target.value)} 
               placeholder="Collège Riadh 5" 
               className="mt-1" 
             />
@@ -85,7 +110,7 @@ const SchoolConfigForm: React.FC<SchoolConfigFormProps> = ({ wizardData }) => {
               id="startTime" 
               type="time" 
               value={data.startTime} 
-              onChange={(e) => handleInputChange('startTime', e.target.value)} 
+              onChange={(e) => handleSchoolConfigChange('startTime', e.target.value)} 
               className="mt-1"
             />
           </div>
@@ -95,7 +120,7 @@ const SchoolConfigForm: React.FC<SchoolConfigFormProps> = ({ wizardData }) => {
               id="endTime" 
               type="time" 
               value={data.endTime} 
-              onChange={(e) => handleInputChange('endTime', e.target.value)} 
+              onChange={(e) => handleSchoolConfigChange('endTime', e.target.value)} 
               className="mt-1"
             />
           </div>
@@ -103,7 +128,7 @@ const SchoolConfigForm: React.FC<SchoolConfigFormProps> = ({ wizardData }) => {
             <Label htmlFor="sessionDuration">Durée d'une séance (minutes)</Label>
             <Select 
               value={data.sessionDuration.toString()} 
-              onValueChange={(value) => handleInputChange('sessionDuration', parseInt(value))}
+              onValueChange={(value) => handleSchoolConfigChange('sessionDuration', parseInt(value))}
             >
               <SelectTrigger className="mt-1">
                 <SelectValue />
@@ -146,17 +171,6 @@ const SchoolConfigForm: React.FC<SchoolConfigFormProps> = ({ wizardData }) => {
           </p>
         </div>
       </Card>
-
-      <Card className="p-6 bg-primary/5 border-primary/20">
-        <h3 className="text-lg font-semibold text-primary mb-3">Récapitulatif</h3>
-        <div className="space-y-2 text-sm text-primary/90">
-          <p><strong>Établissement:</strong> {data.name || 'Non défini'}</p>
-          <p><strong>Horaires:</strong> {data.startTime} - {data.endTime}</p>
-          <p><strong>Durée séance:</strong> {data.sessionDuration} minutes</p>
-          <p><strong>Jours de cours:</strong> {data.schoolDays.length} jour(s)</p>
-        </div>
-      </Card>
-      <ScenarioManager />
     </div>
   );
 };

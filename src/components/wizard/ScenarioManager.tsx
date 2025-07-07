@@ -20,7 +20,7 @@ export default function ScenarioManager() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [isSaveOpen, setIsSaveOpen] = useState(false);
+  const [isSaveAsOpen, setIsSaveAsOpen] = useState(false);
   const [isLoadOpen, setIsLoadOpen] = useState(false);
   const [draftName, setDraftName] = useState('');
   const [draftDescription, setDraftDescription] = useState('');
@@ -30,17 +30,18 @@ export default function ScenarioManager() {
   const lastSaved = useAppSelector(selectLastSaved);
 
   useEffect(() => {
+    // Fetch the list of drafts when the component mounts or when a save/delete happens
     dispatch(fetchAllDrafts());
-  }, [dispatch]);
+  }, [dispatch, saveStatus]);
 
-  const handleSave = async () => {
+  const handleSaveAs = async () => {
     if (!draftName) {
-      toast({ variant: 'destructive', title: 'Nom requis', description: 'Veuillez donner un nom à votre scénario.' });
+      toast({ variant: 'destructive', title: 'Nom requis', description: 'Veuillez donner un nom à votre nouveau scénario.' });
       return;
     }
     await dispatch(createDraft({ name: draftName, description: draftDescription }));
-    toast({ title: 'Scénario sauvegardé !', description: `Le scénario "${draftName}" a été enregistré.` });
-    setIsSaveOpen(false);
+    toast({ title: 'Scénario sauvegardé !', description: `Le scénario "${draftName}" a été enregistré comme une nouvelle version.` });
+    setIsSaveAsOpen(false);
     setDraftName('');
     setDraftDescription('');
   };
@@ -66,25 +67,25 @@ export default function ScenarioManager() {
           Gestion des Scénarios
         </CardTitle>
         <CardDescription>
-          Sauvegardez, chargez et gérez différentes configurations d'emploi du temps.
+          Chargez un autre scénario ou créez une copie de votre configuration actuelle.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col sm:flex-row gap-2">
-        <Dialog open={isSaveOpen} onOpenChange={setIsSaveOpen}>
+        <Dialog open={isSaveAsOpen} onOpenChange={setIsSaveAsOpen}>
           <DialogTrigger asChild>
             <Button className="w-full sm:w-auto">
               <Save className="mr-2 h-4 w-4" />
-              Sauvegarder le scénario actuel
+              Sauvegarder sous...
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Sauvegarder le scénario</DialogTitle>
-              <DialogDescription>Donnez un nom à votre configuration actuelle pour la retrouver plus tard.</DialogDescription>
+              <DialogTitle>Sauvegarder sous un nouveau nom</DialogTitle>
+              <DialogDescription>Créez une nouvelle copie de votre configuration actuelle. Cela n'affectera pas votre scénario de travail.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="draft-name">Nom du scénario</Label>
+                <Label htmlFor="draft-name">Nom du nouveau scénario</Label>
                 <Input id="draft-name" value={draftName} onChange={(e) => setDraftName(e.target.value)} />
               </div>
               <div className="space-y-2">
@@ -93,10 +94,10 @@ export default function ScenarioManager() {
               </div>
             </div>
             <DialogFooter>
-                <Button variant="outline" onClick={() => setIsSaveOpen(false)}>Annuler</Button>
-                <Button onClick={handleSave} disabled={saveStatus === 'loading'}>
+                <Button variant="outline" onClick={() => setIsSaveAsOpen(false)}>Annuler</Button>
+                <Button onClick={handleSaveAs} disabled={saveStatus === 'loading'}>
                     {saveStatus === 'loading' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Sauvegarder
+                    Sauvegarder la copie
                 </Button>
             </DialogFooter>
           </DialogContent>
@@ -112,7 +113,7 @@ export default function ScenarioManager() {
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Charger un Scénario</DialogTitle>
-                  <DialogDescription>Sélectionnez un scénario sauvegardé pour l'activer et l'éditer.</DialogDescription>
+                  <DialogDescription>Sélectionnez un scénario sauvegardé pour l'activer et l'éditer. Vos modifications actuelles non sauvegardées seront perdues.</DialogDescription>
                 </DialogHeader>
                 <div className="max-h-[60vh] overflow-y-auto p-1">
                     {drafts.length > 0 ? drafts.map(draft => (
@@ -142,7 +143,7 @@ export default function ScenarioManager() {
       {lastSaved && (
         <CardFooter>
             <p className="text-xs text-muted-foreground">
-                Dernière sauvegarde automatique : {new Date(lastSaved).toLocaleString('fr-FR')}
+                Dernière sauvegarde : {new Date(lastSaved).toLocaleString('fr-FR')}
             </p>
         </CardFooter>
       )}

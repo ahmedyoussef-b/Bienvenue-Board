@@ -8,7 +8,8 @@ interface DraftState {
     saveStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
     error: string | null;
     lastSaved: string | null;
-    drafts: ScheduleDraft[]; // To hold the list of all drafts
+    drafts: ScheduleDraft[];
+    activeDraft: ScheduleDraft | null; // NEW: To hold the currently active draft
 }
 
 const initialState: DraftState = {
@@ -17,21 +18,22 @@ const initialState: DraftState = {
     error: null,
     lastSaved: null,
     drafts: [],
+    activeDraft: null,
 };
+
+// --- ASYNC THUNKS ---
 
 // Fetches the single ACTIVE draft
 export const fetchScheduleDraft = createAsyncThunk<ScheduleDraft | null, void, { rejectValue: string }>(
     'scheduleDraft/fetchActive',
     async (_, { rejectWithValue }) => {
         try {
-            // Use the consolidated endpoint with a query parameter
             const response = await fetch('/api/schedule-drafts?active=true', { credentials: 'include' });
             if (!response.ok) {
                 const errorData = await response.json();
                 return rejectWithValue(errorData.message ?? 'Échec de la récupération du brouillon actif');
             }
-            const data = await response.json();
-            return data;
+            return await response.json();
         } catch (error) {
             return rejectWithValue(error instanceof Error ? error.message : 'An unknown network error occurred');
         }
@@ -55,7 +57,7 @@ export const fetchAllDrafts = createAsyncThunk<ScheduleDraft[], void, { rejectVa
     }
 );
 
-// Creates a NEW draft
+// Creates a NEW draft (used for "Save As..." or initial creation)
 export const createDraft = createAsyncThunk<
     ScheduleDraft,
     { name: string; description?: string },
@@ -83,7 +85,6 @@ export const createDraft = createAsyncThunk<
         };
 
         try {
-            // Use the consolidated endpoint
             const response = await fetch('/api/schedule-drafts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -92,6 +93,51 @@ export const createDraft = createAsyncThunk<
             if (!response.ok) {
                 const errorData = await response.json();
                 return rejectWithValue(errorData.message ?? 'Failed to create draft');
+            }
+            return await response.json();
+        } catch (error) {
+            return rejectWithValue(error instanceof Error ? error.message : 'An unknown network error occurred');
+        }
+    }
+);
+
+// Updates the currently active draft (autosave)
+export const updateActiveDraft = createAsyncThunk<
+    ScheduleDraft,
+    void,
+    { state: RootState, rejectValue: string }
+>(
+    'scheduleDraft/updateActive',
+    async (_, { getState, rejectWithValue }) => {
+        const state = getState();
+        const { activeDraft } = state.scheduleDraft;
+        if (!activeDraft) return rejectWithValue("Aucun scénario actif à mettre à jour.");
+
+        const draftPayload = {
+            name: activeDraft.name,
+            description: activeDraft.description,
+            schoolConfig: state.schoolConfig,
+            classes: state.classes.items,
+            subjects: state.subjects.items,
+            teachers: state.teachers.items,
+            classrooms: state.classrooms.items,
+            grades: state.grades.items,
+            lessonRequirements: state.lessonRequirements.items,
+            teacherConstraints: state.teacherConstraints.items,
+            subjectRequirements: state.subjectRequirements.items,
+            teacherAssignments: state.teacherAssignments.items,
+            schedule: state.schedule.items,
+        };
+
+        try {
+            const response = await fetch(`/api/schedule-drafts/${activeDraft.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(draftPayload),
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                return rejectWithValue(errorData.message ?? 'Failed to update draft');
             }
             return await response.json();
         } catch (error) {
@@ -137,13 +183,25 @@ export const activateDraft = createAsyncThunk<ScheduleDraft, string, { rejectVal
 const scheduleDraftSlice = createSlice({
     name: 'scheduleDraft',
     initialState,
-    reducers: {},
+    reducers: {
+        updateActiveDraftDetails(state, action: PayloadAction<{ name?: string, description?: string }>) {
+            if (state.activeDraft) {
+                if (action.payload.name !== undefined) {
+                    state.activeDraft.name = action.payload.name;
+                }
+                if (action.payload.description !== undefined) {
+                    state.activeDraft.description = action.payload.description;
+                }
+            }
+        },
+    },
     extraReducers: (builder) => {
         builder
             // Fetch Active
             .addCase(fetchScheduleDraft.pending, (state) => { state.status = 'loading'; })
             .addCase(fetchScheduleDraft.fulfilled, (state, action: PayloadAction<ScheduleDraft | null>) => {
                 state.status = 'succeeded';
+                state.activeDraft = action.payload;
                 if (action.payload) { state.lastSaved = action.payload.updatedAt; } 
                 else { state.lastSaved = null; }
             })
@@ -155,25 +213,40 @@ const scheduleDraftSlice = createSlice({
             .addCase(fetchAllDrafts.fulfilled, (state, action) => {
                 state.drafts = action.payload;
             })
-            // Create
+            // Create ("Save As")
             .addCase(createDraft.pending, (state) => { state.saveStatus = 'loading'; })
             .addCase(createDraft.fulfilled, (state, action) => {
                 state.saveStatus = 'succeeded';
-                state.drafts.unshift(action.payload); // Add new draft to the list
-                // Deactivate old active draft in the list
-                state.drafts.forEach(d => { if(d.id !== action.payload.id) d.isActive = false; });
+                state.activeDraft = action.payload; // The new draft becomes active
+                state.drafts.forEach(d => { d.isActive = false; });
+                state.drafts.unshift(action.payload);
                 state.lastSaved = action.payload.updatedAt;
             })
             .addCase(createDraft.rejected, (state, action) => {
                 state.saveStatus = 'failed';
                 state.error = action.payload ?? 'Failed to save draft.';
             })
+            // Update (Autosave)
+            .addCase(updateActiveDraft.pending, (state) => { state.saveStatus = 'loading'; })
+            .addCase(updateActiveDraft.fulfilled, (state, action) => {
+                state.saveStatus = 'succeeded';
+                state.activeDraft = action.payload;
+                state.lastSaved = action.payload.updatedAt;
+            })
+            .addCase(updateActiveDraft.rejected, (state, action) => {
+                state.saveStatus = 'failed';
+                state.error = action.payload ?? 'Autosave failed.';
+            })
             // Delete
             .addCase(deleteDraft.fulfilled, (state, action) => {
                 state.drafts = state.drafts.filter(d => d.id !== action.payload);
+                if (state.activeDraft?.id === action.payload) {
+                    state.activeDraft = null; // If the active draft was deleted, clear it
+                }
             })
             // Activate
             .addCase(activateDraft.fulfilled, (state, action) => {
+                state.activeDraft = action.payload; // The newly activated draft becomes active
                 state.drafts = state.drafts.map(d => ({
                     ...d,
                     isActive: d.id === action.payload.id,
@@ -185,8 +258,10 @@ const scheduleDraftSlice = createSlice({
         selectSaveStatus: (state) => state.saveStatus,
         selectLastSaved: (state) => state.lastSaved,
         selectAllDrafts: (state) => state.drafts,
+        selectActiveDraft: (state) => state.activeDraft,
     },
 });
 
-export const { selectDraftStatus, selectSaveStatus, selectLastSaved, selectAllDrafts } = scheduleDraftSlice.selectors;
+export const { updateActiveDraftDetails } = scheduleDraftSlice.actions;
+export const { selectDraftStatus, selectSaveStatus, selectLastSaved, selectAllDrafts, selectActiveDraft } = scheduleDraftSlice.selectors;
 export default scheduleDraftSlice.reducer;

@@ -1,40 +1,67 @@
 // src/components/wizard/ShuddlePageClient.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useAppSelector } from '@/hooks/redux-hooks';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useAppDispatch, useAppSelector } from '@/hooks/redux-hooks';
 import { cn } from '@/lib/utils';
-import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, FilePlus, Sparkles, AlertTriangle } from 'lucide-react';
+import { useDebouncedCallback } from 'use-debounce';
 
 // Components
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import ScheduleEditor from '../schedule/ScheduleEditor';
 
-// Hooks
+// Hooks & Redux
 import useWizardData from '@/hooks/useWizardData';
 import useWizardSteps from '@/hooks/useWizardSteps';
 import { selectSchedule, selectScheduleStatus } from '@/lib/redux/features/schedule/scheduleSlice';
+import { selectActiveDraft, selectDraftStatus, createDraft, updateActiveDraft } from '@/lib/redux/features/scheduleDraftSlice';
+import { useToast } from '@/hooks/use-toast';
 
 const ShuddlePageClient: React.FC = () => {
+    const dispatch = useAppDispatch();
+    const { toast } = useToast();
     const [mode, setMode] = useState<'wizard' | 'edit'>('wizard');
-    const [initialModeSet, setInitialModeSet] = useState(false);
 
     // Selectors
+    const activeDraft = useAppSelector(selectActiveDraft);
+    const draftStatus = useAppSelector(selectDraftStatus);
     const schedule = useAppSelector(selectSchedule);
     const scheduleStatus = useAppSelector(selectScheduleStatus);
 
     // Custom hooks
     const wizardData = useWizardData();
     const { steps, currentStep, progress, handleNext, handlePrevious, handleStepClick } = useWizardSteps();
+    
+    // Autosave with debounce
+    const debouncedAutosave = useDebouncedCallback(() => {
+        if (activeDraft) {
+            dispatch(updateActiveDraft());
+            toast({
+                title: 'Sauvegarde automatique',
+                description: `Les modifications du scénario "${activeDraft.name}" ont été enregistrées.`,
+            });
+        }
+    }, 2000); // Autosave 2 seconds after the last change
 
     useEffect(() => {
-        if (scheduleStatus === 'succeeded' && !initialModeSet) {
-            setMode(schedule && schedule.length > 0 ? 'edit' : 'wizard');
-            setInitialModeSet(true);
+        // Trigger autosave whenever wizard data changes, but not on initial load
+        if (draftStatus === 'succeeded' && activeDraft) {
+            debouncedAutosave();
         }
-    }, [schedule, scheduleStatus, initialModeSet]);
+    }, [wizardData, debouncedAutosave, draftStatus, activeDraft]);
+
+    // Set initial mode based on schedule data
+    useEffect(() => {
+        if (draftStatus === 'succeeded' && scheduleStatus === 'succeeded') {
+            setMode(schedule && schedule.length > 0 ? 'edit' : 'wizard');
+        }
+    }, [schedule, scheduleStatus, draftStatus]);
 
     const handleGenerationSuccess = () => setMode('edit');
 
@@ -46,22 +73,28 @@ const ShuddlePageClient: React.FC = () => {
         />;
     };
 
-    if (!initialModeSet) {
+    if (draftStatus === 'loading') {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="ml-4 text-muted-foreground">Chargement de votre configuration...</p>
             </div>
         );
+    }
+    
+    // If loading is done and there's no active draft, prompt to create one.
+    if (draftStatus === 'succeeded' && !activeDraft) {
+        return <CreateFirstScenarioDialog />;
     }
 
     const renderWizard = () => (
         <>
             <div className="mb-8">
                 <div className="flex justify-between items-center mb-4">
-                    <span className="text-sm font-medium text-muted-foreground">
-                        Étape {currentStep + 1} sur {steps.length}
-                    </span>
-                    <span className="text-sm font-medium text-muted-foreground">
+                    <h2 className="text-xl font-semibold text-foreground truncate pr-4">
+                       Scénario: <span className="text-primary">{activeDraft?.name || 'Nouveau Scénario'}</span>
+                    </h2>
+                    <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
                         {Math.round(progress)}% complété
                     </span>
                 </div>
@@ -115,7 +148,51 @@ const ShuddlePageClient: React.FC = () => {
     );
 };
 
-// Sub-components for better readability
+// --- Sub-components for better readability ---
+
+const CreateFirstScenarioDialog = () => {
+    const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
+    const dispatch = useAppDispatch();
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleCreate = async () => {
+        if (!name.trim()) return;
+        setIsLoading(true);
+        await dispatch(createDraft({ name, description }));
+        setIsLoading(false);
+    };
+
+    return (
+        <Dialog open={true}>
+            <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+                <DialogHeader>
+                    <DialogTitle>Bienvenue dans le planificateur !</DialogTitle>
+                    <DialogDescription>
+                        Pour commencer, veuillez nommer votre premier scénario d'emploi du temps.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="scenario-name">Nom du scénario</Label>
+                        <Input id="scenario-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Année scolaire 2024-2025"/>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="scenario-desc">Description (Optionnel)</Label>
+                        <Input id="scenario-desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ex: Configuration principale"/>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleCreate} disabled={!name.trim() || isLoading}>
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FilePlus className="mr-2 h-4 w-4" />}
+                        Créer et commencer
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 const StepNavigation: React.FC<{
     steps: any[];
     currentStep: number;
@@ -213,7 +290,8 @@ const StepFooter: React.FC<{
 
 const PageHeader: React.FC = () => (
     <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-foreground mb-2">
+        <h1 className="text-4xl font-bold text-foreground mb-2 flex items-center justify-center gap-3">
+            <Sparkles className="text-primary"/>
             Planificateur d'Emplois du Temps
         </h1>
         <p className="text-lg text-muted-foreground">
