@@ -50,12 +50,18 @@ export function LoginForm() {
     console.log("➡️ [LoginForm] useEffect triggered. isSuccess:", isSuccess, "isError:", isError, "loginSuccessData:", loginSuccessData);
     if (isSuccess && loginSuccessData) {
         // More robust check for the 2FA response type
-        const twoFactorResponse = loginSuccessData as Partial<LoginResponse> & { twoFactorRequired?: boolean, twoFactorToken?: string };
+        const twoFactorResponse = loginSuccessData as Partial<LoginResponse> & { twoFactorRequired?: boolean, twoFactorToken?: string, twoFactorCode?: string };
         if (twoFactorResponse.twoFactorRequired && twoFactorResponse.twoFactorToken) {
              console.log("✅ [LoginForm] 2FA required. Redirecting...");
+
+             const description = twoFactorResponse.twoFactorCode
+                ? `Pour le prototypage, votre code est : ${twoFactorResponse.twoFactorCode}`
+                : "Un code de vérification a été envoyé à votre e-mail.";
+
              toast({
                 title: "Vérification Requise",
-                description: "Un code de vérification a été envoyé à votre e-mail.",
+                description: description,
+                duration: 10000, // Make it stay longer to copy the code
              });
              router.push(`/fr/verify-2fa?token=${twoFactorResponse.twoFactorToken}`);
         } else {

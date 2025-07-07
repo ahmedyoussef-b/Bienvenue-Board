@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from "@/lib/prisma";
-import { Prisma } from '@prisma/client';
-import { SafeUser, Role as AppRole } from '@/types/index';
+import { Prisma, Role as AppRole } from '@prisma/client';
+import { SafeUser } from '@/types/index';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { SESSION_COOKIE_NAME } from '@/lib/constants';
@@ -86,6 +86,7 @@ export const POST = async (req: NextRequest) => {
       return NextResponse.json({
         twoFactorRequired: true,
         twoFactorToken: twoFactorToken,
+        twoFactorCode: twoFactorCode, // Return code for prototyping
       }, { status: 200 });
     }
 

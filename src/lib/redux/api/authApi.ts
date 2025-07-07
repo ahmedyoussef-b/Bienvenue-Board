@@ -10,6 +10,7 @@ export interface AuthResponse {
 export interface TwoFactorResponse {
     twoFactorRequired: boolean;
     twoFactorToken: string;
+    twoFactorCode?: string; // For prototyping
 }
 
 export type LoginResponse = AuthResponse | TwoFactorResponse;
