@@ -1,60 +1,114 @@
 "use client";
 
-import { ITEM_PER_PAGE } from "@/lib/constants";
 import { useRouter } from "next/navigation";
+import { useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { ITEM_PER_PAGE } from "@/lib/constants";
+
+const DOTS = "...";
+
+const range = (start: number, end: number) => {
+  let length = end - start + 1;
+  return Array.from({ length }, (_, idx) => idx + start);
+};
 
 const Pagination = ({ page, count }: { page: number; count: number }) => {
   const router = useRouter();
+  const totalPages = Math.ceil(count / ITEM_PER_PAGE);
+  const siblingCount = 1;
 
-  const hasPrev = ITEM_PER_PAGE * (page - 1) > 0;
-  const hasNext = ITEM_PER_PAGE * (page - 1) + ITEM_PER_PAGE < count;
+  const paginationRange = useMemo(() => {
+    const totalPageCount = totalPages;
+    const totalPageNumbers = siblingCount + 5;
+
+    if (totalPageNumbers >= totalPageCount) {
+      return range(1, totalPageCount);
+    }
+
+    const leftSiblingIndex = Math.max(page - siblingCount, 1);
+    const rightSiblingIndex = Math.min(page + siblingCount, totalPageCount);
+
+    const shouldShowLeftDots = leftSiblingIndex > 2;
+    const shouldShowRightDots = rightSiblingIndex < totalPageCount - 1;
+
+    const firstPageIndex = 1;
+    const lastPageIndex = totalPageCount;
+
+    if (!shouldShowLeftDots && shouldShowRightDots) {
+      let leftItemCount = 3 + 2 * siblingCount;
+      let leftRange = range(1, leftItemCount);
+      return [...leftRange, DOTS, totalPageCount];
+    }
+
+    if (shouldShowLeftDots && !shouldShowRightDots) {
+      let rightItemCount = 3 + 2 * siblingCount;
+      let rightRange = range(totalPageCount - rightItemCount + 1, totalPageCount);
+      return [firstPageIndex, DOTS, ...rightRange];
+    }
+
+    if (shouldShowLeftDots && shouldShowRightDots) {
+      let middleRange = range(leftSiblingIndex, rightSiblingIndex);
+      return [firstPageIndex, DOTS, ...middleRange, DOTS, lastPageIndex];
+    }
+    
+    // Fallback for cases where one of the above conditions is not met perfectly
+    // (e.g., when close to edges).
+    return range(1, totalPages);
+  }, [totalPages, page, siblingCount]);
 
   const changePage = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
     const params = new URLSearchParams(window.location.search);
     params.set("page", newPage.toString());
     router.push(`${window.location.pathname}?${params}`);
   };
+
+  if (totalPages <= 1) {
+    return null;
+  }
+
   return (
-    <div className="p-4 flex items-center justify-between text-gray-500">
-      <button
-        disabled={!hasPrev}
-        className="py-2 px-4 rounded-md bg-slate-200 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-        onClick={() => {
-          changePage(page - 1);
-        }}
+    <div className="p-4 flex items-center justify-between text-muted-foreground">
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={page === 1}
+        onClick={() => changePage(page - 1)}
       >
-        Préc.
-      </button>
-      <div className="flex items-center gap-2 text-sm">
-        {Array.from(
-          { length: Math.ceil(count / ITEM_PER_PAGE) },
-          (_, index) => {
-            const pageIndex = index + 1;
+        Précédent
+      </Button>
+
+      <div className="flex items-center gap-1">
+        {paginationRange.map((pageNumber, index) => {
+          if (pageNumber === DOTS) {
             return (
-              <button
-                key={pageIndex}
-                className={`px-2 rounded-sm ${
-                  page === pageIndex ? "bg-lamaSky" : ""
-                }`}
-                onClick={() => {
-                  changePage(pageIndex);
-                }}
-              >
-                {pageIndex}
-              </button>
+              <span key={`${DOTS}-${index}`} className="px-2 py-1">
+                &#8230;
+              </span>
             );
           }
-        )}
+          return (
+            <Button
+              key={pageNumber}
+              variant={page === pageNumber ? "default" : "outline"}
+              size="sm"
+              onClick={() => changePage(pageNumber as number)}
+              className="w-9 h-9 p-0"
+            >
+              {pageNumber}
+            </Button>
+          );
+        })}
       </div>
-      <button
-        className="py-2 px-4 rounded-md bg-slate-200 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-        disabled={!hasNext}
-        onClick={() => {
-          changePage(page + 1);
-        }}
+
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={page === totalPages}
+        onClick={() => changePage(page + 1)}
       >
-        Suiv.
-      </button>
+        Suivant
+      </Button>
     </div>
   );
 };
