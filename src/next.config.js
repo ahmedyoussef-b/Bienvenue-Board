@@ -1,2 +1,3 @@
-// This file has been removed as next.config.js should only exist in the project root.
-// Having a duplicate here can cause unexpected build and server errors.
+// This file is obsolete and intentionally left blank.
+// The primary configuration is in `next.config.js` at the project root.
+// Keeping duplicate configuration files can cause unexpected build errors.
