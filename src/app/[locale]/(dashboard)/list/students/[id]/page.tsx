@@ -6,11 +6,17 @@ import { type StudentWithDetails, type WizardData, type ClassWithGrade, type Tea
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import  {Role} from "@prisma/client";
-import TimetableDisplay from "@/components/schedule/TimetableDisplay";
+import dynamic from 'next/dynamic';
+import { Skeleton } from "@/components/ui/skeleton";
 import StudentWeeklyAttendanceChart from "@/components/attendance/StudentWeeklyAttendanceChart";
 import StudentProfileCard from "@/components/student/StudentProfileCard";
 import StudentStatsCards from "@/components/student/StudentStatsCards";
 import StudentShortcuts from "@/components/student/StudentShortcuts";
+
+const TimetableDisplay = dynamic(() => import('@/components/schedule/TimetableDisplay'), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[700px] w-full" />,
+});
 
 const SingleStudentPage = async ({
   params,
@@ -124,7 +130,7 @@ const SingleStudentPage = async ({
       </div>
       <div className="w-full xl:w-1/3 flex flex-col gap-4">
         <StudentShortcuts student={student} locale={locale} />
-        <Suspense fallback={<p>Chargement de la présence...</p>}>
+        <Suspense fallback={<Skeleton className="h-[320px] w-full" />}>
             <StudentWeeklyAttendanceChart studentId={student.id} />
         </Suspense>
         <Announcements />

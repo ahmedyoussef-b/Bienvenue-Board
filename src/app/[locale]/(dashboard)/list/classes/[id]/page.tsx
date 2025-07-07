@@ -7,11 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Users, User, Calendar as CalendarIcon, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import BigCalendarContainer from "@/components/BigCalendarContainer";
+import dynamic from 'next/dynamic';
+import { Skeleton } from "@/components/ui/skeleton";
 import FormContainer from "@/components/FormContainer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import DynamicAvatar from "@/components/DynamicAvatar";
 import type { Prisma } from "@prisma/client";
+
+const BigCalendarContainer = dynamic(() => import('@/components/BigCalendarContainer'), {
+  ssr: false,
+  loading: () => <Skeleton className="h-full w-full" />,
+});
 
 // Define arguments for the prisma query to ensure type safety and reusability
 const classWithDetailsArgs = {

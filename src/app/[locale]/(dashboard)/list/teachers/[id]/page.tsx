@@ -6,10 +6,16 @@ import { getServerSession } from "@/lib/auth-utils";
 import { type TeacherWithDetails, type WizardData, type ClassWithGrade, type Subject, type Classroom, type Lesson } from "@/types/index";
 import { notFound, redirect } from "next/navigation";
 import { Role } from "@prisma/client";
-import TimetableDisplay from "@/components/schedule/TimetableDisplay";
+import dynamic from 'next/dynamic';
+import { Skeleton } from "@/components/ui/skeleton";
 import TeacherProfileCard from "@/components/teacher/TeacherProfileCard";
 import TeacherStatsCards from "@/components/teacher/TeacherStatsCards";
 import TeacherShortcuts from "@/components/teacher/TeacherShortcuts";
+
+const TimetableDisplay = dynamic(() => import('@/components/schedule/TimetableDisplay'), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[700px] w-full" />,
+});
 
 const SingleTeacherPage = async ({
   params,

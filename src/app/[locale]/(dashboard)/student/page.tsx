@@ -1,5 +1,4 @@
 // src/app/[locale]/(dashboard)/student/page.tsx
-import TimetableDisplay from "@/components/schedule/TimetableDisplay";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
@@ -7,6 +6,14 @@ import { Role } from "@prisma/client";
 import type { WizardData, ClassWithGrade, TeacherWithDetails } from '@/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { notFound } from "next/navigation";
+import dynamic from 'next/dynamic';
+import { Skeleton } from "@/components/ui/skeleton";
+
+const TimetableDisplay = dynamic(() => import('@/components/schedule/TimetableDisplay'), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[700px] w-full" />,
+});
+
 
 const StudentPage = async () => {
   const locale = 'fr';
