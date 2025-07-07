@@ -1,4 +1,3 @@
-
 // src/components/auth/LoginForm.tsx
 "use client";
 
@@ -52,17 +51,19 @@ export function LoginForm() {
   const router = useRouter(); 
 
   useEffect(() => {
+    console.log("👀 [LoginForm] useEffect triggered. State:", { isSuccess, isError });
     if (isSuccess && loginSuccessData) {
-        if ((loginSuccessData as unknown as TwoFactorResponse).twoFactorRequired) {
-             console.log("✅ [LoginForm] 2FA required. Redirecting...");
+        console.log("✅ [LoginForm] Login mutation was successful. Data:", loginSuccessData);
+        if ('twoFactorRequired' in loginSuccessData && (loginSuccessData as TwoFactorResponse).twoFactorRequired) {
+             console.log("🔑 [LoginForm] 2FA required. Redirecting...");
              toast({
                 title: "Vérification Requise",
                 description: "Un code de vérification a été envoyé à votre e-mail.",
              });
-             const token = (loginSuccessData as unknown as TwoFactorResponse).twoFactorToken;
+             const token = (loginSuccessData as TwoFactorResponse).twoFactorToken;
              router.push(`/fr/verify-2fa?token=${token}`);
         } else {
-             console.log("✅ [LoginForm] Login successful. Redirecting...");
+             console.log("🚀 [LoginForm] Standard login successful. State will trigger page redirect.");
              toast({
                 title: "Connexion réussie",
                 description: "Vous êtes maintenant connecté. Redirection...",
@@ -70,7 +71,7 @@ export function LoginForm() {
         }
     }
     if (isError && loginErrorData) {
-      console.error("❌ [LoginForm] Login failed. Error data:", loginErrorData);
+      console.error("❌ [LoginForm] Login mutation failed. Error data:", loginErrorData);
       let title = "Échec de la connexion";
       let description = "Une erreur inattendue s'est produite lors de la connexion.";
 

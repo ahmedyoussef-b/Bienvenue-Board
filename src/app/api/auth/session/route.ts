@@ -1,4 +1,3 @@
-
 // src/app/api/auth/session/route.ts
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
@@ -11,8 +10,6 @@ import { SESSION_COOKIE_NAME } from '@/lib/constants';
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 export async function GET(req: NextRequest) {
-  console.log("➡️ [API] GET /api/auth/session: Session check request received.");
-
   if (!JWT_SECRET_KEY) {
     console.error('❌ [API] Session check failed: JWT_SECRET_KEY is not defined.');
     return NextResponse.json({ message: 'Internal server configuration error' }, { status: 500 });
@@ -23,10 +20,8 @@ export async function GET(req: NextRequest) {
     const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
     if (!token) {
-      console.log("[API] No active session token found in cookies.");
       return NextResponse.json({ message: 'No active session token found' }, { status: 401 });
     }
-    console.log("[API] 🍪 Session token found. Verifying...");
 
     let decoded: JwtPayload;
     try {
@@ -37,7 +32,6 @@ export async function GET(req: NextRequest) {
       clearResponse.cookies.set(SESSION_COOKIE_NAME, '', { maxAge: -1, path: '/' });
       return clearResponse;
     }
-    console.log(`[API] ✅ Token verified for userId: ${decoded.userId}`);
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
@@ -60,7 +54,6 @@ export async function GET(req: NextRequest) {
       role: user.role as AppRole,
     };
     
-    console.log('[API] ✅ Session check successful. Returning user data.');
     return NextResponse.json({ user: safeUser }, { status: 200 });
 
   } catch (error: any) {
