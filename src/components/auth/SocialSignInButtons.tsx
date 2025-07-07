@@ -35,18 +35,26 @@ const SocialSignInButtons = ({ selectedRole }: SocialSignInButtonsProps) => {
             // Success is handled by the auth slice and page useEffect
         } catch (error: any) {
             console.error("Google Sign-In Error:", error);
-            // Handle specific Firebase errors if needed
+            
             if (error.code === 'auth/popup-closed-by-user') {
                  toast({
                     variant: "default",
                     title: "Connexion annulée",
                     description: "La fenêtre de connexion a été fermée.",
                 });
-            } else {
+            } else if (error.code === 'auth/configuration-not-found') {
+                 toast({
+                    variant: "destructive",
+                    title: "Erreur de configuration Firebase",
+                    description: "Les clés API Firebase sont invalides ou le domaine n'est pas autorisé. Veuillez vérifier votre fichier .env et les domaines autorisés dans votre console Firebase.",
+                    duration: 10000,
+                });
+            }
+             else {
                  toast({
                     variant: "destructive",
                     title: "Erreur de connexion",
-                    description: "Impossible de se connecter avec Google. Veuillez réessayer.",
+                    description: `Une erreur est survenue (${error.code || 'inconnue'}). Veuillez réessayer.`,
                 });
             }
         } finally {
