@@ -1,2 +1,3 @@
-// This file has been emptied to resolve a routing conflict with /src/app/[locale]/(auth)/login/page.tsx
-// Next.js does not allow two pages to resolve to the same URL path.
+// This file is intentionally left empty to resolve a routing conflict.
+// The correct login page is /src/app/[locale]/(auth)/login/page.tsx.
+// Please do not add any component or default export here.
