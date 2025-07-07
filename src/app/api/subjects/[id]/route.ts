@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 import { subjectSchema } from '@/lib/formValidationSchemas';
+import { Prisma } from '@prisma/client';
 
 const updateSubjectSchema = subjectSchema.partial();
 
@@ -72,7 +73,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
         console.log(`⬅️ DELETE /api/subjects/${id}: Successfully deleted subject:`, deletedSubject);
         return NextResponse.json(deletedSubject);
     } catch (error: any) {
-        if (error instanceof prisma.Prisma.PrismaClientKnownRequestError) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
             if (error.code === 'P2025') {
                 console.error(`❌ DELETE /api/subjects/${id}: Subject not found`);
                 return NextResponse.json({ message: 'Matière non trouvée' }, { status: 404 });

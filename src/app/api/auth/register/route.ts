@@ -5,8 +5,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt, { type SignOptions, type Secret } from 'jsonwebtoken';
 import type { SafeUser } from '@/types/index';
-import { Role } from "@prisma/client"; // Role enum from Prisma
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { Role, Prisma } from "@prisma/client"; // Role enum from Prisma
 import { SESSION_COOKIE_NAME } from '@/lib/constants';
 
 
@@ -123,7 +122,7 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
      console.error("[API] ❌ Unexpected error during registration:", error);
-    if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         return NextResponse.json({ message: 'Email or username already exists.' }, { status: 409 });
     }
     return NextResponse.json({ message: 'Internal server error', error: (error as Error).message }, { status: 500 });

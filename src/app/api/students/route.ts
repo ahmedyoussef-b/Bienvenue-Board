@@ -4,8 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { studentSchema } from '@/lib/formValidationSchemas';
 import bcrypt from 'bcryptjs';
-import { Role, UserSex } from '@prisma/client'; // Import Prisma enums
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { Role, UserSex, Prisma } from '@prisma/client'; // Import Prisma enums
 
 const HASH_ROUNDS = 10;
 
@@ -96,7 +95,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error creating student:', error);
-    if (error instanceof PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') { // Unique constraint failed
         // This might be a race condition if not caught by the initial check, or a different unique field
         return NextResponse.json({ message: `A student with some of these details already exists. Details: ${error.meta?.target}` }, { status: 409 });

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from "@/lib/prisma";
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { Prisma } from '@prisma/client';
 import { SafeUser, Role as AppRole } from '@/types/index';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
@@ -116,7 +116,7 @@ export const POST = async (req: NextRequest) => {
 
   } catch (error) {
     console.error('[API] ❌ Unexpected error during login:', error);
-    if (error instanceof PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       return NextResponse.json({ message: `Database error: ${error.message}` }, { status: 500 });
     }
     return NextResponse.json({ message: 'An unexpected error occurred during login' }, { status: 500 });

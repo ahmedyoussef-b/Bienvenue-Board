@@ -4,7 +4,6 @@ import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { Prisma, Role } from '@prisma/client';
 import { teacherSchema } from '@/lib/formValidationSchemas';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import type { TeacherWithDetails } from '@/types';
 
 const HASH_ROUNDS = 10;
@@ -132,7 +131,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error("❌ POST /api/teachers: An error occurred in the handler:", error);
-    if (error instanceof PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
              return NextResponse.json({ message: "Un utilisateur avec cet email ou nom d'utilisateur existe déjà." }, { status: 409 });
         }
