@@ -1,9 +1,2 @@
-// src/app/page.tsx
-import { redirect } from 'next/navigation';
-
-// The default and only locale is 'fr' as configured in the i18n middleware.
-const defaultLocale = 'fr';
-
-export default function RootPage() {
-  redirect(`/${defaultLocale}`);
-}
+// This file is intentionally left blank. 
+// The i18n routing is handled by the middleware.ts file.
