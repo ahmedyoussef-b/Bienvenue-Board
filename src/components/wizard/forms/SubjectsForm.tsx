@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import { useAppDispatch } from '@/hooks/redux-hooks';
-import { BookOpen, Hourglass, Trash2, Star, Plus, Copy, AlertTriangle } from 'lucide-react';
+import { BookOpen, Hourglass, Trash2, Star, Plus, Copy, AlertTriangle, Edit } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,8 +21,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from '@/lib/utils';
-import { localAddSubject, localDeleteSubject } from '@/lib/redux/features/subjects/subjectsSlice';
+import { localAddSubject, localDeleteSubject, localUpdateSubject } from '@/lib/redux/features/subjects/subjectsSlice';
 import { setRequirement } from '@/lib/redux/features/lessonRequirements/lessonRequirementsSlice';
 import { useToast } from '@/hooks/use-toast';
 import { WizardData, Subject } from '@/types/ wizard-types';
@@ -46,6 +54,10 @@ const SubjectsForm: React.FC<SubjectsFormProps> = ({ wizardData }) => {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null);
   const [deleteImpact, setDeleteImpact] = useState(0);
+
+  // State for edit modal
+  const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
+  const [editValues, setEditValues] = useState({ weeklyHours: 2, coefficient: 1 });
 
   const handleAddSubject = () => {
     if (!newSubject.name || !newSubject.weeklyHours || !newSubject.coefficient) return;
@@ -99,6 +111,25 @@ const SubjectsForm: React.FC<SubjectsFormProps> = ({ wizardData }) => {
     setSubjectToDelete(null);
     setDeleteImpact(0);
   };
+  
+  const handleOpenEditModal = (subject: Subject) => {
+    setEditingSubject(subject);
+    setEditValues({
+        weeklyHours: subject.weeklyHours || 2,
+        coefficient: subject.coefficient || 1
+    });
+  };
+
+  const handleUpdateSubject = () => {
+    if (!editingSubject) return;
+    dispatch(localUpdateSubject({
+        id: editingSubject.id,
+        ...editValues
+    }));
+    toast({ title: 'Matière mise à jour', description: `Les valeurs par défaut pour "${editingSubject.name}" ont été modifiées.` });
+    setEditingSubject(null);
+  };
+
 
   const handleHoursChange = (classId: number, subjectId: number, hours: number) => {
     dispatch(setRequirement({ classId, subjectId, hours }));
@@ -221,14 +252,25 @@ const SubjectsForm: React.FC<SubjectsFormProps> = ({ wizardData }) => {
                 {subjects.map(subject => (
                   <div key={subject.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
                     <span className="font-medium">{subject.name}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => promptDeleteSubject(subject)}
-                      className="text-destructive hover:text-destructive/90"
-                    >
-                      <Trash2 size={16} />
-                    </Button>
+                    <div className="flex items-center">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenEditModal(subject)}
+                            title="Modifier"
+                        >
+                            <Edit size={16} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => promptDeleteSubject(subject)}
+                          className="text-destructive hover:text-destructive/90"
+                          title="Supprimer"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -326,6 +368,45 @@ const SubjectsForm: React.FC<SubjectsFormProps> = ({ wizardData }) => {
             )}
         </Card>
       </div>
+
+      <Dialog open={editingSubject !== null} onOpenChange={(isOpen) => !isOpen && setEditingSubject(null)}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Modifier la matière: {editingSubject?.name}</DialogTitle>
+                <DialogDescription>
+                    Ajustez les heures et le coefficient par défaut pour cette matière.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-weeklyHours" className="text-right">Heures/semaine</Label>
+                    <Input
+                        id="edit-weeklyHours"
+                        type="number"
+                        min="1"
+                        value={editValues.weeklyHours}
+                        onChange={(e) => setEditValues(v => ({...v, weeklyHours: parseInt(e.target.value, 10) || 0}))}
+                        className="col-span-3"
+                    />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-coefficient" className="text-right">Coefficient</Label>
+                    <Input
+                        id="edit-coefficient"
+                        type="number"
+                        min="1"
+                        value={editValues.coefficient}
+                        onChange={(e) => setEditValues(v => ({...v, coefficient: parseInt(e.target.value, 10) || 0}))}
+                        className="col-span-3"
+                    />
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setEditingSubject(null)}>Annuler</Button>
+                <Button onClick={handleUpdateSubject}>Enregistrer</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>

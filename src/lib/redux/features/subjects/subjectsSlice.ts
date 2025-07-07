@@ -92,6 +92,12 @@ export const subjectsSlice = createSlice({
     localDeleteSubject(state, action: PayloadAction<number>) {
         state.items = state.items.filter(s => s.id !== action.payload);
     },
+    localUpdateSubject(state, action: PayloadAction<Partial<Subject> & { id: number }>) {
+        const index = state.items.findIndex(s => s.id === action.payload.id);
+        if (index !== -1) {
+            state.items[index] = { ...state.items[index], ...action.payload };
+        }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -130,6 +136,6 @@ export const subjectsSlice = createSlice({
   }
 });
 
-export const { setAllSubjects, localAddSubject, localDeleteSubject } = subjectsSlice.actions;
+export const { setAllSubjects, localAddSubject, localDeleteSubject, localUpdateSubject } = subjectsSlice.actions;
 export const { selectAllMatieres, getMatieresStatus, getMatieresError } = subjectsSlice.selectors;
 export default subjectsSlice.reducer;
