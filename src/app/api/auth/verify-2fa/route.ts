@@ -10,7 +10,6 @@ const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 const JWT_ACCESS_TOKEN_EXPIRATION_TIME = process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME || '1h';
 
 export async function POST(req: NextRequest) {
-  console.log("➡️ [API] POST /api/auth/verify-2fa: Request received.");
   if (!JWT_SECRET_KEY) {
     console.error('2FA Verification failed: JWT_SECRET_KEY is not defined.');
     return NextResponse.json({ message: 'Internal server configuration error' }, { status: 500 });
@@ -18,7 +17,6 @@ export async function POST(req: NextRequest) {
 
   try {
     const { token: twoFactorToken, code } = await req.json();
-    console.log("[API] Attempting to verify 2FA token and code.");
 
     if (!twoFactorToken || !code) {
       return NextResponse.json({ message: 'Token and code are required' }, { status: 400 });
@@ -28,19 +26,14 @@ export async function POST(req: NextRequest) {
     let decoded: { userId: string, twoFactorCodeHash: string };
     try {
       decoded = jwt.verify(twoFactorToken, JWT_SECRET_KEY) as typeof decoded;
-      console.log("[API] ✅ 2FA token is valid. Decoded user ID:", decoded.userId);
     } catch (error) {
-      console.error("[API] ❌ Invalid or expired 2FA token.");
       return NextResponse.json({ message: 'Invalid or expired verification token.' }, { status: 401 });
     }
 
     // 2. Compare the submitted code with the hashed code in the token
     const codeMatch = await bcrypt.compare(code, decoded.twoFactorCodeHash);
     if (!codeMatch) {
-      console.error("[API] ❌ Submitted 2FA code does not match.");
       return NextResponse.json({ message: 'Invalid verification code.' }, { status: 401 });
-    } else {
-        console.log("[API] ✅ 2FA code match successful.");
     }
 
     // 3. If code is correct, fetch the user and generate the final session token
@@ -53,7 +46,6 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Generate and return final session token and user data
-    console.log("[API] ✅ Generating final session token.");
     const finalName = user.name || user.username || user.email;
     const userRole = user.role as AppRole;
     
@@ -65,7 +57,6 @@ export async function POST(req: NextRequest) {
     
     const response = NextResponse.json({ token, user: safeUserResponse }, { status: 200 });
     
-    console.log("[API] ✅ Sending final successful login response.");
     response.cookies.set({
       name: SESSION_COOKIE_NAME,
       value: token,

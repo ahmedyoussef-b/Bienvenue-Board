@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    // allowedDevOrigins is now a top-level property, not in experimental
+  },
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,

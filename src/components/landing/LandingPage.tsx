@@ -17,7 +17,8 @@ export default function LandingPage() {
     return (
         <div 
             className="relative flex flex-col items-center justify-center min-h-screen bg-cover bg-center bg-no-repeat p-8"
-            style={{ backgroundImage: "url('/images/riadh5.jpg')" }}
+            style={{ backgroundImage: "url('https://placehold.co/1920x1080.png')" }}
+            data-ai-hint="school building"
         >
             {/* Overlay */}
             <div className="absolute inset-0 bg-black/50 z-0" />
