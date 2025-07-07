@@ -1,12 +1,7 @@
 // src/app/[locale]/layout.tsx
 import type { ReactNode } from 'react';
-import { Providers } from './Providers';
 
-// This layout is now a Server Component
+// This layout is now just a pass-through since Providers are in the root layout.
 export default function LocaleLayout({ children }: Readonly<{ children: ReactNode }>) {
-  return (
-    <Providers>
-      {children}
-    </Providers>
-  );
+  return <>{children}</>;
 }
