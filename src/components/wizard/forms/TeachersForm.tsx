@@ -191,9 +191,9 @@ const TeachersForm: React.FC<TeachersFormProps> = ({ wizardData }) => {
   const teacherWorkload = useMemo(() => {
     const workloadMap = new Map<string, number>();
     teachers.forEach(teacher => {
-        const teacherAssignments = teacherAssignments.filter(a => a.teacherId === teacher.id);
+        const assignmentsForTeacher = teacherAssignments.filter(a => a.teacherId === teacher.id);
         let totalHours = 0;
-        teacherAssignments.forEach(assignment => {
+        assignmentsForTeacher.forEach(assignment => {
             assignment.classIds.forEach(classId => {
                 const req = lessonRequirements.find(r => r.classId === classId && r.subjectId === assignment.subjectId);
                 const subj = subjects.find(s => s.id === assignment.subjectId);
