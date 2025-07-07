@@ -35,15 +35,16 @@ export default function Verify2FAForm({ token }: Verify2FAFormProps) {
   const router = useRouter();
 
   useEffect(() => {
+    console.log("➡️ [Verify2FAForm] useEffect triggered. isSuccess:", isSuccess, "isError:", isError);
     if (isSuccess) {
-      // The authSlice extraReducer will handle the state update.
-      // The page component's useEffect will handle the redirect.
+      console.log("✅ [Verify2FAForm] 2FA verification successful.");
       toast({
         title: 'Connexion réussie',
         description: 'Vous êtes maintenant connecté.',
       });
     }
     if (isError && verifyErrorData) {
+      console.log("❌ [Verify2FAForm] 2FA verification failed. Error:", verifyErrorData);
       const errorMessage = (verifyErrorData as any)?.data?.message || 'Code de vérification invalide ou expiré.';
       toast({
         variant: "destructive",
@@ -54,6 +55,7 @@ export default function Verify2FAForm({ token }: Verify2FAFormProps) {
   }, [isSuccess, isError, verifyErrorData, toast, router]);
 
   const onSubmit: SubmitHandler<Verify2FAFormData> = async (data) => {
+    console.log("➡️ [Verify2FAForm] Submitting 2FA form with data:", data);
     await verify2FA(data);
   };
 
