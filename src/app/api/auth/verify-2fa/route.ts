@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       secure: true,
       maxAge: 60 * 60 * 24, // 1 day
       path: '/',
-      sameSite: 'lax',
+      sameSite: 'none',
     });
      console.log(`[API] 🍪 Final session cookie set for ${user.username}.`);
 

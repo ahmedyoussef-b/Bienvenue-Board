@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
       secure: true,
       maxAge: -1,
       path: '/',
-      sameSite: 'lax',
+      sameSite: 'none',
     });
     console.log("[API] 🍪 Cleared session cookie.");
     return response;

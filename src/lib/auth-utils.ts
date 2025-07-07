@@ -26,6 +26,7 @@ export async function getServerSession() {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET_KEY) as AppJwtPayload;
+    console.log('🛡️ [auth-utils] Token verified successfully on server.');
     return {
       userId: decoded.userId,
       role: decoded.role,
@@ -34,7 +35,7 @@ export async function getServerSession() {
       isAuthenticated: true,
     };
   } catch (e: any) {
-    console.error('[Server] Token verification failed. Error:', e.message);
+    console.error('🛡️ [auth-utils] Server token verification failed. Error:', e.message);
     return null;
   }
 }
