@@ -1,9 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  i18n: {
-    locales: ["fr"],
-    defaultLocale: "fr",
-    localeDetection: false,
+  experimental: {
+    allowedDevOrigins: ["https://3000-firebase-studio-1751587093894.cluster-6frnii43o5blcu522sivebzpii.cloudworkstations.dev"],
   },
   /* config options here */
   typescript: {
