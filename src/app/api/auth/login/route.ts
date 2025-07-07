@@ -48,49 +48,7 @@ export const POST = async (req: NextRequest) => {
     }
     console.log(`[API] ✅ Password match successful for user ${user.username}.`);
     
-    // Admin 2FA Flow
-    if (user.role === AppRole.ADMIN) {
-      console.log(`[API] 🛡️ Admin role detected. Initiating 2FA flow.`);
-      const twoFactorCode = crypto.randomInt(100000, 1000000).toString();
-      const twoFactorCodeHashed = await bcrypt.hash(twoFactorCode, 10);
-      
-      const twoFactorToken = jwt.sign(
-        { userId: user.id, twoFactorCodeHash: twoFactorCodeHashed },
-        JWT_SECRET_KEY,
-        { expiresIn: JWT_2FA_TOKEN_EXPIRATION_TIME }
-      );
-      
-      try {
-        const transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port: Number(process.env.SMTP_PORT),
-          secure: Number(process.env.SMTP_PORT) === 465,
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-          },
-        });
-
-        await transporter.sendMail({
-          from: process.env.EMAIL_FROM,
-          to: user.email,
-          subject: 'Votre code de connexion SchooLama',
-          html: `<p>Votre code de vérification est : <strong>${twoFactorCode}</strong></p><p>Il expirera dans 5 minutes.</p>`,
-        });
-         console.log(`[API] 📧 2FA code email sent to ${user.email}.`);
-      } catch(emailError) {
-        console.error(`** 🔑 [API] Fallback 2FA code for ${user.email}: ${twoFactorCode} **`);
-      }
-      
-      console.log(`[API] ✅ Responding with 2FA required.`);
-      return NextResponse.json({
-        twoFactorRequired: true,
-        twoFactorToken: twoFactorToken,
-        twoFactorCode: twoFactorCode, // Return code for prototyping
-      }, { status: 200 });
-    }
-
-    // Standard User Login
+    // Standard User Login for ALL roles
     console.log(`[API] ✅ Standard user login. Generating session token for ${user.username}.`);
     const finalName = user.name || user.username || user.email;
     const userRole = user.role as AppRole;
