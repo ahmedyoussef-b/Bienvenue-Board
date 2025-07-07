@@ -1,6 +1,6 @@
 // src/lib/redux/slices/authSlice.ts
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { SafeUser } from '@/types';
+import type { SafeUser } from '@/types/index';
 import { authApi, type LoginResponse, type AuthResponse } from '../api/authApi';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
@@ -44,6 +44,7 @@ const authSlice = createSlice({
       state.isLoading = false;
     },
     manualLogout: (state) => {
+      console.log("➡️ [authSlice] manualLogout: Clearing user state.");
       state.user = null;
       state.isAuthenticated = false;
       state.isLoading = false;
@@ -55,6 +56,7 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     // Fulfilled handler for all successful auth mutations that return AuthResponse
     const handleAuthSuccess = (state: AuthState, action: PayloadAction<AuthResponse>) => {
+      console.log("✅ [authSlice] Handling auth success. User:", action.payload.user.username);
       state.user = action.payload.user;
       state.isAuthenticated = true;
       state.isLoading = false;
@@ -65,6 +67,7 @@ const authSlice = createSlice({
 
     // Rejected handler for all failed auth mutations
     const handleAuthFailure = (state: AuthState) => {
+      console.log("❌ [authSlice] Handling auth failure. Clearing user state.");
       state.user = null;
       state.isAuthenticated = false;
       state.isLoading = false;
@@ -78,22 +81,28 @@ const authSlice = createSlice({
       .addMatcher(
         authApi.endpoints.login.matchPending,
         (state) => { 
+          console.log("⏳ [authSlice] login.matchPending: Setting isLoading = true");
           state.isLoading = true; 
         }
       )
       .addMatcher(
         authApi.endpoints.login.matchFulfilled,
         (state, action: PayloadAction<LoginResponse>) => {
+          console.log("✅ [authSlice] login.matchFulfilled. Payload:", action.payload);
           if ('user' in action.payload) {
             handleAuthSuccess(state, action as PayloadAction<AuthResponse>);
           } else {
+            console.log("[authSlice] 2FA required. Auth state not changed.");
             state.isLoading = false;
           }
         }
       )
       .addMatcher(
         authApi.endpoints.login.matchRejected,
-        handleAuthFailure
+        (state, action) => {
+          console.error("❌ [authSlice] login.matchRejected. Error:", action.error.message);
+          handleAuthFailure(state);
+        }
       )
       .addMatcher(
         authApi.endpoints.register.matchPending,
@@ -121,17 +130,26 @@ const authSlice = createSlice({
       )
       // Logout
       .addMatcher(authApi.endpoints.logout.matchPending, (state) => {
+        console.log("⏳ [authSlice] logout.matchPending: Setting isLoading = true");
         state.isLoading = true;
       })
-      .addMatcher(authApi.endpoints.logout.matchFulfilled, handleAuthFailure)
-      .addMatcher(authApi.endpoints.logout.matchRejected, handleAuthFailure) // Also handle failure case for logout
+      .addMatcher(authApi.endpoints.logout.matchFulfilled, (state) => {
+         console.log("✅ [authSlice] logout.matchFulfilled. Clearing user state.");
+         handleAuthFailure(state);
+      })
+      .addMatcher(authApi.endpoints.logout.matchRejected, (state, action) => {
+        console.error("❌ [authSlice] logout.matchRejected. Error:", action.error.message);
+        handleAuthFailure(state)
+      }) // Also handle failure case for logout
       // Check Session
       .addMatcher(authApi.endpoints.checkSession.matchPending, (state) => {
         if (!state.isAuthenticated || state.user === null) {
+            console.log("⏳ [authSlice] checkSession.matchPending: No user found, setting isLoading = true");
             state.isLoading = true;
         }
       })
       .addMatcher(authApi.endpoints.checkSession.matchFulfilled, (state, action) => {
+        console.log("✅ [authSlice] checkSession.matchFulfilled. Session is valid. User:", action.payload.user.username);
         state.user = action.payload.user;
         state.isAuthenticated = true;
         state.isLoading = false;
@@ -140,22 +158,30 @@ const authSlice = createSlice({
         }
       })
       .addMatcher(authApi.endpoints.checkSession.matchRejected, (state, action) => {
+        console.log("❌ [authSlice] checkSession.matchRejected. Clearing user state. Error:", action.error.message);
         handleAuthFailure(state);
       })
        // Verify 2FA
       .addMatcher(
         authApi.endpoints.verify2FA.matchPending,
         (state) => {
+          console.log("⏳ [authSlice] verify2FA.matchPending: Setting isLoading = true");
           state.isLoading = true;
         }
       )
       .addMatcher(
         authApi.endpoints.verify2FA.matchFulfilled,
-        handleAuthSuccess
+        (state, action) => {
+            console.log("✅ [authSlice] verify2FA.matchFulfilled. Calling handleAuthSuccess.");
+            handleAuthSuccess(state, action);
+        }
       )
       .addMatcher(
         authApi.endpoints.verify2FA.matchRejected,
-        handleAuthFailure
+        (state, action) => {
+          console.error("❌ [authSlice] verify2FA.matchRejected. Error:", action.error.message);
+          handleAuthFailure(state);
+        }
       );
   },
   selectors: {

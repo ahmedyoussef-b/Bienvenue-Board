@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { SESSION_COOKIE_NAME } from '@/lib/constants';
 
 export async function POST(req: NextRequest) {
+  console.log("➡️ [API] POST /api/auth/logout: Logout request received.");
   try {
     const response = NextResponse.json({ message: 'Logout successful' }, { status: 200 });
 
@@ -15,9 +16,10 @@ export async function POST(req: NextRequest) {
       path: '/',
       sameSite: 'lax',
     });
-
+    console.log("[API] 🍪 Cleared session cookie.");
     return response;
   } catch (error) {
+    console.error("[API] ❌ Error during logout:", error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

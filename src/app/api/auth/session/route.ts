@@ -10,8 +10,9 @@ import { SESSION_COOKIE_NAME } from '@/lib/constants';
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 export async function GET(req: NextRequest) {
+  console.log("➡️ [API] GET /api/auth/session: Session check request received.");
   if (!JWT_SECRET_KEY) {
-    console.error("🛡️ [Server] auth-utils: JWT_SECRET_KEY is not defined. Cannot verify token.");
+    console.error("❌ [API] Session check failed: JWT_SECRET_KEY is not defined.");
     return NextResponse.json({ message: 'Internal server configuration error' }, { status: 500 });
   }
 
@@ -20,27 +21,33 @@ export async function GET(req: NextRequest) {
     const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
     if (!token) {
+      console.log("[API] ❌ No active session token found in cookies.");
       return NextResponse.json({ message: 'No active session token found' }, { status: 401 });
     }
+    console.log("[API] ✅ Session token found. Verifying...");
 
     let decoded: AppJwtPayload;
     try {
       decoded = jwt.verify(token, JWT_SECRET_KEY) as AppJwtPayload;
     } catch (error: any) {
+      console.warn("[API] ❌ Token verification failed. Invalid or expired token.", error.message);
       const clearResponse = NextResponse.json({ message: 'Invalid or expired session token' }, { status: 401 });
       clearResponse.cookies.set(SESSION_COOKIE_NAME, '', { maxAge: -1, path: '/' });
       return clearResponse;
     }
+    console.log(`[API] ✅ Token verified successfully for userId: ${decoded.userId}`);
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
     });
 
     if (!user) {
+      console.warn(`[API] ❌ User from token (ID: ${decoded.userId}) not found in database.`);
       const clearResponse = NextResponse.json({ message: 'Session user not found' }, { status: 401 });
       clearResponse.cookies.set(SESSION_COOKIE_NAME, '', { maxAge: -1, path: '/' });
       return clearResponse;
     }
+    console.log(`[API] ✅ User found in database. Responding with user data.`);
     
     const finalName = user.name || user.username || user.email;
 
