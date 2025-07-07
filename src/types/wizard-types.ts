@@ -1,6 +1,7 @@
-import { ClassWithGrade, Subject as PrismaSubject, TeacherWithDetails, Classroom, Grade, Lesson, TeacherConstraint } from '@/types';
+import { ClassWithGrade, Subject, TeacherWithDetails, Classroom, Grade, Lesson, TeacherConstraint, ScheduleDraft } from '@/types';
 
-export type Subject = PrismaSubject;
+export type Subject = Subject;
+export type ScheduleDraft = ScheduleDraft;
 
 export interface WizardData {
   school: {

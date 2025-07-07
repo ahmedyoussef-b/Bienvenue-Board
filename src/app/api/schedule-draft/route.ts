@@ -1,4 +1,4 @@
-// src/app/api/schedule-drafts/route.ts
+// src/app/api/schedule-draft/route.ts
 import { NextResponse, type NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from '@/lib/auth-utils';
@@ -16,13 +16,23 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const drafts = await prisma.scheduleDraft.findMany({
-            where: { userId: session.userId },
-            orderBy: { updatedAt: 'desc' },
+        // Fetch only the active draft for this user
+        const activeDraft = await prisma.scheduleDraft.findFirst({
+            where: { 
+                userId: session.userId,
+                isActive: true,
+            },
         });
-        return NextResponse.json(drafts, { status: 200 });
+        
+        if (!activeDraft) {
+            // Return null or an empty object if no active draft is found, which is an expected scenario.
+            // Using 204 No Content might be semantically better, but this works with the client setup.
+            return NextResponse.json(null, { status: 200 });
+        }
+
+        return NextResponse.json(activeDraft, { status: 200 });
     } catch (error) {
-        console.error('[API/schedule-drafts GET] Error:', error);
+        console.error('[API/schedule-draft/active GET] Error:', error);
         return NextResponse.json({ message: 'Erreur interne du serveur.' }, { status: 500 });
     }
 }
@@ -44,12 +54,18 @@ export async function POST(request: NextRequest) {
         const { name, description } = validation.data;
         const { schoolConfig, ...initialData } = body.initialData || {};
 
+        // When creating a new draft, deactivate all others for this user
+        await prisma.scheduleDraft.updateMany({
+            where: { userId: session.userId },
+            data: { isActive: false },
+        });
+
         const newDraft = await prisma.scheduleDraft.create({
             data: {
                 userId: session.userId,
                 name,
                 description,
-                isActive: false, // New drafts are not active by default
+                isActive: true, // New drafts are now active by default
                 schoolConfig: schoolConfig || {},
                 classes: initialData.classes || [],
                 subjects: initialData.subjects || [],
@@ -66,7 +82,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json(newDraft, { status: 201 });
     } catch (error: any) {
-        console.error('[API/schedule-drafts POST] Error:', error);
+        console.error('[API/schedule-draft POST] Error:', error);
         if (error.code === 'P2002') {
              return NextResponse.json({ message: 'Un scénario avec ce nom existe déjà.' }, { status: 409 });
         }
