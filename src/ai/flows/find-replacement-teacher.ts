@@ -11,10 +11,7 @@ import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import type { Day } from '@prisma/client';
 import { findConflictingConstraint } from '@/lib/schedule-utils';
-import { model, generate } from 'genkit/generate';
-import { defineFlow, runFlow } from 'genkit/flow';
-import { defineTool } from 'genkit/tool';
-
+import { ai } from '@/ai/genkit';
 
 // Schemas for input and output
 export const FindReplacementTeacherInputSchema = z.object({
@@ -44,8 +41,8 @@ export const FindReplacementTeacherOutputSchema = z.object({
 export type FindReplacementTeacherOutput = z.infer<typeof FindReplacementTeacherOutputSchema>;
 
 
-// Tool definition
-const getTeacherAvailability = defineTool(
+// Tool definition using ai.defineTool
+const getTeacherAvailability = ai.defineTool(
   {
     name: 'getTeacherAvailability',
     description: 'Get a list of available and qualified teachers for a specific lesson slot.',
@@ -105,8 +102,8 @@ const getTeacherAvailability = defineTool(
 );
 
 
-// Flow definition
-const findReplacementTeacherFlow = defineFlow(
+// Flow definition using ai.defineFlow
+const findReplacementTeacherFlow = ai.defineFlow(
   {
     name: 'findReplacementTeacherFlow',
     inputSchema: FindReplacementTeacherInputSchema,
@@ -143,9 +140,9 @@ const findReplacementTeacherFlow = defineFlow(
         endTime: l.endTime.toISOString().substring(11, 16)
     }));
     
-    const llm = model('googleai/gemini-2.0-flash');
-    const response = await generate({
-      model: llm,
+    // Use ai.generate and new response format
+    const response = await ai.generate({
+      model: 'googleai/gemini-2.0-flash',
       system: `You are a helpful school administration assistant. Your task is to find the best possible replacements for an absent teacher's lessons.`,
       prompt: `Teacher ${absentTeacher.name} ${absentTeacher.surname} (ID: ${absentTeacherId}) is absent on ${day}. 
       Their schedule for the day is: ${JSON.stringify(simpleLessons)}.
@@ -160,12 +157,12 @@ const findReplacementTeacherFlow = defineFlow(
       }
     });
 
-    return response.output()!;
+    return response.output!;
   }
 );
 
 
-// Exported server action
+// Exported server action, directly calls the flow
 export async function findReplacementTeacher(input: FindReplacementTeacherInput): Promise<FindReplacementTeacherOutput> {
-  return await runFlow(findReplacementTeacherFlow, input);
+  return await findReplacementTeacherFlow(input);
 }
