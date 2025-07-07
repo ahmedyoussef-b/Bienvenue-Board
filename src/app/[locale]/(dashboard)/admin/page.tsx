@@ -9,6 +9,8 @@ import AdminActionCards from '@/components/dashboard/admin/AdminActionCards';
 import AdminStatsGrid from '@/components/dashboard/admin/AdminStatsGrid';
 import AdminSidebar from '@/components/dashboard/admin/AdminSidebar';
 
+export const dynamic = 'force-dynamic';
+
 const AdminPage = async ({
   searchParams,
 }: {
