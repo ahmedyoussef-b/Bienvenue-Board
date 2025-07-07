@@ -16,22 +16,21 @@ export const generateTimeSlots = (startTime: string, endTime: string, sessionDur
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const [endHour, endMinute] = endTime.split(':').map(Number);
 
-    // Use a fixed date to avoid DST issues
     const startDate = new Date(Date.UTC(2000, 0, 1, startHour, startMinute));
     const endDate = new Date(Date.UTC(2000, 0, 1, endHour, endMinute));
 
     let currentTime = new Date(startDate);
 
     while (currentTime < endDate) {
-        // Skip lunch break from 12:00 to 13:59
-        if (currentTime.getUTCHours() === 12 || currentTime.getUTCHours() === 13) {
-            currentTime.setUTCHours(14, 0, 0, 0);
-            if (currentTime >= endDate) break;
+        const currentHour = currentTime.getUTCHours();
+        
+        // N'ajoute pas de créneaux pendant la pause déjeuner (12:xx or 13:xx)
+        if (currentHour < 12 || currentHour >= 14) {
+            slots.push(
+                `${currentHour.toString().padStart(2, '0')}:${currentTime.getUTCMinutes().toString().padStart(2, '0')}`
+            );
         }
-
-        slots.push(
-            `${currentTime.getUTCHours().toString().padStart(2, '0')}:${currentTime.getUTCMinutes().toString().padStart(2, '0')}`
-        );
+        
         currentTime.setUTCMinutes(currentTime.getUTCMinutes() + sessionDuration);
     }
     return slots;
@@ -305,3 +304,56 @@ export const generateSchedule = (wizardData: WizardData): { schedule: Schedulabl
 
     return { schedule: newSchedule, unplacedLessons };
 };
+
+export const adjustScheduleToCurrentWeek = (
+  scheduleData: Lesson[]
+): { title: string; start: Date; end: Date; }[] => {
+  if (!scheduleData || scheduleData.length === 0) {
+    return [];
+  }
+
+  const today = new Date();
+  // Get the start of the current week, starting on Monday.
+  const startOfThisWeek = startOfWeek(today, { weekStartsOn: 1 });
+
+  const dayMapping: { [key in Day]: number } = {
+    MONDAY: 0,
+    TUESDAY: 1,
+    WEDNESDAY: 2,
+    THURSDAY: 3,
+    FRIDAY: 4,
+    SATURDAY: 5,
+    SUNDAY: 6, // Should not happen in this app
+  };
+
+  const adjustedSchedule: { title: string; start: Date; end: Date; }[] = [];
+
+  scheduleData.forEach(lesson => {
+    // Check if the day exists in our mapping
+    if (dayMapping[lesson.day] === undefined) return;
+
+    const lessonDayIndex = dayMapping[lesson.day];
+    
+    // Calculate the date for the lesson in the current week
+    const lessonDate = addDays(startOfThisWeek, lessonDayIndex); 
+
+    // startTime and endTime from Prisma are full Date objects, but we only care about the time part.
+    // The seed stores time in UTC, so we use getUTCHours/Minutes.
+    const startHour = new Date(lesson.startTime).getUTCHours();
+    const startMinute = new Date(lesson.startTime).getUTCMinutes();
+    const endHour = new Date(lesson.endTime).getUTCHours();
+    const endMinute = new Date(lesson.endTime).getUTCMinutes();
+    
+    // Create the final start and end Date objects for the calendar event
+    const startDateTime = set(lessonDate, { hours: startHour, minutes: startMinute, seconds: 0, milliseconds: 0 });
+    const endDateTime = set(lessonDate, { hours: endHour, minutes: endMinute, seconds: 0, milliseconds: 0 });
+
+    adjustedSchedule.push({
+      title: lesson.subject.name, // Use subject name for the event title
+      start: startDateTime,
+      end: endDateTime,
+    });
+  });
+
+  return adjustedSchedule;
+}
