@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  i18n: {
+    locales: ["fr"],
+    defaultLocale: "fr",
+    localeDetection: false,
+  },
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
@@ -19,7 +24,7 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'api.dicebear.com',
         port: '',
-        pathname: '/8.x/avataaars/svg',
+        pathname: '/**', // Use a more permissive pathname
       },
       {
         protocol: 'https',

@@ -9,10 +9,14 @@ import { SESSION_COOKIE_NAME } from '@/lib/constants';
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 export async function getServerSession() {
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
+  const allCookies = cookieStore.getAll();
+  console.log('🛡️ [auth-utils] All cookies received by server:', allCookies);
+
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   
    if (!token) {
+    console.log('🛡️ [auth-utils] No session token cookie found.');
     return null;
   }
   if (!JWT_SECRET_KEY) {

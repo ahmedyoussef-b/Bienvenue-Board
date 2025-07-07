@@ -19,7 +19,6 @@ export interface User {
   avatar?: string;
 }
 
-
 const initialState: AuthState = {
   user: null,
   isAuthenticated: false,

@@ -16,6 +16,7 @@ import type { SerializedError } from '@reduxjs/toolkit';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
+import type { LoginResponse } from "@/lib/redux/api/authApi";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Adresse e-mail invalide." }),
@@ -26,11 +27,6 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 interface ApiErrorData {
   message: string;
-}
-
-interface TwoFactorResponse {
-    twoFactorRequired: boolean;
-    twoFactorToken: string;
 }
 
 function isFetchBaseQueryError(error: unknown): error is FetchBaseQueryError {
@@ -52,13 +48,14 @@ export function LoginForm() {
 
   useEffect(() => {
     if (isSuccess && loginSuccessData) {
-        if ('twoFactorRequired' in loginSuccessData && (loginSuccessData as TwoFactorResponse).twoFactorRequired) {
+        // More robust check for the 2FA response type
+        const twoFactorResponse = loginSuccessData as Partial<LoginResponse> & { twoFactorRequired?: boolean, twoFactorToken?: string };
+        if (twoFactorResponse.twoFactorRequired && twoFactorResponse.twoFactorToken) {
              toast({
                 title: "Vérification Requise",
                 description: "Un code de vérification a été envoyé à votre e-mail.",
              });
-             const token = (loginSuccessData as TwoFactorResponse).twoFactorToken;
-             router.push(`/fr/verify-2fa?token=${token}`);
+             router.push(`/fr/verify-2fa?token=${twoFactorResponse.twoFactorToken}`);
         } else {
              toast({
                 title: "Connexion réussie",

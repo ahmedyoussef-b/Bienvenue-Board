@@ -15,10 +15,14 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
+    const allCookies = cookieStore.getAll();
+    console.log('➡️ [API /session] All cookies received by server:', allCookies); // NEW LOG
+    
     const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
     if (!token) {
+      console.log('➡️ [API /session] No session token cookie found.'); // NEW LOG
       return NextResponse.json({ message: 'No active session token found' }, { status: 401 });
     }
 
@@ -26,6 +30,7 @@ export async function GET(req: NextRequest) {
     try {
       decoded = jwt.verify(token, JWT_SECRET_KEY) as JwtPayload;
     } catch (error: any) {
+      console.log('➡️ [API /session] Token verification failed. Clearing cookie.'); // NEW LOG
       const clearResponse = NextResponse.json({ message: 'Invalid or expired session token' }, { status: 401 });
       clearResponse.cookies.set(SESSION_COOKIE_NAME, '', { maxAge: -1, path: '/' });
       return clearResponse;
@@ -51,6 +56,7 @@ export async function GET(req: NextRequest) {
       role: user.role as AppRole,
     };
     
+    console.log('➡️ [API /session] ✅ Session is valid. Returning user:', safeUser.email); // NEW LOG
     return NextResponse.json({ user: safeUser }, { status: 200 });
 
   } catch (error: any) {
