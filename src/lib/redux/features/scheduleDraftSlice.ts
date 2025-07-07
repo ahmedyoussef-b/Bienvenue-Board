@@ -24,7 +24,8 @@ export const fetchScheduleDraft = createAsyncThunk<ScheduleDraft | null, void, {
     'scheduleDraft/fetchActive',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await fetch('/api/schedule-draft', { credentials: 'include' });
+            // Use the consolidated endpoint with a query parameter
+            const response = await fetch('/api/schedule-drafts?active=true', { credentials: 'include' });
             if (!response.ok) {
                 const errorData = await response.json();
                 return rejectWithValue(errorData.message ?? 'Échec de la récupération du brouillon actif');
@@ -82,7 +83,8 @@ export const createDraft = createAsyncThunk<
         };
 
         try {
-            const response = await fetch('/api/schedule-draft', {
+            // Use the consolidated endpoint
+            const response = await fetch('/api/schedule-drafts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(draftPayload),
