@@ -13,6 +13,7 @@ import { updateSchoolConfig, selectSchoolConfig } from '@/lib/redux/features/sch
 import { updateActiveDraftDetails, selectActiveDraft } from '@/lib/redux/features/scheduleDraftSlice';
 import { Loader2 } from 'lucide-react';
 import ImportConfigDialog from './ImportConfigDialog';
+import ScenarioManager from '../ScenarioManager'; // Import the ScenarioManager
 import { WizardData } from '@/types/ wizard-types';
 
 interface SchoolConfigFormProps {
@@ -56,8 +57,9 @@ const SchoolConfigForm: React.FC<SchoolConfigFormProps> = ({ wizardData }) => {
 
   return (
     <div className="space-y-6">
-       <div className="flex justify-end">
+       <div className="flex justify-end gap-2">
         <ImportConfigDialog grades={wizardData.grades} />
+        <ScenarioManager />
       </div>
       <Card className="p-6">
         <div className="flex items-center space-x-2 mb-4">
