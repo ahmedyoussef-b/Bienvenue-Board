@@ -13,6 +13,7 @@ import { Loader2, Save, Upload, Trash2, CheckCircle, List } from 'lucide-react';
 import { createDraft, fetchAllDrafts, deleteDraft, activateDraft, selectAllDrafts, selectSaveStatus, selectLastSaved } from '@/lib/redux/features/scheduleDraftSlice';
 import { useRouter } from 'next/navigation';
 import type { ScheduleDraft } from '@/types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 
 export default function ScenarioManager() {
   const dispatch = useAppDispatch();
