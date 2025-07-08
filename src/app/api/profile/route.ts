@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import { Prisma, Role } from '@prisma/client';
 import { z } from 'zod';
 import { profileUpdateSchema } from '@/lib/formValidationSchemas';
+import { SafeUser } from '@/types';
 
 export async function PUT(request: NextRequest) {
   const session = await getServerSession();
@@ -28,7 +29,7 @@ export async function PUT(request: NextRequest) {
 
     const { name, surname, username, email, password, phone, address, img } = validation.data;
 
-    await prisma.$transaction(async (tx) => {
+    const updatedUser = await prisma.$transaction(async (tx) => {
       // 1. Update User model
       const userData: Prisma.UserUpdateInput = {};
       
@@ -59,12 +60,10 @@ export async function PUT(request: NextRequest) {
           userData.img = img;
       }
 
-      if (Object.keys(userData).length > 0) {
-        await tx.user.update({
-          where: { id: session.userId },
-          data: userData,
-        });
-      }
+      const finalUser = await tx.user.update({
+        where: { id: session.userId },
+        data: userData,
+      });
 
       // 2. Update Role-specific profile model
       const profileData: any = {};
@@ -94,9 +93,12 @@ export async function PUT(request: NextRequest) {
               break;
           }
       }
+      return finalUser;
     });
 
-    return NextResponse.json({ message: "Profil mis à jour avec succès" }, { status: 200 });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...safeUser } = updatedUser;
+    return NextResponse.json({ message: "Profil mis à jour avec succès", user: safeUser }, { status: 200 });
 
   } catch (error) {
     console.error('[API PUT /profile] Erreur:', error);

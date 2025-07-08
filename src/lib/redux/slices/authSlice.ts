@@ -51,7 +51,15 @@ const authSlice = createSlice({
       if (typeof window !== 'undefined') {
         localStorage.removeItem('authUser');
       }
-    }
+    },
+    updateCurrentUser: (state, action: PayloadAction<Partial<SafeUser>>) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('authUser', JSON.stringify(state.user));
+        }
+      }
+    },
   },
   extraReducers: (builder) => {
     // Fulfilled handler for all successful auth mutations that return AuthResponse
@@ -164,6 +172,6 @@ const authSlice = createSlice({
   }
 });
 
-export const { manualLogout, loginStart, loginSuccess } = authSlice.actions;
+export const { manualLogout, loginStart, loginSuccess, updateCurrentUser } = authSlice.actions;
 export const { selectCurrentUser, selectIsAuthenticated, selectIsAuthLoading } = authSlice.selectors;
 export default authSlice.reducer;

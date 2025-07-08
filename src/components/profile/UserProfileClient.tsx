@@ -13,7 +13,9 @@ import { CldUploadWidget } from 'next-cloudinary';
 import { Loader2, Save, User, KeyRound, Phone, Home, Upload } from 'lucide-react';
 import Image from "next/image";
 import DynamicAvatar from '@/components/DynamicAvatar';
-import type { Teacher, Student, Parent, Admin, Role } from "@/types";
+import { useAppDispatch } from '@/hooks/redux-hooks';
+import { updateCurrentUser } from '@/lib/redux/slices/authSlice';
+import type { Teacher, Student, Parent, Admin, Role, SafeUser } from "@/types";
 
 type UserProfile = (Teacher | Student | Parent | Admin) & {
   user: {
@@ -49,6 +51,7 @@ interface CloudinaryUploadWidgetResults {
 
 const UserProfileClient: React.FC<UserProfileClientProps> = ({ userProfile }) => {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ProfileUpdateSchema>({
@@ -69,7 +72,6 @@ const UserProfileClient: React.FC<UserProfileClientProps> = ({ userProfile }) =>
 
   const onSubmit: SubmitHandler<ProfileUpdateSchema> = async (data) => {
     setIsLoading(true);
-    // Remove empty password so it's not sent
     const payload = (data.password && data.password.trim() === '') ? { ...data, password: '' } : data;
 
     try {
@@ -89,7 +91,12 @@ const UserProfileClient: React.FC<UserProfileClientProps> = ({ userProfile }) =>
         title: "Profil mis à jour",
         description: "Vos informations ont été enregistrées avec succès.",
       });
-      router.refresh(); // Refresh the page to show new server data
+
+      // Dispatch action to update Redux store
+      if (result.user) {
+        dispatch(updateCurrentUser(result.user));
+      }
+      
     } catch (error: any) {
       toast({
         variant: 'destructive',
