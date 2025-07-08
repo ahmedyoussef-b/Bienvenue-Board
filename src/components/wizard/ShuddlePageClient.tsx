@@ -51,7 +51,7 @@ const ShuddlePageClient: React.FC = () => {
         if (draftStatus === 'succeeded' && activeDraft) {
             debouncedSave();
         }
-    }, [wizardData, activeDraft?.name, activeDraft?.description, debouncedSave, draftStatus, activeDraft]);
+    }, [wizardData, activeDraft?.name, activeDraft?.description, debouncedSave, draftStatus]);
 
     // Set initial mode based on schedule data
     useEffect(() => {
