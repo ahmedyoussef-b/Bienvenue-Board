@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
@@ -15,8 +16,6 @@ import Image from "next/image";
 import DynamicAvatar from '@/components/DynamicAvatar';
 import { useUpdateProfileMutation } from '@/lib/redux/api/authApi';
 import type { Teacher, Student, Parent, Admin, Role } from "@/types";
-import { useAppDispatch } from '@/hooks/redux-hooks';
-import { updateCurrentUser } from '@/lib/redux/slices/authSlice';
 
 type UserProfile = (Teacher | Student | Parent | Admin) & {
   user: {
@@ -51,7 +50,6 @@ interface CloudinaryUploadWidgetResults {
 
 const UserProfileClient: React.FC<UserProfileClientProps> = ({ userProfile }) => {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const { toast } = useToast();
   const [updateProfile, { isLoading }] = useUpdateProfileMutation();
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ProfileUpdateSchema>({
@@ -77,15 +75,12 @@ const UserProfileClient: React.FC<UserProfileClientProps> = ({ userProfile }) =>
     }
 
     try {
-      const result = await updateProfile(payload).unwrap();
-
-      dispatch(updateCurrentUser(result.user));
-
+      await updateProfile(payload).unwrap();
       toast({
         title: "Profil mis à jour",
         description: "Vos informations ont été enregistrées avec succès.",
       });
-      
+      // The state update is handled by the authApi extraReducer, no need to dispatch here.
     } catch (error: any) {
       toast({
         variant: 'destructive',
