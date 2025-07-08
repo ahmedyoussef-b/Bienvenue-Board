@@ -39,19 +39,26 @@ const ShuddlePageClient: React.FC = () => {
     const wizardData = useWizardData();
     const { steps, currentStep, progress, handleNext, handlePrevious, handleStepClick } = useWizardSteps();
     
-    // Debounced autosave
+    // --- AUTOSAVE LOGIC ---
+    // Debounced function to dispatch the update.
     const debouncedSave = useDebouncedCallback(() => {
         if (draftStatus === 'succeeded' && activeDraft) {
             dispatch(updateActiveDraft());
         }
     }, 2000); // Autosave 2 seconds after the last change
 
+    // Serialize data to a string for stable comparison, breaking the infinite loop.
+    const wizardDataString = JSON.stringify(wizardData);
+
     useEffect(() => {
-        // We only want to autosave when not loading and a draft is active
+        // This effect now only runs when the *content* of wizardData changes,
+        // or when the draft's name/description changes.
         if (draftStatus === 'succeeded' && activeDraft) {
             debouncedSave();
         }
-    }, [wizardData, activeDraft?.name, activeDraft?.description, debouncedSave, draftStatus]);
+    }, [wizardDataString, activeDraft?.name, activeDraft?.description, debouncedSave, draftStatus]);
+    // --- END AUTOSAVE LOGIC ---
+
 
     // Set initial mode based on schedule data
     useEffect(() => {
