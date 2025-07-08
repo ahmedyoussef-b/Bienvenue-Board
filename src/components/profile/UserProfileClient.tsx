@@ -37,8 +37,14 @@ const roleTranslations: { [key in Role]: string } = {
   VISITOR: "Visiteur",
 };
 
-interface CloudinaryResult {
-  info?: { secure_url: string };
+// More robust types for Cloudinary widget results
+interface CloudinaryUploadWidgetInfo {
+  secure_url: string;
+}
+
+interface CloudinaryUploadWidgetResults {
+  event: "success" | string;
+  info: CloudinaryUploadWidgetInfo | string | { public_id: string };
 }
 
 const UserProfileClient: React.FC<UserProfileClientProps> = ({ userProfile }) => {
@@ -123,9 +129,10 @@ const UserProfileClient: React.FC<UserProfileClientProps> = ({ userProfile }) =>
                 </div>
                 <CldUploadWidget
                     uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "ml_default"}
-                    onSuccess={(result: any) => {
-                        if (result.event === "success" && result.info) {
-                            setValue("img", result.info.secure_url, { shouldValidate: true });
+                    onSuccess={(result: CloudinaryUploadWidgetResults) => {
+                        if (result.event === "success" && typeof result.info === 'object' && 'secure_url' in result.info) {
+                            const info = result.info as CloudinaryUploadWidgetInfo;
+                            setValue("img", info.secure_url, { shouldValidate: true, shouldDirty: true });
                         }
                     }}
                 >
