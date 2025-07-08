@@ -17,8 +17,8 @@ import type { Day } from '@prisma/client';
 
 // Types passed from the server component
 type StudentData = { id: string; name: string; surname: string };
-type ClassData = { id: number; name: string; students: StudentData[] };
-type LessonData = { id: number; classId: number; day: Day, startTime: Date, subject: { name: string } };
+type ClassData = { id: number; name: string; students?: StudentData[] };
+type LessonData = { id: number; classId: number; day: Day, startTime: Date, subject: { id: number; name: string } };
 
 interface AttendanceManagerProps {
   classes: ClassData[];

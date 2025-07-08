@@ -8,13 +8,21 @@ const AttendancePage = async () => {
     select: {
       id: true,
       name: true,
-      students: {
+      abbreviation: true,
+      capacity: true,
+      gradeId: true,
+      students: { // Select students for the AttendanceManager component
         select: {
           id: true,
           name: true,
           surname: true,
+          classId: true, // Include classId in student selection if needed in AttendanceManager
         },
       },
+      grade: true, // Include grade if needed in AttendanceManager
+      _count: { // Include student count if needed
+        select: { students: true },
+      }
     },
     orderBy: { name: "asc" },
   });
@@ -23,16 +31,22 @@ const AttendancePage = async () => {
     select: {
       id: true,
       classId: true,
+      name: true, // Assuming lesson has a name field
       day: true,
       startTime: true,
+      endTime: true,
+      subjectId: true,
       subject: {
         select: {
-          name: true,
-        },
+          id: true,
+          name: true
+        }
       },
     },
     orderBy: [{ day: 'asc' }, { startTime: 'asc' }],
   });
+
+  console.log("Fetched lessons:", lessons);
 
   return (
     <div className="p-4 md:p-6">
