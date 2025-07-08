@@ -177,6 +177,15 @@ const AnnouncementForm = ({
                   uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "ml_default"}
                   options={{ multiple: true }}
                   onSuccess={handleUploadSuccess}
+                  onError={(error) => {
+                    console.error("Cloudinary Upload Error:", error);
+                    toast({
+                        variant: "destructive",
+                        title: "Échec du téléversement",
+                        description: "Veuillez vérifier que votre 'upload preset' est configuré pour les téléversements non signés.",
+                        duration: 10000,
+                    });
+                  }}
               >
                   {({ open }) => (
                        <button 
@@ -196,6 +205,15 @@ const AnnouncementForm = ({
               uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "ml_default"}
               options={{ multiple: true }}
               onSuccess={handleUploadSuccess}
+              onError={(error) => {
+                console.error("Cloudinary Upload Error:", error);
+                toast({
+                    variant: "destructive",
+                    title: "Échec du téléversement",
+                    description: "Veuillez vérifier que votre 'upload preset' est configuré pour les téléversements non signés.",
+                    duration: 10000,
+                });
+              }}
             >
               {({ open }) => (
                 <button 

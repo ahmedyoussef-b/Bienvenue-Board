@@ -135,6 +135,15 @@ const UserProfileClient: React.FC<UserProfileClientProps> = ({ userProfile }) =>
                             setValue("img", info.secure_url, { shouldValidate: true, shouldDirty: true });
                         }
                     }}
+                    onError={(error) => {
+                        console.error("Cloudinary Upload Error:", error);
+                        toast({
+                            variant: "destructive",
+                            title: "Échec du téléversement",
+                            description: "Veuillez vérifier que votre 'upload preset' est configuré pour les téléversements non signés.",
+                            duration: 10000,
+                        });
+                    }}
                 >
                     {({ open }) => (
                         <Button type="button" variant="outline" onClick={() => open()} disabled={isLoading} className="text-xs w-full">

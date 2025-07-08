@@ -240,13 +240,22 @@ const StudentForm = ({
       <div className="flex flex-col gap-2 w-full md:w-1/4">
         <label className="text-xs text-gray-500">Image de Profil</label>
         <CldUploadWidget
-           uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "ml_default"} // Provide a fallback preset name or ensure env var is set
-           onSuccess={(result: CloudinaryUploadWidgetResults) => { // Explicitly type result
+           uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "ml_default"}
+           onSuccess={(result: CloudinaryUploadWidgetResults) => {
              if (result.event === "success" && typeof result.info === 'object' && 'secure_url' in result.info) {
-               const info = result.info as CloudinaryUploadWidgetInfo; // Type assertion
-               setValue("img", info.secure_url, { shouldValidate: true, shouldDirty: true }); // Update form field state
+               const info = result.info as CloudinaryUploadWidgetInfo;
+               setValue("img", info.secure_url, { shouldValidate: true, shouldDirty: true });
              }
            }}
+           onError={(error) => {
+                console.error("Cloudinary Upload Error:", error);
+                toast({
+                    variant: "destructive",
+                    title: "Échec du téléversement",
+                    description: "Veuillez vérifier que votre 'upload preset' est configuré pour les téléversements non signés.",
+                    duration: 10000,
+                });
+            }}
         >
           {({ open }) => (
             <button type="button" onClick={() => open()} className="text-xs text-gray-500 flex items-center gap-2 cursor-pointer p-2 border rounded disabled:opacity-50" disabled={isLoading}>

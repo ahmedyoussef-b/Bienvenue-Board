@@ -227,6 +227,15 @@ const TeacherForm: React.FC<TeacherFormProps> = ({ type, initialData, setOpen, a
                 setValue("img", info.secure_url, { shouldValidate: true, shouldDirty: true });
               }
             }}
+            onError={(error) => {
+                console.error("Cloudinary Upload Error:", error);
+                toast({
+                    variant: "destructive",
+                    title: "Échec du téléversement",
+                    description: "Veuillez vérifier que votre 'upload preset' est configuré pour les téléversements non signés.",
+                    duration: 10000,
+                });
+            }}
           >
             {({ open }) => (
               <button type="button" onClick={() => open()} className="text-xs text-gray-500 flex items-center gap-2 cursor-pointer p-2 border rounded disabled:opacity-50" disabled={isLoading}>
