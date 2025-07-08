@@ -1,5 +1,6 @@
+// src/lib/redux/slices/session/thunks/sessions.ts
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { ActiveSession } from '../types';
+import { ActiveSession, ClassRoom, SessionParticipant } from '../types';
 import { SESSION_TEMPLATES } from '@/lib/constants';
 import type { SafeUser } from '@/types';
 
@@ -9,17 +10,13 @@ export const startSession = createAsyncThunk<ActiveSession, {
   participantIds: string[]; 
   templateId?: string 
 }, { 
-  rejectValue: string, 
-  state: { 
-    session: { classes: ClassRoom[] }, 
-    auth: { user: SafeUser | null } 
-  } 
+  rejectValue: string
 }>(
   'session/startSession',
   async ({ classId, className, participantIds, templateId }, { rejectWithValue, getState }) => {
-    const state = getState();
+    const state = getState() as any;
     const host = state.auth.user;
-    const selectedClass = state.session.classes.find(c => c.id.toString() === classId);
+    const selectedClass = state.session.classes.find((c: ClassRoom) => c.id.toString() === classId);
 
     if (!host || !selectedClass) return rejectWithValue('Host or class data not found');
 
@@ -108,23 +105,19 @@ export const startMeeting = createAsyncThunk<ActiveSession, {
   title: string; 
   participantIds: string[] 
 }, { 
-  rejectValue: string, 
-  state: { 
-    session: { meetingCandidates: SessionParticipant[] }, 
-    auth: { user: SafeUser | null } 
-  } 
+  rejectValue: string 
 }>(
   'session/startMeeting',
   async ({ title, participantIds }, { rejectWithValue, getState }) => {
-    const state = getState();
+    const state = getState() as any;
     const host = state.auth.user;
     const allCandidates = state.session.meetingCandidates;
 
     if (!host) return rejectWithValue('Host user not found');
 
     const participants = allCandidates
-      .filter(p => participantIds.includes(p.id))
-      .map(p => ({ 
+      .filter((p: SessionParticipant) => participantIds.includes(p.id))
+      .map((p: SessionParticipant) => ({ 
         ...p, 
         isInSession: true, 
         hasRaisedHand: false, 
