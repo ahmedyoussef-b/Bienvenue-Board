@@ -1,4 +1,5 @@
 import { useAppSelector } from '@/hooks/redux-hooks';
+import { useMemo } from 'react';
 import { selectAllClasses } from '@/lib/redux/features/classes/classesSlice';
 import { selectAllMatieres } from '@/lib/redux/features/subjects/subjectsSlice';
 import { selectAllProfesseurs } from '@/lib/redux/features/teachers/teachersSlice';
@@ -11,18 +12,30 @@ import { selectTeacherAssignments } from '@/lib/redux/features/teacherAssignment
 import { selectSchoolConfig } from '@/lib/redux/features/schoolConfigSlice';
 
 export default function useWizardData() {
-    // This hook just aggregates data from the redux store.
-    // No useMemo is needed here as useAppSelector handles re-renders correctly.
-    return {
-        school: useAppSelector(selectSchoolConfig),
-        classes: useAppSelector(selectAllClasses),
-        subjects: useAppSelector(selectAllMatieres),
-        teachers: useAppSelector(selectAllProfesseurs),
-        rooms: useAppSelector(selectAllSalles),
-        grades: useAppSelector(selectAllGrades),
-        lessonRequirements: useAppSelector(selectLessonRequirements),
-        teacherConstraints: useAppSelector(selectTeacherConstraints),
-        subjectRequirements: useAppSelector(selectSubjectRequirements),
-        teacherAssignments: useAppSelector(selectTeacherAssignments),
-    };
+    const school = useAppSelector(selectSchoolConfig);
+    const classes = useAppSelector(selectAllClasses);
+    const subjects = useAppSelector(selectAllMatieres);
+    const teachers = useAppSelector(selectAllProfesseurs);
+    const rooms = useAppSelector(selectAllSalles);
+    const grades = useAppSelector(selectAllGrades);
+    const lessonRequirements = useAppSelector(selectLessonRequirements);
+    const teacherConstraints = useAppSelector(selectTeacherConstraints);
+    const subjectRequirements = useAppSelector(selectSubjectRequirements);
+    const teacherAssignments = useAppSelector(selectTeacherAssignments);
+
+    return useMemo(() => ({
+        school,
+        classes,
+        subjects,
+        teachers,
+        rooms,
+        grades,
+        lessonRequirements,
+        teacherConstraints,
+        subjectRequirements,
+        teacherAssignments,
+    }), [
+        school, classes, subjects, teachers, rooms, grades, 
+        lessonRequirements, teacherConstraints, subjectRequirements, teacherAssignments
+    ]);
 }
