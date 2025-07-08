@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Download, Printer, Trash2, Building, BookOpen } from 'lucide-react';
-import type { WizardData, Lesson, Subject, ClassWithGrade } from '@/types';
+import type { WizardData, Lesson, Subject, ClassWithGrade, Classroom } from '@/types';
 import { Day } from '@prisma/client';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { useAppDispatch } from '@/hooks/redux-hooks';
@@ -35,6 +35,37 @@ const getSubjectColorClass = (subjectId: number, subjects: Subject[]): string =>
     return subjectColors[index % subjectColors.length] || 'bg-muted';
 };
 
+// --- New Helper Function ---
+const getAvailableRoomsForSlot = (
+    day: Day,
+    timeSlot: string,
+    wizardData: WizardData,
+    fullSchedule: Lesson[],
+    lessonToExcludeId: number | null = null
+): Classroom[] => {
+    if (!wizardData?.rooms || !Array.isArray(wizardData.rooms)) return [];
+
+    const slotStartMinutes = timeToMinutes(timeSlot);
+    const slotEndMinutes = slotStartMinutes + wizardData.school.sessionDuration;
+
+    const occupiedRoomIds = new Set(
+        fullSchedule
+            .filter(l => {
+                if (l.id === lessonToExcludeId) return false; // Exclude the lesson we're editing
+                if (l.classroomId == null || l.day !== day) return false;
+
+                const otherLessonStart = timeToMinutes(formatTimeSimple(l.startTime));
+                const otherLessonEnd = timeToMinutes(formatTimeSimple(l.endTime));
+
+                // Check for overlap: (StartA < EndB) and (EndA > StartB)
+                return slotStartMinutes < otherLessonEnd && slotEndMinutes > otherLessonStart;
+            })
+            .map(l => l.classroomId!)
+    );
+
+    return wizardData.rooms.filter(room => !occupiedRoomIds.has(room.id));
+}
+
 // --- Internal Components ---
 
 const RoomSelectorPopover: React.FC<{
@@ -48,32 +79,15 @@ const RoomSelectorPopover: React.FC<{
     const [isOpen, setIsOpen] = useState(false);
 
     const availableRooms = useMemo(() => {
-        if (!wizardData?.rooms || !Array.isArray(fullSchedule) || !lesson) return [];
+        if (!lesson) return []; // Cannot determine capacity without a lesson/class
         
-        // Find the class associated with the lesson to get its student count.
+        const allAvailable = getAvailableRoomsForSlot(day, timeSlot, wizardData, fullSchedule, lesson.id);
+
         const lessonClass = wizardData.classes.find(c => c.id === lesson.classId);
         const studentCount = lessonClass?._count.students || 0;
 
-        const lessonStartMinutes = timeToMinutes(formatTimeSimple(lesson.startTime));
-        const lessonEndMinutes = timeToMinutes(formatTimeSimple(lesson.endTime));
-
-        const occupiedRoomIds = new Set(
-            fullSchedule
-                .filter(l => l.id !== lesson.id) 
-                .filter(l => l.classroomId != null && l.day === day)
-                .filter(l => {
-                    const otherLessonStart = timeToMinutes(formatTimeSimple(l.startTime));
-                    const otherLessonEnd = timeToMinutes(formatTimeSimple(l.endTime));
-                    return lessonStartMinutes < otherLessonEnd && lessonEndMinutes > otherLessonStart;
-                })
-                .map(l => l.classroomId!)
-        );
-        
-        // Filter rooms by being unoccupied AND having enough capacity for the students.
-        return wizardData.rooms.filter(room => 
-            !occupiedRoomIds.has(room.id) && room.capacity >= studentCount
-        );
-    }, [day, fullSchedule, wizardData, lesson]);
+        return allAvailable.filter(room => room.capacity >= studentCount);
+    }, [day, timeSlot, fullSchedule, wizardData, lesson]);
     
     const handleRoomChange = (newRoomId: number | null) => {
         if (!lesson) return;
@@ -202,15 +216,8 @@ const InteractiveEmptyCell: React.FC<{
     });
     
     const availableRooms = useMemo(() => {
-        if (!wizardData?.rooms || !Array.isArray(wizardData.rooms) || !Array.isArray(fullSchedule)) return [];
-        
-        const occupiedRoomIds = new Set(
-            fullSchedule
-                .filter(l => l.day === day && formatTimeSimple(l.startTime) === timeSlot && l.classroomId != null)
-                .map(l => l.classroomId!)
-        );
-        return wizardData.rooms.filter(room => !occupiedRoomIds.has(room.id));
-    }, [day, timeSlot, fullSchedule, wizardData?.rooms]);
+        return getAvailableRoomsForSlot(day, timeSlot, wizardData, fullSchedule);
+    }, [day, timeSlot, wizardData, fullSchedule]);
     
     const availableSubjects = useMemo(() => {
         if (viewMode !== 'class' || !selectedViewId || !wizardData.subjects || !wizardData.school) {
