@@ -2,6 +2,7 @@
 import prisma from '@/lib/prisma';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ChatroomSession, User } from '@prisma/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -16,7 +17,13 @@ export default async function AdminChatroomDashboardPage() {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const sessions = await prisma.chatroomSession.findMany({
+    interface SessionWithHostAndCount extends ChatroomSession {
+ host: User | null;
+        _count: {
+            participants: number;
+        };
+    }
+    const sessions: SessionWithHostAndCount[] = (await prisma.chatroomSession.findMany({
         where: {
             startTime: {
                 gte: sevenDaysAgo,
@@ -31,7 +38,7 @@ export default async function AdminChatroomDashboardPage() {
         orderBy: {
             startTime: 'desc',
         },
-    });
+    })) as SessionWithHostAndCount[]; // Add type assertion here
 
     const totalSessions = sessions.length;
     let totalDurationSeconds = 0;
@@ -50,7 +57,7 @@ export default async function AdminChatroomDashboardPage() {
 
     const teacherSessionsMap = new Map<string, number>();
     sessions.forEach(session => {
-        if (session.host.name) {
+ if (session.host && session.host.name) {
             teacherSessionsMap.set(
                 session.host.name,
                 (teacherSessionsMap.get(session.host.name) || 0) + 1
@@ -170,7 +177,7 @@ export default async function AdminChatroomDashboardPage() {
                                 {sessions.slice(0, 5).map(session => (
                                     <TableRow key={session.id}>
                                         <TableCell className="font-medium">{session.title}</TableCell>
-                                        <TableCell>{session.host.name}</TableCell>
+ <TableCell>{session.host ? session.host.name : 'N/A'}</TableCell>
                                         <TableCell className="text-right">{session._count.participants}</TableCell>
                                     </TableRow>
                                 ))}

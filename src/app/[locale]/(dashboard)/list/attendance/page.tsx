@@ -14,7 +14,6 @@ const AttendancePage = async () => {
           name: true,
           surname: true,
         },
-        orderBy: [{ surname: "asc" }, {name: "asc"}],
       },
     },
     orderBy: { name: "asc" },

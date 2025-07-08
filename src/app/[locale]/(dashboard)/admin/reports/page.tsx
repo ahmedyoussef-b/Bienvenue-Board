@@ -48,9 +48,9 @@ export default function AdminReportsPage() {
     return <div>Accès non autorisé</div>;
   }
 
-  const totalSessions = reports.length;
-  const activeSessions = reports.filter(s => s.status === 'ACTIVE').length;
-  const completedSessions = reports.filter(s => s.status === 'ENDED').length;
+  const totalSessions = reports.length;  
+  const activeSessions = reports.filter(s => s.status.toLowerCase() === 'active').length;
+  const completedSessions = reports.filter(s => s.status.toLowerCase() === 'ended').length;
   const totalParticipants = reports.reduce((sum, s) => sum + s.participants.length, 0);
   const averageSessionDuration = totalSessions > 0
     ? reports.reduce((sum, s) => sum + s.duration, 0) / totalSessions
