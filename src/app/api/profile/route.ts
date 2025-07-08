@@ -7,11 +7,21 @@ import { Prisma, Role } from '@prisma/client';
 import { z } from 'zod';
 import { profileUpdateSchema } from '@/lib/formValidationSchemas';
 import { SafeUser } from '@/types';
+import jwt from 'jsonwebtoken';
+import { SESSION_COOKIE_NAME } from '@/lib/constants';
+
+const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
+const JWT_ACCESS_TOKEN_EXPIRATION_TIME = process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME || '1h';
 
 export async function PUT(request: NextRequest) {
   const session = await getServerSession();
   if (!session?.userId || !session.role) {
     return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+  }
+  
+  if (!JWT_SECRET_KEY) {
+      console.error("❌ [API/profile] JWT_SECRET_KEY is not defined.");
+      return NextResponse.json({ message: "Erreur de configuration du serveur." }, { status: 500 });
   }
 
   try {
@@ -33,14 +43,12 @@ export async function PUT(request: NextRequest) {
       // 1. Update User model
       const userData: Prisma.UserUpdateInput = {};
       
-      // Only check for uniqueness if the email is actually changing
       if (email && email !== currentUser.email) {
         const existing = await tx.user.findUnique({ where: { email } });
         if (existing) throw new Error("Cet e-mail est déjà utilisé par un autre compte.");
         userData.email = email;
       }
 
-      // Only check for uniqueness if the username is actually changing
       if (username && username !== currentUser.username) {
         const existing = await tx.user.findUnique({ where: { username } });
         if (existing) throw new Error("Ce nom d'utilisateur est déjà pris.");
@@ -51,7 +59,6 @@ export async function PUT(request: NextRequest) {
         userData.password = await bcrypt.hash(password, 10);
       }
       
-      // Update User.name only if profile name/surname are provided (not for students from this form)
       if (name && surname) {
         userData.name = `${name} ${surname}`;
       }
@@ -82,7 +89,6 @@ export async function PUT(request: NextRequest) {
               await tx.teacher.update({ where: { userId: session.userId }, data: profileData });
               break;
             case Role.STUDENT:
-              // Student model doesn't have name/surname, they are on User model, but phone/address are here
               const { name: _n, surname: _s, ...studentData } = profileData;
               if (Object.keys(studentData).length > 0) {
                 await tx.student.update({ where: { userId: session.userId }, data: studentData });
@@ -98,7 +104,31 @@ export async function PUT(request: NextRequest) {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...safeUser } = updatedUser;
-    return NextResponse.json({ message: "Profil mis à jour avec succès", user: safeUser }, { status: 200 });
+
+    // Re-issue JWT with new data
+    const tokenPayload = {
+        userId: safeUser.id,
+        role: safeUser.role,
+        email: safeUser.email,
+        name: safeUser.name,
+        img: safeUser.img // Include new image in token
+    };
+
+    const newToken = jwt.sign(tokenPayload, JWT_SECRET_KEY, { expiresIn: JWT_ACCESS_TOKEN_EXPIRATION_TIME });
+    const response = NextResponse.json({ message: "Profil mis à jour avec succès", user: safeUser }, { status: 200 });
+    
+    // Set the new token in the cookie
+    response.cookies.set({
+      name: SESSION_COOKIE_NAME,
+      value: newToken,
+      httpOnly: true,
+      secure: true,
+      maxAge: 60 * 60 * 24, // 1 day
+      path: '/',
+      sameSite: 'none',
+    });
+
+    return response;
 
   } catch (error) {
     console.error('[API PUT /profile] Erreur:', error);

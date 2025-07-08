@@ -1,4 +1,4 @@
-// src/app/[locale]/(dashboard)/list/parents/[id]/page.tsx
+// src/app/api/parents/[id]/route.ts
 import prisma from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import { getServerSession } from "@/lib/auth-utils";
@@ -163,10 +163,13 @@ const SingleParentPage = async ({ params }: { params: { id: string } }) => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                      <div className="flex items-center gap-4">
-                        <DynamicAvatar 
-                            imageUrl={parent.user?.img || parent.img}
-                            seed={parent.id}
-                        />
+                        <div className="relative w-24 h-24 rounded-full overflow-hidden">
+                            <DynamicAvatar 
+                                imageUrl={parent.user?.img || parent.img}
+                                seed={parent.id}
+                                isLCP={true}
+                            />
+                        </div>
                          <div className="flex-1">
                             <p className="font-semibold text-lg">{parent.name} {parent.surname}</p>
                             <p className="text-sm text-muted-foreground">{parent.user?.username}</p>
@@ -198,10 +201,12 @@ const SingleParentPage = async ({ params }: { params: { id: string } }) => {
                     <div className="space-y-3">
                         {parent.students.map((student: ParentWithDetails['students'][number]) => (
                             <Link key={student.id} href={`/${locale}/list/students/${student.id}`} className="flex items-center space-x-3 p-2 rounded-md hover:bg-muted transition-colors">
-                                <DynamicAvatar
-                                  imageUrl={student.user?.img || student.img}
-                                  seed={student.id}
-                                />
+                                <div className="relative w-10 h-10 rounded-full overflow-hidden">
+                                    <DynamicAvatar
+                                    imageUrl={student.user?.img || student.img}
+                                    seed={student.id}
+                                    />
+                                </div>
                                 <div>
                                     <p className="text-sm font-medium text-foreground">{student.name} {student.surname}</p>
                                     <p className="text-xs text-muted-foreground">Classe: {student.class?.name || 'N/A'}</p>

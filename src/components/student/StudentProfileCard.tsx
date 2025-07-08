@@ -14,10 +14,11 @@ export default function StudentProfileCard({ student, userRole }: StudentProfile
   return (
     <div className="bg-lamaSky py-6 px-4 rounded-md flex-1 flex gap-4">
       <div className="w-1/3 flex items-center justify-center">
-        <div className="w-36 h-36 flex items-center justify-center overflow-hidden rounded-full bg-muted">
+        <div className="relative w-36 h-36 flex items-center justify-center overflow-hidden rounded-full bg-muted">
           <DynamicAvatar
             imageUrl={student.user?.img || student.img}
             seed={student.id || student.user?.email || Math.random().toString(36).substring(7)}
+            isLCP={true}
           />
         </div>
       </div>

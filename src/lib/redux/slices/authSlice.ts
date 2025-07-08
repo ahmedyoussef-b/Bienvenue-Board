@@ -163,6 +163,11 @@ const authSlice = createSlice({
           console.error("❌ [authSlice] verify2FA.matchRejected. Error:", action.error.message);
           handleAuthFailure(state);
         }
+      )
+      // Update Profile
+      .addMatcher(
+        authApi.endpoints.updateProfile.matchFulfilled,
+        handleAuthSuccess
       );
   },
   selectors: {
