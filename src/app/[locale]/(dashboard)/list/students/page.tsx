@@ -150,12 +150,13 @@ const StudentListPage = async ({
         </div>
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
-          {cardData.map((item) => (
+          {cardData.map((item, index) => (
             <UserEntityCard
               key={item.id}
               entity={item}
               entityType="student"
               userRole={userRole}
+              isLCP={index < 4}
             />
           ))}
         </div>

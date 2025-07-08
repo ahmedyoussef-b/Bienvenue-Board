@@ -113,13 +113,14 @@ const ParentListPage = async ({
         </div>
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
-          {cardData.map((item) => (
+          {cardData.map((item, index) => (
             <UserEntityCard
               key={item.id}
               entity={item as ParentCardData}
               entityType="parent"
               userRole={userRole}
               isAssociated={item.isAssociated}
+              isLCP={index < 4}
             />
           ))}
         </div>

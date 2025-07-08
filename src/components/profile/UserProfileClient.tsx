@@ -13,9 +13,8 @@ import { CldUploadWidget } from 'next-cloudinary';
 import { Loader2, Save, User, KeyRound, Phone, Home, Upload } from 'lucide-react';
 import Image from "next/image";
 import DynamicAvatar from '@/components/DynamicAvatar';
-import { useAppDispatch } from '@/hooks/redux-hooks';
-import { updateCurrentUser } from '@/lib/redux/slices/authSlice';
-import type { Teacher, Student, Parent, Admin, Role, SafeUser } from "@/types";
+import { useUpdateProfileMutation } from '@/lib/redux/api/authApi';
+import type { Teacher, Student, Parent, Admin, Role } from "@/types";
 
 type UserProfile = (Teacher | Student | Parent | Admin) & {
   user: {
@@ -39,7 +38,6 @@ const roleTranslations: { [key in Role]: string } = {
   VISITOR: "Visiteur",
 };
 
-// More robust types for Cloudinary widget results
 interface CloudinaryUploadWidgetInfo {
   secure_url: string;
 }
@@ -51,9 +49,8 @@ interface CloudinaryUploadWidgetResults {
 
 const UserProfileClient: React.FC<UserProfileClientProps> = ({ userProfile }) => {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [updateProfile, { isLoading }] = useUpdateProfileMutation();
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ProfileUpdateSchema>({
     resolver: zodResolver(profileUpdateSchema),
     defaultValues: {
@@ -71,40 +68,25 @@ const UserProfileClient: React.FC<UserProfileClientProps> = ({ userProfile }) =>
   const imgUrl = watch('img');
 
   const onSubmit: SubmitHandler<ProfileUpdateSchema> = async (data) => {
-    setIsLoading(true);
-    const payload = (data.password && data.password.trim() === '') ? { ...data, password: '' } : data;
+    const payload: Partial<ProfileUpdateSchema> = { ...data };
+    if (payload.password && payload.password.trim() === '') {
+      delete payload.password;
+    }
 
     try {
-      const response = await fetch('/api/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Une erreur s'est produite.");
-      }
+      await updateProfile(payload).unwrap();
 
       toast({
         title: "Profil mis à jour",
         description: "Vos informations ont été enregistrées avec succès.",
       });
-
-      // Dispatch action to update Redux store
-      if (result.user) {
-        dispatch(updateCurrentUser(result.user));
-      }
       
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Échec de la mise à jour',
-        description: error.message,
+        description: error.data?.message || error.message || "Une erreur est survenue.",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -132,6 +114,7 @@ const UserProfileClient: React.FC<UserProfileClientProps> = ({ userProfile }) =>
                     <DynamicAvatar 
                         imageUrl={imgUrl}
                         seed={userProfile.user.id}
+                        isLCP={true}
                     />
                 </div>
                 <CldUploadWidget

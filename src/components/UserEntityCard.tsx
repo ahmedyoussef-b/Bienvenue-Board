@@ -48,9 +48,10 @@ interface UserEntityCardProps {
   entityType: EntityType;
   userRole?: AppRole;
   isAssociated?: boolean;
+  isLCP?: boolean;
 }
 
-const UserEntityCard: React.FC<UserEntityCardProps> = ({ entity, entityType, userRole, isAssociated }) => {
+const UserEntityCard: React.FC<UserEntityCardProps> = ({ entity, entityType, userRole, isAssociated, isLCP = false }) => {
   const locale = 'fr';
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
 
@@ -76,7 +77,8 @@ const UserEntityCard: React.FC<UserEntityCardProps> = ({ entity, entityType, use
           <div className="relative h-28 w-28 rounded-full overflow-hidden border-2 border-primary/20">
             <DynamicAvatar 
               imageUrl={entity.img || entity.user?.img}
-              seed={entity.id || entity.user?.email || Math.random().toString(36).substring(7)} 
+              seed={entity.id || entity.user?.email || Math.random().toString(36).substring(7)}
+              isLCP={isLCP}
             />
           </div>
           <h3 className="text-xl font-bold text-primary mt-3 truncate w-full">{fullName}</h3>

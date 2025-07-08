@@ -1,6 +1,7 @@
 // src/lib/redux/api/authApi.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { SafeUser, Role } from '@/types/index';
+import type { ProfileUpdateSchema } from '@/lib/formValidationSchemas';
 
 export interface AuthResponse {
   message: string;
@@ -87,6 +88,14 @@ export const authApi = createApi({
         }),
         invalidatesTags: ['UserSession'],
     }),
+    updateProfile: builder.mutation<AuthResponse, Partial<ProfileUpdateSchema>>({
+      query: (body) => ({
+        url: '/api/profile',
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: ['UserSession'],
+    }),
   }),
 });
 
@@ -97,4 +106,5 @@ export const {
   useLogoutMutation,
   useCheckSessionQuery,
   useVerify2FAMutation,
+  useUpdateProfileMutation,
 } = authApi;

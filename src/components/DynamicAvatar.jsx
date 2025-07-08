@@ -9,9 +9,10 @@ import { cn } from "@/lib/utils";
  *  seed?: string;
  *  imageUrl?: string | null;
  *  className?: string;
+ *  isLCP?: boolean;
  * }} props
  */
-const DynamicAvatar = ({ seed = Math.random().toString(36).substring(2), imageUrl = null, className = '' }) => {
+const DynamicAvatar = ({ seed = Math.random().toString(36).substring(2), imageUrl = null, className = '', isLCP = false }) => {
   // If an image URL is provided, use it. Otherwise, generate a fallback avatar.
   const finalImageUrl = imageUrl || `https://api.dicebear.com/8.x/avataaars/svg?seed=${seed}`;
 
@@ -21,8 +22,8 @@ const DynamicAvatar = ({ seed = Math.random().toString(36).substring(2), imageUr
       alt="User avatar"
       fill
       sizes="(max-width: 768px) 50vw, 33vw"
-      className={cn('object-cover', className)} // Ensures the image fills the container and respects parent's border-radius
-      priority={false} // Avoid priority on avatars that are not critical
+      className={cn('object-cover', className)}
+      priority={isLCP}
     />
   );
 }
