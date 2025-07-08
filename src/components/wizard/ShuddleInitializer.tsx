@@ -18,7 +18,7 @@ import { setAllSubjectRequirements } from '@/lib/redux/features/subjectRequireme
 import { setAllTeacherAssignments } from '@/lib/redux/features/teacherAssignmentsSlice';
 import { setSchoolConfig } from '@/lib/redux/features/schoolConfigSlice';
 import type { SchoolData } from '@/lib/redux/features/schoolConfigSlice';
-import { fetchScheduleDraft } from '@/lib/redux/features/scheduleDraftSlice';
+import { fetchScheduleDraft, selectDraftStatus } from '@/lib/redux/features/scheduleDraftSlice';
 
 
 interface ShuddleInitializerProps {
@@ -37,7 +37,7 @@ interface ShuddleInitializerProps {
 
 export default function ShuddleInitializer({ initialData }: ShuddleInitializerProps) {
     const dispatch = useAppDispatch();
-    const [isInitialized, setIsInitialized] = useState(false);
+    const draftStatus = useAppSelector(selectDraftStatus);
 
     useEffect(() => {
         const initialize = async () => {
@@ -85,13 +85,14 @@ export default function ShuddleInitializer({ initialData }: ShuddleInitializerPr
                  dispatch(setAllSubjectRequirements(initialData.subjectRequirements));
                  dispatch(setAllTeacherAssignments([])); 
             }
-            setIsInitialized(true);
         };
 
-        initialize();
-    }, [dispatch, initialData]);
+        if (draftStatus === 'idle') {
+            initialize();
+        }
+    }, [dispatch, initialData, draftStatus]);
 
-    if (!isInitialized) {
+    if (draftStatus === 'loading' || draftStatus === 'idle') {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />

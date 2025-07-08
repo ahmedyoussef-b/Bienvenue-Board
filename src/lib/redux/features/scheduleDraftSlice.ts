@@ -173,7 +173,12 @@ export const activateDraft = createAsyncThunk<ScheduleDraft, string, { rejectVal
                 const errorData = await response.json();
                 return rejectWithValue(errorData.message ?? 'Failed to activate draft');
             }
-            return await response.json();
+            // After activating on the server, we fetch the newly activated draft to get all its data
+            const getResponse = await fetch('/api/schedule-drafts?active=true');
+            if (!getResponse.ok) {
+                throw new Error("Failed to fetch the newly activated draft data.");
+            }
+            return await getResponse.json();
         } catch (error) {
             return rejectWithValue(error instanceof Error ? error.message : 'Unknown network error occurred');
         }
@@ -230,8 +235,10 @@ const scheduleDraftSlice = createSlice({
             .addCase(updateActiveDraft.pending, (state) => { state.saveStatus = 'loading'; })
             .addCase(updateActiveDraft.fulfilled, (state, action) => {
                 state.saveStatus = 'succeeded';
-                state.activeDraft = action.payload;
                 state.lastSaved = action.payload.updatedAt;
+                if (state.activeDraft) {
+                  state.activeDraft.updatedAt = action.payload.updatedAt;
+                }
             })
             .addCase(updateActiveDraft.rejected, (state, action) => {
                 state.saveStatus = 'failed';
@@ -251,6 +258,8 @@ const scheduleDraftSlice = createSlice({
                     ...d,
                     isActive: d.id === action.payload.id,
                 }));
+                 // Trigger a full reload by setting status to idle, forcing components to re-initialize
+                state.status = 'idle';
             });
     },
     selectors: {
