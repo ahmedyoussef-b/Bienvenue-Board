@@ -5,14 +5,22 @@ import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import type { Role, JwtPayload as AppJwtPayload } from '@/types/index';
 import { SESSION_COOKIE_NAME } from '@/lib/constants';
+import prisma from '@/lib/prisma'; // Importer prisma
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
-export async function getServerSession() {
-  const cookieStore = cookies();
-  const allCookies = cookieStore.getAll();
-  console.log('🛡️ [auth-utils] All cookies received by server:', allCookies);
+// Définir un type de retour explicite pour plus de clarté
+type ServerSession = {
+  userId: string;
+  role: Role;
+  email: string;
+  name: string;
+  isAuthenticated: boolean;
+  img: string | null;
+};
 
+export async function getServerSession(): Promise<ServerSession | null> {
+  const cookieStore = cookies();
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   
    if (!token) {
@@ -26,14 +34,30 @@ export async function getServerSession() {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET_KEY) as AppJwtPayload;
-    console.log('🛡️ [auth-utils] Token verified successfully on server.');
+    console.log(`🛡️ [auth-utils] Token verified for userId: ${decoded.userId}. Fetching fresh user data...`);
+
+    // --- FIX: Récupérer les données utilisateur à jour depuis la base de données ---
+    const user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+    });
+
+    if (!user) {
+        console.warn(`🛡️ [auth-utils] User from token (ID: ${decoded.userId}) not found in DB.`);
+        return null;
+    }
+    
+    console.log('🛡️ [auth-utils] Fresh user data fetched. Building session object.');
+
+    // --- FIX: Construire l'objet de session à partir des données fraîches ---
     return {
-      userId: decoded.userId,
-      role: decoded.role,
-      email: decoded.email,
-      name: decoded.name || decoded.email, // Fallback for name
+      userId: user.id,
+      role: user.role,
+      email: user.email,
+      name: user.name || user.email,
       isAuthenticated: true,
+      img: user.img, // La nouvelle URL de l'image est maintenant incluse
     };
+
   } catch (e: any) {
     console.error('🛡️ [auth-utils] Server token verification failed. Error:', e.message);
     return null;
