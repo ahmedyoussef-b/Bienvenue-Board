@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Brain, BarChart3, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { SessionTemplate } from '@/lib/redux/slices/sessionSlice';
+import type { SessionTemplate } from '@/lib/redux/slices/session/types';
 import { SESSION_TEMPLATES } from '@/lib/constants';
 
 interface TemplateSelectorProps {

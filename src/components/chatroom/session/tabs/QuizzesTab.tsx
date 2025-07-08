@@ -2,7 +2,7 @@
 'use client';
 
 import QuizPanel from '../QuizPanel';
-import type { SessionParticipant } from '@/lib/redux/slices/sessionSlice';
+import type { SessionParticipant } from '@/lib/redux/slices/session/types';
 
 interface QuizzesTabProps {
   currentUserParticipant: SessionParticipant | undefined;

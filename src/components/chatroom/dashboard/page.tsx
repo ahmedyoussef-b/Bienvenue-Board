@@ -6,7 +6,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useAppDispatch, useAppSelector } from "@/hooks/redux-hooks";
-import { setSelectedClass, fetchChatroomClasses, type ClassRoom, startSession } from "@/lib/redux/slices/sessionSlice";
+import { setSelectedClass, fetchChatroomClasses, startSession } from "@/lib/redux/slices/sessionSlice";
+import type { ClassRoom } from '@/lib/redux/slices/session/types';
 import ClassCard from '@/components/chatroom/dashboard/ClassCard';
 import StudentSelector from '@/components/chatroom/dashboard/StudentSelector';
 import TemplateSelector from '@/components/chatroom/dashboard/TemplateSelector';
@@ -105,7 +106,9 @@ export default function DashboardPage() {
                 </div>
             </CardHeader>
             <CardContent className="pt-6">
-              <StudentSelector classroom={selectedClass} />
+              <StudentSelector 
+                classroom={selectedClass}
+              />
             </CardContent>
             <CardContent>
                <div className="mt-6 pt-6 border-t">

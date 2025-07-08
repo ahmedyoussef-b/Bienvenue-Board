@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Send, Users, MessageCircle } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/redux-hooks';
 import type { SafeUser } from '@/types';
-import { sendMessage, clearChatMessages, type ChatMessage } from '@/lib/redux/slices/sessionSlice';
+import { sendGeneralMessage, clearChatMessages, type ChatMessage } from '@/lib/redux/slices/sessionSlice';
 
 interface ChatRoomProps {
   roomType: 'admin' | 'teacher';
@@ -41,7 +41,8 @@ export default function ChatRoom({ roomType, title, description, allowedRoles }:
   const handleSendMessage = () => {
     if (!newMessage.trim() || !user) return;
 
-    const message: Omit<ChatMessage, 'id'> = {
+    const message: ChatMessage = {
+      id: `msg_${Date.now()}`,
       userId: user.id,
       userName: user.name || user.email,
       userAvatar: user.img || undefined,
@@ -49,12 +50,8 @@ export default function ChatRoom({ roomType, title, description, allowedRoles }:
       timestamp: new Date().toISOString(), // Use serializable string
       userRole: user.role.toLowerCase() as 'admin' | 'teacher'
     };
-
-    dispatch(sendMessage({
-      ...message,
-      id: `msg_${Date.now()}`,
-    } as ChatMessage));
     
+    dispatch(sendGeneralMessage(message));
     setNewMessage('');
   };
 

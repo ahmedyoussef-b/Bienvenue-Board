@@ -2,7 +2,7 @@
 'use client';
 
 import PollPanel from '../PollPanel';
-import type { SessionParticipant } from '@/lib/redux/slices/sessionSlice';
+import type { SessionParticipant } from '@/lib/redux/slices/session/types';
 
 interface ActivitiesTabProps {
   currentUserParticipant: SessionParticipant | undefined;

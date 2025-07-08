@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Users, UserCheck } from 'lucide-react';
-import { ClassRoom } from '@/lib/redux/slices/sessionSlice';
+import type { ClassRoom } from '@/lib/redux/slices/session/types';
 
 interface ClassCardProps {
   classroom: ClassRoom;

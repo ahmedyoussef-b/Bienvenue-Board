@@ -3,9 +3,9 @@
 
 import VideoTile from '../VideoTile';
 import { Video, UserX, Star } from 'lucide-react';
-import type { ActiveSession, SafeUser } from '@/types';
 import { useAppDispatch, useAppSelector } from '@/hooks/redux-hooks';
 import { moveParticipant, toggleMute, toggleSpotlight } from '@/lib/redux/slices/sessionSlice';
+import type { ActiveSession, SafeUser } from '@/lib/redux/slices/session/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, rectSortingStrategy } from '@dnd-kit/sortable';

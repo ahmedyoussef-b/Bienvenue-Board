@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/redux-hooks';
 import { toggleTeacherSelection } from '@/lib/redux/slices/sessionSlice';
-import type { SessionParticipant } from '@/lib/redux/slices/sessionSlice';
+import type { SessionParticipant } from '@/lib/redux/slices/session/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
