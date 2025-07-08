@@ -11,7 +11,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     const { id } = params;
+    console.log(`API [/api/schedule-drafts/${id} PUT]: Request received.`);
     const body = await request.json();
+    console.log(`API [/api/schedule-drafts/${id} PUT]: Request body parsed.`);
+
 
     try {
         const { name, description, ...draftData } = body;
@@ -24,10 +27,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
             where: { id, userId: session.userId },
             data: updatePayload,
         });
-
+        
+        console.log(`API [/api/schedule-drafts/${id} PUT]: Draft successfully updated in DB. Sending response.`);
         return NextResponse.json(updatedDraft, { status: 200 });
     } catch (error) {
-        console.error(`[API] Erreur lors de la mise à jour du brouillon ${id}:`, error);
+        console.error(`API [/api/schedule-drafts/${id} PUT]: Error occurred.`, error);
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
              return NextResponse.json({ message: 'Un scénario avec ce nom existe déjà.' }, { status: 409 });
         }

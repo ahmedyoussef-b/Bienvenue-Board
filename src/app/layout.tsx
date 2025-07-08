@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Inter, Space_Grotesk } from 'next/font/google';
 import './globals.css'; // Global styles
 import { Providers } from './[locale]/Providers';
+import Script from 'next/script'; // Import the Script component
 
 const inter = Inter({
   subsets: ['latin'],
@@ -34,6 +35,14 @@ export default function RootLayout({
         <Providers>
           {children}
         </Providers>
+        <Script src="https://unpkg.com/eruda" strategy="afterInteractive" />
+        <Script id="eruda-init" strategy="afterInteractive">
+          {`
+            if (typeof window !== 'undefined' && typeof eruda !== 'undefined') {
+              eruda.init();
+            }
+          `}
+        </Script>
       </body>
     </html>
   );

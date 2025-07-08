@@ -20,7 +20,7 @@ import ScheduleEditor from '../schedule/ScheduleEditor';
 import useWizardData from '@/hooks/useWizardData';
 import useWizardSteps from '@/hooks/useWizardSteps';
 import { selectSchedule, selectScheduleStatus } from '@/lib/redux/features/schedule/scheduleSlice';
-import { selectActiveDraft, selectDraftStatus, createDraft, updateActiveDraft, selectSaveStatus } from '@/lib/redux/features/scheduleDraftSlice';
+import { selectActiveDraft, selectDraftStatus, createDraft, updateActiveDraft, selectSaveStatus, updateActiveDraftDetails } from '@/lib/redux/features/scheduleDraftSlice';
 import { useToast } from '@/hooks/use-toast';
 
 const ShuddlePageClient: React.FC = () => {
@@ -42,6 +42,7 @@ const ShuddlePageClient: React.FC = () => {
     // --- AUTOSAVE LOGIC ---
     const debouncedSave = useDebouncedCallback(() => {
         if (draftStatus === 'succeeded' && activeDraft) {
+             console.log("CLIENT [debouncedSave]: Dispatching updateActiveDraft.");
             dispatch(updateActiveDraft());
         }
     }, 2000); // Autosave 2 seconds after the last change
@@ -50,8 +51,12 @@ const ShuddlePageClient: React.FC = () => {
     const wizardDataString = JSON.stringify(wizardData);
 
     useEffect(() => {
+        console.log("CLIENT [ShuddlePageClient EFFECT]: Running autosave effect. Status:", draftStatus, "Has active draft:", !!activeDraft);
         if (draftStatus === 'succeeded' && activeDraft) {
+             console.log("CLIENT [ShuddlePageClient EFFECT]: Conditions met, calling debouncedSave.");
             debouncedSave();
+        } else {
+             console.log("CLIENT [ShuddlePageClient EFFECT]: Conditions not met, skipping save.");
         }
     }, [wizardDataString, activeDraft?.name, activeDraft?.description, debouncedSave, draftStatus, activeDraft]);
     // --- END AUTOSAVE LOGIC ---
