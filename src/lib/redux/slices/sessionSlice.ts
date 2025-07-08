@@ -108,6 +108,7 @@ export interface BreakoutRoom {
 }
 
 export interface ActiveSession {
+  title: any;
   id: string;
   hostId: string;
   sessionType: 'class' | 'meeting';
