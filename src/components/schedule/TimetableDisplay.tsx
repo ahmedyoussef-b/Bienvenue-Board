@@ -49,20 +49,31 @@ const getAvailableRoomsForSlot = (
     const slotStartMinutes = timeToMinutes(timeSlot);
     const slotEndMinutes = slotStartMinutes + duration;
 
-    const occupiedRoomIds = new Set(
-        fullSchedule
-            .filter(l => {
-                if (l.id === lessonToExcludeId) return false;
-                if (l.classroomId == null || l.day !== day) return false;
+    const occupiedRoomIds = new Set<number>();
 
-                const otherLessonStart = timeToMinutes(formatTimeSimple(l.startTime));
-                const otherLessonEnd = timeToMinutes(formatTimeSimple(l.endTime));
+    fullSchedule.forEach(l => {
+        // Skip if it's the lesson we're currently trying to place/move
+        if (l.id === lessonToExcludeId) {
+            return;
+        }
 
-                // Check for overlap: (StartA < EndB) and (EndA > StartB)
-                return slotStartMinutes < otherLessonEnd && slotEndMinutes > otherLessonStart;
-            })
-            .map(l => l.classroomId!)
-    );
+        // Skip if lesson has no room or is on a different day
+        if (l.classroomId == null || l.day !== day) {
+            return;
+        }
+        
+        // Direct calculation from Date object to avoid timezone issues
+        const otherStartTime = new Date(l.startTime);
+        const otherEndTime = new Date(l.endTime);
+
+        const otherLessonStart = otherStartTime.getUTCHours() * 60 + otherStartTime.getUTCMinutes();
+        const otherLessonEnd = otherEndTime.getUTCHours() * 60 + otherEndTime.getUTCMinutes();
+
+        // Check for overlap
+        if (slotStartMinutes < otherLessonEnd && slotEndMinutes > otherLessonStart) {
+            occupiedRoomIds.add(l.classroomId);
+        }
+    });
 
     return wizardData.rooms.filter(room => !occupiedRoomIds.has(room.id));
 };
