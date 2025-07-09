@@ -64,11 +64,15 @@ export const scheduleSlice = createSlice({
                 const newStartDate = new Date(Date.UTC(2000, 0, 1, hour, minute, 0));
                 const newEndDate = new Date(newStartDate.getTime() + durationMs);
 
+                // When a lesson is moved, its room assignment is no longer guaranteed to be valid.
+                // Resetting it to null forces the user to re-evaluate and re-assign from the list of available rooms
+                // for the new slot. This prevents silent conflicts.
                 return {
                     ...lesson,
                     day: newDay,
                     startTime: newStartDate.toISOString(),
                     endTime: newEndDate.toISOString(),
+                    classroomId: null, // Reset the classroom
                 };
             }
             return lesson;
