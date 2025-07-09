@@ -5,7 +5,7 @@ import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
-import { ITEM_PER_PAGE } from "@/lib/settings";
+import { ITEM_PER_PAGE } from "@/lib/constants";
 import {  type EventWithClass } from "@/types/index"; 
 import Image from "next/image";
 import { getServerSession } from "@/lib/auth-utils";

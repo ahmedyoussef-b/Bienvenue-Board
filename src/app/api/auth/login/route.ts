@@ -54,7 +54,7 @@ export const POST = async (req: NextRequest) => {
     const userRole = user.role as AppRole;
     
     const tokenPayload = { userId: user.id, role: userRole, email: user.email, name: finalName };
-    const token = jwt.sign(tokenPayload, JWT_SECRET_KEY, { expiresIn: JWT_ACCESS_TOKEN_EXPIRATION_TIME });
+    const token = jwt.sign(tokenPayload, JWT_SECRET_KEY as jwt.Secret, { expiresIn: JWT_ACCESS_TOKEN_EXPIRATION_TIME });
 
     const { password: _, ...userScalars } = user;
     const safeUserResponse: SafeUser = { ...userScalars, name: finalName, role: userRole };

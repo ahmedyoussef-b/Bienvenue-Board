@@ -133,3 +133,5 @@ export const reactionLabels = {
   understood: 'Compris !',
   confused: 'Confus(e)',
 };
+
+export const BADGE_TEMPLATES = []; // TODO: Replace with actual definition
