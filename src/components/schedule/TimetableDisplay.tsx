@@ -35,10 +35,11 @@ const getSubjectColorClass = (subjectId: number, subjects: Subject[]): string =>
     return subjectColors[index % subjectColors.length] || 'bg-muted';
 };
 
-// --- New Helper Function ---
+// --- Updated Helper Function ---
 const getAvailableRoomsForSlot = (
     day: Day,
     timeSlot: string,
+    duration: number, // Duration of the lesson/slot in minutes
     wizardData: WizardData,
     fullSchedule: Lesson[],
     lessonToExcludeId: number | null = null
@@ -46,12 +47,12 @@ const getAvailableRoomsForSlot = (
     if (!wizardData?.rooms || !Array.isArray(wizardData.rooms)) return [];
 
     const slotStartMinutes = timeToMinutes(timeSlot);
-    const slotEndMinutes = slotStartMinutes + wizardData.school.sessionDuration;
+    const slotEndMinutes = slotStartMinutes + duration;
 
     const occupiedRoomIds = new Set(
         fullSchedule
             .filter(l => {
-                if (l.id === lessonToExcludeId) return false; // Exclude the lesson we're editing
+                if (l.id === lessonToExcludeId) return false;
                 if (l.classroomId == null || l.day !== day) return false;
 
                 const otherLessonStart = timeToMinutes(formatTimeSimple(l.startTime));
@@ -64,7 +65,7 @@ const getAvailableRoomsForSlot = (
     );
 
     return wizardData.rooms.filter(room => !occupiedRoomIds.has(room.id));
-}
+};
 
 // --- Internal Components ---
 
@@ -81,7 +82,9 @@ const RoomSelectorPopover: React.FC<{
     const availableRooms = useMemo(() => {
         if (!lesson) return []; // Cannot determine capacity without a lesson/class
         
-        const allAvailable = getAvailableRoomsForSlot(day, timeSlot, wizardData, fullSchedule, lesson.id);
+        const lessonDuration = (new Date(lesson.endTime).getTime() - new Date(lesson.startTime).getTime()) / (1000 * 60);
+        
+        const allAvailable = getAvailableRoomsForSlot(day, timeSlot, lessonDuration, wizardData, fullSchedule, lesson.id);
 
         const lessonClass = wizardData.classes.find(c => c.id === lesson.classId);
         const studentCount = lessonClass?._count.students || 0;
@@ -216,7 +219,7 @@ const InteractiveEmptyCell: React.FC<{
     });
     
     const availableRooms = useMemo(() => {
-        return getAvailableRoomsForSlot(day, timeSlot, wizardData, fullSchedule);
+        return getAvailableRoomsForSlot(day, timeSlot, wizardData.school.sessionDuration, wizardData, fullSchedule);
     }, [day, timeSlot, wizardData, fullSchedule]);
     
     const availableSubjects = useMemo(() => {

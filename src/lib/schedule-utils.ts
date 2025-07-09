@@ -366,13 +366,18 @@ export const adjustScheduleToCurrentWeek = (
     if (dayMapping[lesson.day] === undefined) return;
 
     const lessonDayIndex = dayMapping[lesson.day];
-    const lessonDate = addDays(startOfThisWeek, lessonDayIndex - 1); 
+    
+    // Calculate the date for the lesson in the current week
+    const lessonDate = addDays(startOfThisWeek, lessonDayIndex - 1); // -1 because our week starts on Monday(1), but addDays from Sunday base
 
+    // startTime and endTime from Prisma are full Date objects, but we only care about the time part.
+    // The seed stores time in UTC, so we use getUTCHours/Minutes.
     const startHour = new Date(lesson.startTime).getUTCHours();
     const startMinute = new Date(lesson.startTime).getUTCMinutes();
     const endHour = new Date(lesson.endTime).getUTCHours();
     const endMinute = new Date(lesson.endTime).getUTCMinutes();
     
+    // Create the final start and end Date objects for the calendar event
     const startDateTime = set(lessonDate, { hours: startHour, minutes: startMinute, seconds: 0, milliseconds: 0 });
     const endDateTime = set(lessonDate, { hours: endHour, minutes: endMinute, seconds: 0, milliseconds: 0 });
 
