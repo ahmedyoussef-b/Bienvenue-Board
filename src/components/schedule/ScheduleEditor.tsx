@@ -180,7 +180,7 @@ export default function ScheduleEditor({ wizardData, onBackToWizard }: { wizardD
                         wizardData={wizardData} 
                         scheduleData={filteredSchedule}
                         fullSchedule={schedule}
-                        isEditable={true} 
+                        isEditable={viewMode === 'class'}
                         onDeleteLesson={handleDeleteLesson}
                         onAddLesson={handlePlaceLesson}
                         viewMode={viewMode}
