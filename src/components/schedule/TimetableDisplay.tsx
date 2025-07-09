@@ -96,17 +96,10 @@ const RoomSelectorPopover: React.FC<{
         const lessonDuration = (new Date(lesson.endTime).getTime() - new Date(lesson.startTime).getTime()) / (1000 * 60);
         
         const allAvailable = getAvailableRoomsForSlot(day, timeSlot, lessonDuration, wizardData, fullSchedule, lesson.id);
-
-        const lessonClass = wizardData.classes.find(c => c.id === lesson.classId);
-        const studentCount = lessonClass?._count.students || 0;
         
-        // --- CORRECTED LOGIC ---
-        // A room is available if its capacity is sufficient OR if it's a lab (assuming split groups).
-        const finalRooms = allAvailable.filter(room => 
-            room.capacity >= studentCount || room.name.toLowerCase().includes('labo')
-        );
-        
-        return finalRooms;
+        // The user requested to remove the capacity filter.
+        // Now, all physically available rooms will be shown.
+        return allAvailable;
 
     }, [day, timeSlot, fullSchedule, wizardData, lesson]);
     
