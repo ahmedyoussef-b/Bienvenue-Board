@@ -39,21 +39,16 @@ const AttendancePage = async () => {
       subjectId: true,
       teacherId: true,
       classroomId: true,
-    },
-    include: { // Include the related subject data
       subject: {
         select: { id: true, name: true },
       },
-  },
-
+    },
     orderBy: [{ day: 'asc' }, { startTime: 'asc' }],
   });
 
-  console.log("Fetched lessons:", lessons);
-
   return (
     <div className="p-4 md:p-6">
-      <AttendanceManager classes={classes} lessons={lessons} />
+      <AttendanceManager classes={classes} lessons={lessons as any} />
     </div>
   );
 };
