@@ -44,25 +44,17 @@ const getAvailableRoomsForSlot = (
     fullSchedule: Lesson[],
     lessonToExcludeId: number | null = null
 ): Classroom[] => {
-    console.log('[getAvailableRoomsForSlot] CALLED with:', { day, timeSlot, duration, lessonToExcludeId });
-
     if (!wizardData?.rooms || !Array.isArray(wizardData.rooms)) {
-        console.error('[getAvailableRoomsForSlot] No rooms in wizardData.');
         return [];
     }
 
     const slotStartMinutes = timeToMinutes(timeSlot);
     const slotEndMinutes = slotStartMinutes + duration;
 
-    console.log(`[getAvailableRoomsForSlot] Checking slot: ${day} from ${slotStartMinutes} to ${slotEndMinutes} mins.`);
-
     const occupiedRoomIds = new Set<number>();
 
     fullSchedule.forEach(l => {
-        if (l.id === lessonToExcludeId) {
-            console.log(`[getAvailableRoomsForSlot] Excluding lesson ID ${lessonToExcludeId} from conflict check.`);
-            return;
-        }
+        if (l.id === lessonToExcludeId) return;
 
         if (l.classroomId == null || l.day !== day) {
             return;
@@ -76,17 +68,12 @@ const getAvailableRoomsForSlot = (
 
         // Check for overlap
         if (slotStartMinutes < otherLessonEnd && slotEndMinutes > otherLessonStart) {
-             console.log(`[getAvailableRoomsForSlot] Conflict found for room ID ${l.classroomId}. Lesson "${l.name}" (${otherLessonStart}-${otherLessonEnd}) overlaps with slot ${slotStartMinutes}-${slotEndMinutes}.`);
             occupiedRoomIds.add(l.classroomId);
         }
     });
     
-    console.log('[getAvailableRoomsForSlot] Occupied Room IDs for this slot:', Array.from(occupiedRoomIds));
-
     const availableRooms = wizardData.rooms.filter(room => !occupiedRoomIds.has(room.id));
     
-    console.log('[getAvailableRoomsForSlot] RETURNING Available Rooms:', availableRooms.map(r => r.name));
-
     return availableRooms;
 };
 
@@ -104,7 +91,6 @@ const RoomSelectorPopover: React.FC<{
     const [isOpen, setIsOpen] = useState(false);
 
     const availableRooms = useMemo(() => {
-        console.log('[RoomSelectorPopover] Calculating available rooms for existing lesson:', lesson?.name);
         if (!lesson) return []; // Cannot determine capacity without a lesson/class
         
         const lessonDuration = (new Date(lesson.endTime).getTime() - new Date(lesson.startTime).getTime()) / (1000 * 60);
@@ -114,8 +100,12 @@ const RoomSelectorPopover: React.FC<{
         const lessonClass = wizardData.classes.find(c => c.id === lesson.classId);
         const studentCount = lessonClass?._count.students || 0;
         
-        const finalRooms = allAvailable.filter(room => room.capacity >= studentCount);
-        console.log('[RoomSelectorPopover] Final rooms for this lesson:', finalRooms.map(r => r.name));
+        // --- CORRECTED LOGIC ---
+        // A room is available if its capacity is sufficient OR if it's a lab (assuming split groups).
+        const finalRooms = allAvailable.filter(room => 
+            room.capacity >= studentCount || room.name.toLowerCase().includes('labo')
+        );
+        
         return finalRooms;
 
     }, [day, timeSlot, fullSchedule, wizardData, lesson]);
@@ -247,10 +237,7 @@ const InteractiveEmptyCell: React.FC<{
     });
     
     const availableRooms = useMemo(() => {
-        console.log('[InteractiveEmptyCell] Calculating available rooms for empty slot:', { day, timeSlot });
-        const rooms = getAvailableRoomsForSlot(day, timeSlot, wizardData.school.sessionDuration, wizardData, fullSchedule);
-        console.log('[InteractiveEmptyCell] Available rooms for empty slot:', { day, timeSlot }, rooms.map(r => r.name));
-        return rooms;
+        return getAvailableRoomsForSlot(day, timeSlot, wizardData.school.sessionDuration, wizardData, fullSchedule);
     }, [day, timeSlot, wizardData, fullSchedule]);
     
     const availableSubjects = useMemo(() => {
