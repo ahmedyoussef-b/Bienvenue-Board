@@ -18,6 +18,14 @@ import { findConflictingConstraint } from '@/lib/schedule-utils';
 type SchedulableLesson = Omit<Lesson, 'id' | 'createdAt' | 'updatedAt'>;
 const formatTimeSimple = (date: string | Date): string => `${new Date(date).getUTCHours().toString().padStart(2, '0')}:00`;
 
+// Helper to convert time string 'HH:mm' to minutes from midnight
+const timeToMinutes = (time: string): number => {
+    if (typeof time !== 'string' || !time.includes(':')) return 0;
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+};
+
+
 export default function ScheduleEditor({ wizardData, onBackToWizard }: { wizardData: WizardData, onBackToWizard: () => void }) {
     const dispatch = useAppDispatch();
     const { toast } = useToast();
@@ -47,7 +55,6 @@ export default function ScheduleEditor({ wizardData, onBackToWizard }: { wizardD
         const [hour, minute] = time.split(':').map(Number);
         const classIdNum = parseInt(selectedClassId, 10);
         
-        // Find the specific teacher assigned to this subject for this class
         const assignment = teacherAssignments.find(a => a.subjectId === subject.id && a.classIds.includes(classIdNum));
         if (!assignment) {
             toast({ variant: "destructive", title: "Aucun enseignant assigné", description: `Aucun enseignant n'est assigné pour enseigner "${subject.name}" à cette classe.` });
@@ -60,40 +67,54 @@ export default function ScheduleEditor({ wizardData, onBackToWizard }: { wizardD
             return;
         }
         
-        // Check teacher availability
         const isTeacherBusy = schedule.some(l => l.teacherId === teacher.id && l.day === day && formatTimeSimple(l.startTime) === time);
         if (isTeacherBusy) {
             toast({ variant: "destructive", title: "Enseignant occupé", description: `${teacher.name} ${teacher.surname} a déjà un cours sur ce créneau.` });
             return;
         }
         
-        const lessonEndTime = new Date(Date.UTC(0, 0, 1, hour, minute + school.sessionDuration));
-        const lessonEndTimeStr = `${String(lessonEndTime.getUTCHours()).padStart(2, '0')}:${String(lessonEndTime.getUTCMinutes()).padStart(2, '0')}`;
+        const lessonEndTimeDate = new Date(Date.UTC(0, 0, 1, hour, minute + school.sessionDuration));
+        const lessonEndTimeStr = `${String(lessonEndTimeDate.getUTCHours()).padStart(2, '0')}:${String(lessonEndTimeDate.getUTCMinutes()).padStart(2, '0')}`;
         const constraint = findConflictingConstraint(teacher.id, day, time, lessonEndTimeStr, teacherConstraints);
         if (constraint) {
             toast({ variant: "destructive", title: "Enseignant indisponible", description: `${teacher.name} ${teacher.surname} a une contrainte sur ce créneau.` });
             return;
         }
         
-        // Find an available room
+        // --- CORRECTED ROOM LOGIC ---
+        const lessonStartMinutes = timeToMinutes(time);
+        const lessonEndMinutes = lessonStartMinutes + school.sessionDuration;
+
+        const occupiedRoomIdsInSlot = new Set(
+            schedule
+                .filter(l => {
+                    if (l.classroomId == null || l.day !== day) return false;
+                    const otherLessonStart = timeToMinutes(formatTimeSimple(l.startTime));
+                    const otherLessonEnd = timeToMinutes(formatTimeSimple(l.endTime));
+                    // Check for overlap: (StartA < EndB) and (EndA > StartB)
+                    return lessonStartMinutes < otherLessonEnd && lessonEndMinutes > otherLessonStart;
+                })
+                .map(l => l.classroomId!)
+        );
+        
+        let potentialRooms = rooms.filter(r => !occupiedRoomIdsInSlot.has(r.id));
+        
         const subjectReq = subjectRequirements.find(r => r.subjectId === subject.id);
-        const occupiedRoomIds = new Set(schedule.filter(l => l.day === day && formatTimeSimple(l.startTime) === time && l.classroomId != null).map(l => l.classroomId!));
-        let potentialRooms = rooms.filter(r => !occupiedRoomIds.has(r.id));
-        if (subjectReq?.requiredRoomId && subjectReq.requiredRoomId !== null) {
+        if (subjectReq?.requiredRoomId) {
+            if (occupiedRoomIdsInSlot.has(subjectReq.requiredRoomId)) {
+                 toast({ variant: "destructive", title: "Salle requise occupée", description: `La salle requise pour "${subject.name}" est occupée.` });
+                 return;
+            }
             potentialRooms = potentialRooms.filter(r => r.id === subjectReq.requiredRoomId);
         }
-        const availableRoom = potentialRooms.length > 0 ? potentialRooms[0] : null;
         
-        if (rooms.length > 0 && subjectReq?.requiredRoomId && subjectReq.requiredRoomId !== null && potentialRooms.length === 0) {
-            toast({ variant: "destructive", title: "Salle requise occupée", description: `La salle requise pour "${subject.name}" est occupée.` });
-            return;
-        }
+        const availableRoom = potentialRooms.length > 0 ? potentialRooms[0] : null;
 
         const newLesson: SchedulableLesson = {
             name: `${subject.name} - ${classes.find(c => c.id === classIdNum)?.name}`,
             day: day,
             startTime: new Date(Date.UTC(2000, 0, 1, hour, minute)).toISOString(),
-            endTime: new Date(Date.UTC(2000, 0, 1, hour, minute + school.sessionDuration)).toISOString(),
+            endTime: lessonEndTimeDate.toISOString(),
             subjectId: subject.id,
             classId: classIdNum,
             teacherId: teacher.id,
