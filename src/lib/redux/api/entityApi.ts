@@ -2,7 +2,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 // Import specific model types and enums from your centralized types file
 import type { 
-    Subject, Class, Teacher, Student, Parent, Lesson, Exam, Assignment, Event, Announcement, Result, Attendance, Role, Grade
+    Subject, Class, Teacher, Student, Parent, Lesson, Exam, Assignment, Event, Announcement, Attendance, Role, Grade
 } from '@/types/index'; 
 // Import schema types for request bodies
 import type {
@@ -20,6 +20,7 @@ import type {
   AttendanceSchema,
   GradeSchema
 } from '@/lib/formValidationSchemas';
+import { Result } from '@prisma/client';
 
 const entityConfig: { [key: string]: { route: string, tag: string } } = {
   subject: { route: 'subjects', tag: 'Subject' },

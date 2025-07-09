@@ -21,6 +21,9 @@ const BigCalendarContainer = dynamic(() => import('@/components/BigCalendarConta
 
 // Define arguments for the prisma query to ensure type safety and reusability
 const classWithDetailsArgs = {
+  where: {
+    // This will be populated dynamically in the page component
+  },
     include: {
       grade: true,
       students: {
@@ -51,7 +54,9 @@ const SingleClassPage = async ({ params }: { params: { id: string } }) => {
   const userRole = session?.role as AppRole | undefined;
 
   const classData = await prisma.class.findUnique({
-    where: { id },
+    where: {
+      id: id,
+    },
     ...classWithDetailsArgs
   });
 

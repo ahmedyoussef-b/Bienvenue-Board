@@ -28,7 +28,7 @@ interface CloudinaryUploadWidgetInfo {
 }
 
 interface CloudinaryUploadWidgetResults {
-  event: "success" | string;
+ event: "success" | string | undefined;
   info: CloudinaryUploadWidgetInfo | string | { public_id: string };
 }
 

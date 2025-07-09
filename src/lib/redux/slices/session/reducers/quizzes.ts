@@ -1,5 +1,5 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { SessionState, Quiz } from '../types';
+import { SessionState, Quiz, QuizQuestion } from '../types';
 
 export const quizReducers = {
   createQuiz: (state: SessionState, action: PayloadAction<{ title: string; questions: Omit<QuizQuestion, 'id'>[] }>) => {

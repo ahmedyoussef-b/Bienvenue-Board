@@ -27,8 +27,9 @@ const AttendancePage = async () => {
     orderBy: { name: "asc" },
   });
 
+  // Fetch lessons with subject details included
   const lessons = await prisma.lesson.findMany({
-    select: {
+    select: { 
       id: true,
       classId: true,
       name: true, // Assuming lesson has a name field
@@ -36,13 +37,15 @@ const AttendancePage = async () => {
       startTime: true,
       endTime: true,
       subjectId: true,
-      subject: {
-        select: {
-          id: true,
-          name: true
-        }
-      },
+      teacherId: true,
+      classroomId: true,
     },
+    include: { // Include the related subject data
+      subject: {
+        select: { id: true, name: true },
+      },
+  },
+
     orderBy: [{ day: 'asc' }, { startTime: 'asc' }],
   });
 

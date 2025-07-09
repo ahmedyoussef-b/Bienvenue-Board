@@ -4,6 +4,19 @@ import type { Lesson, Day } from '@/types';
 
 type SchedulableLesson = Omit<Lesson, 'id' | 'createdAt' | 'updatedAt'>;
 
+/**
+ * Creates a Date object for a given day and time.
+ * Assumes day is relative to the start of the week (Monday as 0).
+ * Time is in "HH:mm" format.
+ * Uses a fixed year (2000) and month (January) for date part as it only matters for day of the week and time.
+ */
+const createDateFromDayAndTime = (day: Day, time: string): Date => {
+  const [hour, minute] = time.split(':').map(Number);
+  // Use UTC to avoid timezone issues affecting hour calculation
+  const date = new Date(Date.UTC(2000, 0, 1 + Number(day), hour, minute, 0)); // Adjust day based on Monday=0
+  return date;
+};
+
 export type ScheduleState = {
   items: Lesson[];
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
@@ -55,28 +68,15 @@ export const scheduleSlice = createSlice({
     },
     updateLessonSlot(state, action: PayloadAction<{ lessonId: number; newDay: Day; newTime: string }>) {
         const { lessonId, newDay, newTime } = action.payload;
-        state.items = state.items.map(lesson => {
-            if (lesson.id === lessonId) {
-                const start = new Date(lesson.startTime);
-                const end = new Date(lesson.endTime);
-                const durationMs = end.getTime() - start.getTime();
-                const [hour, minute] = newTime.split(':').map(Number);
-                const newStartDate = new Date(Date.UTC(2000, 0, 1, hour, minute, 0));
-                const newEndDate = new Date(newStartDate.getTime() + durationMs);
-
-                // When a lesson is moved, its room assignment is no longer guaranteed to be valid.
-                // Resetting it to null forces the user to re-evaluate and re-assign from the list of available rooms
-                // for the new slot. This prevents silent conflicts.
-                return {
-                    ...lesson,
-                    day: newDay,
-                    startTime: newStartDate.toISOString(),
-                    endTime: newEndDate.toISOString(),
-                    classroomId: null, // Reset the classroom
-                };
-            }
-            return lesson;
-        });
+        const lessonToUpdate = state.items.find(lesson => lesson.id === lessonId);
+        if (lessonToUpdate) {
+          const newStartDate = createDateFromDayAndTime(newDay, newTime);
+          const durationMs = lessonToUpdate.endTime.getTime() - lessonToUpdate.startTime.getTime();
+          const newEndDate = new Date(newStartDate.getTime() + durationMs);
+          lessonToUpdate.day = newDay;
+          lessonToUpdate.startTime = newStartDate;
+          lessonToUpdate.endTime = newEndDate;
+        }
     },
     updateLessonSubject(state, action: PayloadAction<{ lessonId: number; newSubjectId: number }>) {
       state.items = state.items.map(lesson =>
@@ -111,8 +111,8 @@ export const scheduleSlice = createSlice({
       const lesson = state.items.find(l => l.id === action.payload.lessonId);
       if (lesson) {
         const endTime = new Date(lesson.endTime);
-        endTime.setUTCHours(endTime.getUTCHours() + 1); // Assumes 1-hour extension
-        lesson.endTime = endTime.toISOString();
+        endTime.setHours(endTime.getHours() + 1); // Assumes 1-hour extension
+        lesson.endTime = endTime; // endTime is already a Date object, no need for toISOString
       }
     },
   },

@@ -158,7 +158,9 @@ export interface SessionTemplate {
   name: string;
   description: string;
   quizzes: Omit<Quiz, 'id' | 'startTime' | 'isActive' | 'currentQuestionIndex' | 'answers' | 'timeRemaining'>[];
-  polls: Omit<Poll, 'id' | 'createdAt' | 'isActive' | 'totalVotes' | 'options'> & { options: string[] }[];
+  polls: Omit<Poll, 'id' | 'createdAt' | 'isActive' | 'totalVotes' | 'options'> & {
+    question: any; options: string[] 
+}[];
 }
 
 export type ChatMessage = { 

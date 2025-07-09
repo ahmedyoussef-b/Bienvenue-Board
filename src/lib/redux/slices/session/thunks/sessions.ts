@@ -1,6 +1,6 @@
 // src/lib/redux/slices/session/thunks/sessions.ts
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { ActiveSession, ClassRoom, SessionParticipant } from '../types';
+import { ActiveSession, ClassRoom, Poll, Quiz, SessionParticipant } from '../types';
 import { SESSION_TEMPLATES } from '@/lib/constants';
 import type { SafeUser } from '@/types';
 
@@ -21,8 +21,8 @@ export const startSession = createAsyncThunk<ActiveSession, {
     if (!host || !selectedClass) return rejectWithValue('Host or class data not found');
 
     const participants = selectedClass.students
-      .filter(s => participantIds.includes(s.id))
-      .map(s => ({ 
+ .filter((s: SessionParticipant) => participantIds.includes(s.id))
+      .map((s: { points: any; badges: any; }) => ({ 
         ...s, 
         isInSession: true, 
         hasRaisedHand: false, 
@@ -47,8 +47,8 @@ export const startSession = createAsyncThunk<ActiveSession, {
       breakoutRoomId: null 
     });
 
-    let templatePolls = [];
-    let templateQuizzes = [];
+    let templatePolls: Poll[] = [];
+    let templateQuizzes: Quiz[] = [];
     const selectedTemplate = templateId ? SESSION_TEMPLATES.find(t => t.id === templateId) : null;
     
     if (selectedTemplate) {
@@ -116,7 +116,7 @@ export const startMeeting = createAsyncThunk<ActiveSession, {
     if (!host) return rejectWithValue('Host user not found');
 
     const participants = allCandidates
-      .filter((p: SessionParticipant) => participantIds.includes(p.id))
+ .filter((p: SessionParticipant) => participantIds.includes(p.id))
       .map((p: SessionParticipant) => ({ 
         ...p, 
         isInSession: true, 

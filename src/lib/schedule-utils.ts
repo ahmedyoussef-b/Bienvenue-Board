@@ -1,7 +1,7 @@
 // src/lib/schedule-utils.ts
-import type { WizardData, Day, TeacherConstraint, Subject, Lesson, TeacherAssignment, TeacherWithDetails } from '@/types';
+import { WizardData, Day, TeacherConstraint, Subject, Lesson, TeacherAssignment, TeacherWithDetails, Subject as SubjectType } from '@/types';
 import { type Lesson as PrismaLesson } from '@prisma/client';
-import { startOfWeek, set, addDays } from 'date-fns';
+import { startOfWeek, set, addDays } from 'date-fns'; // Import addDays from date-fns
 
 type SchedulableLesson = Omit<PrismaLesson, 'id' | 'createdAt' | 'updatedAt'>;
 
@@ -142,7 +142,7 @@ export const calculateAvailableSlots = (
 
 export const mergeConsecutiveLessons = (lessons: PrismaLesson[], wizardData: WizardData): PrismaLesson[] => {
     if (!lessons || lessons.length === 0) return [];
-    const dayOrder: Day[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+    const dayOrder: Day[] = [Day.MONDAY, Day.TUESDAY, Day.WEDNESDAY, Day.THURSDAY, Day.FRIDAY, Day.SATURDAY, Day.SUNDAY];
     const lessonsByDay: { [key in Day]?: PrismaLesson[] } = {};
     for (const lesson of lessons) {
         if (!lessonsByDay[lesson.day]) {
@@ -187,11 +187,13 @@ const timeToMinutes = (time: string): number => {
 function calculateSlotFitness(
   lessonToPlace: { classItem: typeof wizardData.classes[0], subject: Subject },
   day: Day,
-  time: string,
+ time: string,
   schedule: SchedulableLesson[],
   wizardData: WizardData
 ): number {
-  const { school, teachers, teacherConstraints = [], subjectRequirements = [], teacherAssignments = [] } = wizardData;
+  const { school, teachers, teacherConstraints = [] } = wizardData;
+  const { teacherAssignments = [], subjectRequirements } = wizardData;
+
   const { classItem, subject } = lessonToPlace;
 
   const assignment = teacherAssignments.find(a => a.subjectId === subject.id && a.classIds.includes(classItem.id));
@@ -223,10 +225,13 @@ function calculateSlotFitness(
   if (schedule.some(l => l.teacherId === teacher.id && l.day === day && timeToMinutes(formatTimeSimple(l.startTime)) === nextSlotInMinutes)) {
     score -= 15;
   }
-  const subjectReq = subjectRequirements.find(r => r.subjectId === subject.id);
-  if (subjectReq) {
-    if (subjectReq.timePreference === 'AM' && hour >= 12) score -= 25;
+
+ if (subjectRequirements) {
+    const subjectReq = subjectRequirements.find(r => r.subjectId === subject.id);
+    if (subjectReq) {
+      if (subjectReq.timePreference === 'AM' && hour >= 12) score -= 25;
     if (subjectReq.timePreference === 'PM' && hour < 14) score -= 25;
+    }
   }
   score += Math.random() * 5;
   return score;
@@ -274,8 +279,12 @@ export const generateSchedule = (wizardData: WizardData): { schedule: Schedulabl
 
                 // Now, handle room logic
                 const { classItem, subject } = lessonSlot;
-                const subjectReq = subjectRequirements.find(r => r.subjectId === subject.id);
-                const requiredRoomId = subjectReq?.requiredRoomId;
+                // Add check for subjectRequirements
+                let requiredRoomId: number | null | undefined;
+                if (subjectRequirements) {
+                    const subjectReq = subjectRequirements.find(r => r.subjectId === subject.id);
+                    requiredRoomId = subjectReq?.requiredRoomId;
+                }
                 let potentialRoomId: number | null = null;
                 
                 const occupiedRoomIds = new Set(
@@ -316,13 +325,17 @@ export const generateSchedule = (wizardData: WizardData): { schedule: Schedulabl
             const { day, time, roomId } = bestSlot;
             const { classItem, subject } = lessonSlot;
             const [hour, minute] = time.split(':').map(Number);
-            const assignment = teacherAssignments.find(a => a.subjectId === subject.id && a.classIds.includes(classItem.id))!;
+            // Add check for teacherAssignments
+            const assignment = teacherAssignments?.find(a => a.subjectId === subject.id && a.classIds.includes(classItem.id));
+            if (!assignment) {
+                 continue; // Should not happen if calculateSlotFitness returns a non-negative score, but good for safety
+            }
 
             newSchedule.push({
                 name: `${subject.name} - ${classItem.name}`,
                 day,
-                startTime: new Date(Date.UTC(2000, 0, 1, hour, minute)).toISOString(),
-                endTime: new Date(Date.UTC(2000, 0, 1, hour, minute + school.sessionDuration)).toISOString(),
+                startTime: new Date(Date.UTC(2000, 0, 1, hour, minute)),
+                endTime: new Date(Date.UTC(2000, 0, 1, hour, minute + school.sessionDuration)),
                 subjectId: subject.id,
                 teacherId: assignment.teacherId,
                 classId: classItem.id,
@@ -353,6 +366,8 @@ const dayMapping: { [key in Day]: number } = {
 export const adjustScheduleToCurrentWeek = (
   scheduleData: Lesson[]
 ): { title: string; start: Date; end: Date; }[] => {
+  // Assuming wizardData is available or can be fetched/passed here.
+  // For this fix, let's assume we can somehow get the subjects list.
   if (!scheduleData || scheduleData.length === 0) {
     return [];
   }
@@ -362,10 +377,19 @@ export const adjustScheduleToCurrentWeek = (
 
   const adjustedSchedule: { title: string; start: Date; end: Date; }[] = [];
 
+  // Placeholder for fetching subjects - replace with actual data fetching mechanism
+  // This would ideally be passed as an argument or fetched from a global state/API
+  const subjects: SubjectType[] = []; // You need to populate this with your actual subjects data
+
+  // Fetch subjects here if not passed as an argument
+  // Example (replace with your actual fetch logic):
+  // const subjectsResponse = await fetch('/api/subjects');
+  // const subjects = await subjectsResponse.json();
+
   scheduleData.forEach(lesson => {
     if (dayMapping[lesson.day] === undefined) return;
 
-    const lessonDayIndex = dayMapping[lesson.day];
+    const lessonDayIndex = dayMapping[lesson.day as Day];
     
     // Calculate the date for the lesson in the current week
     const lessonDate = addDays(startOfThisWeek, lessonDayIndex - 1); // -1 because our week starts on Monday(1), but addDays from Sunday base
@@ -382,7 +406,8 @@ export const adjustScheduleToCurrentWeek = (
     const endDateTime = set(lessonDate, { hours: endHour, minutes: endMinute, seconds: 0, milliseconds: 0 });
 
     adjustedSchedule.push({
-      title: lesson.subject.name,
+      // Find the subject name based on subjectId
+      title: subjects.find(subj => subj.id === lesson.subjectId)?.name || 'Unknown Subject',
       start: startDateTime,
       end: endDateTime,
     });

@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, BarChart3, Clock, Users, TrendingUp, Loader2 } from 'lucide-react';
-import { useAppSelector } from '@/hooks/redux-hooks';
+import { useAppSelector } from '@/lib/redux/store';
 import SessionReportCard from '@/components/chatroom/reports/SessionReportCard';
 import { selectCurrentUser } from '@/lib/redux/slices/authSlice';
 import { Role } from '@/types';

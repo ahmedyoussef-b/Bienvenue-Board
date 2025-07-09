@@ -1,15 +1,15 @@
 
 'use client';
-
+import { useAppSelector  } from '../../../lib/redux/store'; // Import useAppSelector from the store
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Send, Users, MessageCircle } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '@/hooks/redux-hooks';
-import type { SafeUser } from '@/types';
+import type { SafeUser, Role } from '@/types';
 import { sendGeneralMessage, clearChatMessages, type ChatMessage } from '@/lib/redux/slices/sessionSlice';
+import { useAppDispatch } from '@/hooks/redux-hooks';
 
 interface ChatRoomProps {
   roomType: 'admin' | 'teacher';
@@ -80,7 +80,7 @@ export default function ChatRoom({ roomType, title, description, allowedRoles }:
     }
   };
 
-  if (!user || !allowedRoles.includes(user.role)) {
+  if (!user || !allowedRoles.includes(user.role as 'ADMIN' | 'TEACHER')) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 flex items-center justify-center">
         <Card className="max-w-md w-full">
@@ -98,7 +98,7 @@ export default function ChatRoom({ roomType, title, description, allowedRoles }:
     );
   }
 
-  return (
+  if (user && allowedRoles.includes(user.role as 'ADMIN' | 'TEACHER')) { // Safely check user.role
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4">
       <div className="max-w-6xl mx-auto">
         <Card className="h-[calc(100vh-2rem)] flex flex-col">
@@ -131,7 +131,7 @@ export default function ChatRoom({ roomType, title, description, allowedRoles }:
                     <p className="text-sm">Soyez le premier à envoyer un message !</p>
                   </div>
                 )}
-                {messages.map((message) => (
+                {messages.map((message: ChatMessage) => ( // Explicitly type message
                   <div
                     key={message.id}
                     className={`flex gap-3 ${
@@ -211,5 +211,5 @@ export default function ChatRoom({ roomType, title, description, allowedRoles }:
         </Card>
       </div>
     </div>
-  );
+  }
 }

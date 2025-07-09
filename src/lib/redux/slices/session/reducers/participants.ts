@@ -1,6 +1,6 @@
 import { PayloadAction } from '@reduxjs/toolkit';
 import { arrayMove } from '@dnd-kit/sortable';
-import { SessionState, SessionParticipant } from '../types';
+import { SessionState, SessionParticipant, ClassRoom } from '../types';
 
 export const participantReducers = {
   setSelectedClass: (state: SessionState, action: PayloadAction<ClassRoom | null>) => {

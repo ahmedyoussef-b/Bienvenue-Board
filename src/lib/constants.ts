@@ -1,7 +1,7 @@
 // src/lib/constants.ts
 import { Role } from "@/types/index";
 import type { Day } from '@/types';
-import type { SessionTemplate } from '@/lib/redux/slices/sessionSlice';
+import type { SessionTemplate, Quiz, Poll } from '@/lib/redux/slices/session/types';
 
 export const ITEM_PER_PAGE = 10;
 export const SESSION_COOKIE_NAME = 'appSessionToken';
@@ -69,23 +69,16 @@ export const menuItems: Array<{
     ],
   },
 ];
-
-export const BADGE_TEMPLATES = [
-  { type: 'participation', name: 'Participant actif', description: 'Pour une participation remarquable', icon: '🙋' },
-  { type: 'correct_answer', name: 'Expert', description: 'Pour des réponses correctes', icon: '🎯' },
-  { type: 'helpful', name: 'Entraide', description: 'Pour avoir aidé ses camarades', icon: '🤝' },
-  { type: 'creative', name: 'Créatif', description: 'Pour des idées originales', icon: '💡' },
-  { type: 'leader', name: 'Leader', description: 'Pour avoir pris des initiatives', icon: '👑' },
-  { type: 'consistent', name: 'Persévérant', description: 'Pour la régularité', icon: '⭐' },
-];
-
+type TemplatePoll = Omit<Poll, 'id' | 'isActive' | 'createdAt' | 'totalVotes'> & {
+  options: string[];
+};
 export const SESSION_TEMPLATES: SessionTemplate[] = [
   {
     id: 'template_math_7',
     name: 'Révision Maths 7ème',
     description: 'Un quiz rapide sur les fractions et un sondage sur la géométrie.',
     quizzes: [
-      {
+      { 
         title: 'Quiz sur les Fractions',
         questions: [
           {
@@ -117,7 +110,7 @@ export const SESSION_TEMPLATES: SessionTemplate[] = [
     name: 'Contrôle Histoire 8ème',
     description: 'Un sondage sur la révolution et un quiz sur les dates clés.',
     quizzes: [
-       {
+      {
         title: 'Dates Clés',
         questions: [
           {
@@ -130,10 +123,8 @@ export const SESSION_TEMPLATES: SessionTemplate[] = [
         ]
       }
     ],
-    polls: [],
-  }
+    polls: [] as TemplatePoll[]  }
 ];
-
 export const reactionLabels = {
   thumbs_up: 'J\'aime',
   thumbs_down: 'Je n\'aime pas',

@@ -3,16 +3,17 @@
 
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
-import type { Role, JwtPayload as AppJwtPayload } from '@/types/index';
+import type { JwtPayload as AppJwtPayload } from '@/types/index';
 import { SESSION_COOKIE_NAME } from '@/lib/constants';
-import prisma from '@/lib/prisma'; // Importer prisma
+import prisma from '@/lib/prisma';
+import { Role } from '@prisma/client';
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 // Définir un type de retour explicite pour plus de clarté
 type ServerSession = {
-  userId: string;
-  role: Role;
+ userId: string;
+  role: Role; // Use the Role enum from Prisma Client
   email: string;
   name: string;
   isAuthenticated: boolean;

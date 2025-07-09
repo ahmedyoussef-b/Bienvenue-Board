@@ -1,5 +1,6 @@
 
 import { configureStore } from '@reduxjs/toolkit';
+import { TypedUseSelectorHook, useSelector } from 'react-redux';
 import { authApi } from './api/authApi';
 import authReducer from './slices/authSlice';
 import { entityApi } from './api/entityApi';
@@ -49,3 +50,4 @@ export const store = configureStore({
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

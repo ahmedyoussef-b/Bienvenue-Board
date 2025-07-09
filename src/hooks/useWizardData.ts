@@ -1,18 +1,19 @@
-import { useAppSelector } from '@/hooks/redux-hooks';
 import { useMemo } from 'react';
+import { selectSchoolConfig } from '../lib/redux/features/schoolConfigSlice';
+import { useAppSelector } from '@/lib/redux/store';
 import { selectAllClasses } from '@/lib/redux/features/classes/classesSlice';
-import { selectAllMatieres } from '@/lib/redux/features/subjects/subjectsSlice';
-import { selectAllProfesseurs } from '@/lib/redux/features/teachers/teachersSlice';
 import { selectAllSalles } from '@/lib/redux/features/classrooms/classroomsSlice';
 import { selectAllGrades } from '@/lib/redux/features/grades/gradesSlice';
 import { selectLessonRequirements } from '@/lib/redux/features/lessonRequirements/lessonRequirementsSlice';
-import { selectTeacherConstraints } from '@/lib/redux/features/teacherConstraintsSlice';
 import { selectSubjectRequirements } from '@/lib/redux/features/subjectRequirementsSlice';
+import { selectAllMatieres } from '@/lib/redux/features/subjects/subjectsSlice';
 import { selectTeacherAssignments } from '@/lib/redux/features/teacherAssignmentsSlice';
-import { selectSchoolConfig } from '@/lib/redux/features/schoolConfigSlice';
+import { selectTeacherConstraints } from '@/lib/redux/features/teacherConstraintsSlice';
+import { selectAllProfesseurs } from '@/lib/redux/features/teachers/teachersSlice';
+
 
 export default function useWizardData() {
-    const school = useAppSelector(selectSchoolConfig);
+ const school = useAppSelector(selectSchoolConfig);
     const classes = useAppSelector(selectAllClasses);
     const subjects = useAppSelector(selectAllMatieres);
     const teachers = useAppSelector(selectAllProfesseurs);
