@@ -11,9 +11,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     const { id } = params;
-    console.log(`API [/api/schedule-drafts/${id} PUT]: Request received.`);
     const body = await request.json();
-    console.log(`API [/api/schedule-drafts/${id} PUT]: Request body parsed.`);
 
 
     try {
@@ -28,10 +26,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
             data: updatePayload,
         });
         
-        console.log(`API [/api/schedule-drafts/${id} PUT]: Draft successfully updated in DB. Sending response.`);
         return NextResponse.json(updatedDraft, { status: 200 });
     } catch (error) {
-        console.error(`API [/api/schedule-drafts/${id} PUT]: Error occurred.`, error);
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
              return NextResponse.json({ message: 'Un scénario avec ce nom existe déjà.' }, { status: 409 });
         }
@@ -54,7 +50,6 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
         return new NextResponse(null, { status: 204 });
     } catch (error) {
-        console.error(`[API] Erreur lors de la suppression du brouillon ${id}:`, error);
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
             return NextResponse.json({ message: 'Scénario non trouvé.' }, { status: 404 });
         }

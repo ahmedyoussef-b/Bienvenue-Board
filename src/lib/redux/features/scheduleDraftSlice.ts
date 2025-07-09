@@ -109,11 +109,9 @@ export const updateActiveDraft = createAsyncThunk<
 >(
     'scheduleDraft/updateActive',
     async (_, { getState, rejectWithValue }) => {
-        console.log("REDUX [updateActiveDraft THUNK]: Called.");
         const state = getState();
         const { activeDraft } = state.scheduleDraft;
         if (!activeDraft) {
-            console.error("REDUX [updateActiveDraft THUNK]: No active draft to update. Rejecting.");
             return rejectWithValue("Aucun scénario actif à mettre à jour.");
         }
 
@@ -134,7 +132,6 @@ export const updateActiveDraft = createAsyncThunk<
         };
 
         try {
-            console.log(`REDUX [updateActiveDraft THUNK]: Sending PUT request to /api/schedule-drafts/${activeDraft.id}`);
             const response = await fetch(`/api/schedule-drafts/${activeDraft.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -142,12 +139,9 @@ export const updateActiveDraft = createAsyncThunk<
             });
             if (!response.ok) {
                 const errorData = await response.json();
-                console.error("REDUX [updateActiveDraft THUNK]: API request failed.", errorData);
                 return rejectWithValue(errorData.message ?? 'Failed to update draft');
             }
-            const responseData = await response.json();
-            console.log("REDUX [updateActiveDraft THUNK]: API request successful.");
-            return responseData;
+            return await response.json();
         } catch (error) {
             return rejectWithValue(error instanceof Error ? error.message : 'An unknown network error occurred');
         }
@@ -241,19 +235,15 @@ const scheduleDraftSlice = createSlice({
             })
             // Update (Autosave)
             .addCase(updateActiveDraft.pending, (state) => { 
-                console.log("REDUX [scheduleDraftSlice REDUCER]: updateActiveDraft.pending");
                 state.saveStatus = 'loading'; 
             })
             .addCase(updateActiveDraft.fulfilled, (state, action) => {
-                console.log("REDUX [scheduleDraftSlice REDUCER]: updateActiveDraft.fulfilled. Payload updatedAt:", action.payload.updatedAt);
                 state.saveStatus = 'succeeded';
                 state.lastSaved = action.payload.updatedAt;
-                 if (state.activeDraft) {
-                  state.activeDraft.updatedAt = action.payload.updatedAt;
-                }
+                // DO NOT update the activeDraft object here. This is the key to breaking the loop.
+                // The client state is the source of truth; this action just confirms it's saved.
             })
             .addCase(updateActiveDraft.rejected, (state, action) => {
-                console.error("REDUX [scheduleDraftSlice REDUCER]: updateActiveDraft.rejected. Error:", action.payload);
                 state.saveStatus = 'failed';
                 state.error = action.payload ?? 'Autosave failed.';
             })

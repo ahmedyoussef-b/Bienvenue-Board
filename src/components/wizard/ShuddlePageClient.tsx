@@ -41,24 +41,25 @@ const ShuddlePageClient: React.FC = () => {
     
     // --- AUTOSAVE LOGIC ---
     const debouncedSave = useDebouncedCallback(() => {
+        // The thunk gets the latest state from the store, so we don't need to pass anything.
+        // We just need to check if we *should* save.
         if (draftStatus === 'succeeded' && activeDraft) {
-             console.log("CLIENT [debouncedSave]: Dispatching updateActiveDraft.");
             dispatch(updateActiveDraft());
         }
-    }, 2000); // Autosave 2 seconds after the last change
+    }, 2000);
 
     // Serialize data to a string for stable comparison.
     const wizardDataString = JSON.stringify(wizardData);
-
+    const activeDraftName = activeDraft?.name;
+    const activeDraftDescription = activeDraft?.description;
+    
     useEffect(() => {
-        console.log("CLIENT [ShuddlePageClient EFFECT]: Running autosave effect. Status:", draftStatus, "Has active draft:", !!activeDraft);
+        // This effect will run only when the user-editable data changes.
+        // It avoids re-triggering from the save action itself.
         if (draftStatus === 'succeeded' && activeDraft) {
-             console.log("CLIENT [ShuddlePageClient EFFECT]: Conditions met, calling debouncedSave.");
             debouncedSave();
-        } else {
-             console.log("CLIENT [ShuddlePageClient EFFECT]: Conditions not met, skipping save.");
         }
-    }, [wizardDataString, activeDraft?.name, activeDraft?.description, debouncedSave, draftStatus, activeDraft]);
+    }, [wizardDataString, activeDraftName, activeDraftDescription, debouncedSave, draftStatus]); // Using primitive dependencies
     // --- END AUTOSAVE LOGIC ---
 
 
