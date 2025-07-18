@@ -22,19 +22,35 @@ function main() {
         console.log('--- Début du seeding réaliste ---');
         // 1. Nettoyage de la base de données
         console.log('Nettoyage des anciennes données...');
+        // Chatroom related tables - Deleting in order of dependency to avoid foreign key errors
+        if (prisma.pollAnswer)
+            yield prisma.pollAnswer.deleteMany({});
+        if (prisma.quizAnswer)
+            yield prisma.quizAnswer.deleteMany({});
+        if (prisma.pollOption)
+            yield prisma.pollOption.deleteMany({});
+        if (prisma.quizQuestion)
+            yield prisma.quizQuestion.deleteMany({});
+        if (prisma.poll)
+            yield prisma.poll.deleteMany({});
+        if (prisma.quiz)
+            yield prisma.quiz.deleteMany({});
+        if (prisma.chatroomMessage)
+            yield prisma.chatroomMessage.deleteMany({});
+        if (prisma.sessionParticipant)
+            yield prisma.sessionParticipant.deleteMany({});
+        if (prisma.chatroomSession)
+            yield prisma.chatroomSession.deleteMany({});
+        // Existing cleanup logic
         yield prisma.attendance.deleteMany({});
         yield prisma.result.deleteMany({});
         yield prisma.assignment.deleteMany({});
         yield prisma.exam.deleteMany({});
-        // Check if models exist before deleting to make seeding more robust
         if (prisma.lessonRequirement) {
             yield prisma.lessonRequirement.deleteMany({});
         }
         if (prisma.teacherConstraint) {
             yield prisma.teacherConstraint.deleteMany({});
-        }
-        if (prisma.subjectRequirement) {
-            yield prisma.subjectRequirement.deleteMany({});
         }
         if (prisma.scheduleDraft) {
             yield prisma.scheduleDraft.deleteMany({});
@@ -52,10 +68,10 @@ function main() {
         yield prisma.classroom.deleteMany({});
         yield prisma.user.deleteMany({});
         console.log('Anciennes données supprimées.');
-        // 2. Création de l'utilisateur Administrateur
-        console.log('Création de l\'administrateur...');
+        // 2. Création des utilisateurs Administrateurs
+        console.log('Création des administrateurs...');
         const hashedPassword = yield bcryptjs_1.default.hash('password123', HASH_ROUNDS);
-        const adminUser = yield prisma.user.create({
+        const adminUser1 = yield prisma.user.create({
             data: {
                 email: 'admin@example.com',
                 username: 'admin',
@@ -67,13 +83,31 @@ function main() {
         });
         yield prisma.admin.create({
             data: {
-                userId: adminUser.id,
+                userId: adminUser1.id,
                 name: 'Admin',
                 surname: 'Principal',
                 phone: '0123456789',
             },
         });
-        console.log('Administrateur créé.');
+        const adminUser2 = yield prisma.user.create({
+            data: {
+                email: 'admin1@example.com',
+                username: 'admin1',
+                password: hashedPassword,
+                role: client_1.Role.ADMIN,
+                name: 'Admin Secondaire',
+                active: true,
+            },
+        });
+        yield prisma.admin.create({
+            data: {
+                userId: adminUser2.id,
+                name: 'Admin',
+                surname: 'Secondaire',
+                phone: '0987654321',
+            },
+        });
+        console.log('Administrateurs créés.');
         // 3. Création des Niveaux (Grades)
         console.log('Création des niveaux...');
         const gradesData = [{ level: 7 }, { level: 8 }, { level: 9 }];
@@ -86,10 +120,10 @@ function main() {
             classrooms.push(yield prisma.classroom.create({ data: { name: `Salle ${i}`, capacity: 30, building: 'Principal' } }));
         }
         for (let i = 1; i <= 2; i++) {
-            classrooms.push(yield prisma.classroom.create({ data: { name: `Labo Science ${i}`, capacity: 30, building: 'Sciences' } }));
-            classrooms.push(yield prisma.classroom.create({ data: { name: `Labo Physique ${i}`, capacity: 30, building: 'Sciences' } }));
-            classrooms.push(yield prisma.classroom.create({ data: { name: `Labo Technique ${i}`, capacity: 30, building: 'Technique' } }));
-            classrooms.push(yield prisma.classroom.create({ data: { name: `Labo Informatique ${i}`, capacity: 30, building: 'Informatique' } }));
+            classrooms.push(yield prisma.classroom.create({ data: { name: `Labo Science ${i}`, capacity: 25, building: 'Sciences' } }));
+            classrooms.push(yield prisma.classroom.create({ data: { name: `Labo Physique ${i}`, capacity: 25, building: 'Sciences' } }));
+            classrooms.push(yield prisma.classroom.create({ data: { name: `Labo Technique ${i}`, capacity: 25, building: 'Technique' } }));
+            classrooms.push(yield prisma.classroom.create({ data: { name: `Gymnase ${i}`, capacity: 40, building: 'Sports' } }));
         }
         console.log(`${classrooms.length} salles créées.`);
         // 5. Création des Matières
@@ -97,7 +131,7 @@ function main() {
         const subjectNames = [
             'MATHEMATIQUE', 'FRANCAIS', 'ARABE', 'ANGLAIS', 'SCIENCES', 'PHYSIQUE',
             'INFORMATIQUE', 'HISTOIRE', 'GEOGRAPHY', 'EDUCATION CIVILE', 'EDUCATION RELIGIEUSE',
-            'ART', 'MUSIQUE', 'EDUCATION SPORTIVE'
+            'ART', 'MUSIQUE', 'EDUCATION SPORTIVE', 'TECHNIQUE'
         ];
         const subjects = yield Promise.all(subjectNames.map((name) => prisma.subject.create({ data: { name, weeklyHours: 2, coefficient: 1 } })));
         const subjectMap = new Map(subjects.map((s) => [s.name, s]));
@@ -127,14 +161,20 @@ function main() {
             const user = yield prisma.user.create({ data: { email: `prof.sport${i}@example.com`, username: `prof.sport${i}`, password: hashedPassword, role: client_1.Role.TEACHER, name: `Prof Sport ${i}`, active: true } });
             createdTeachers.push(yield prisma.teacher.create({ data: { userId: user.id, name: 'Professeur', surname: `Sportif ${i}`, sex: client_1.UserSex.MALE, birthday: new Date(), bloodType: 'A+', subjects: { connect: { id: subjectMap.get('EDUCATION SPORTIVE').id } } } }));
         }
-        for (let i = 1; i <= 2; i++) {
+        for (let i = 1; i <= 3; i++) {
             const user = yield prisma.user.create({ data: { email: `prof.musi${i}@example.com`, username: `prof.musi${i}`, password: hashedPassword, role: client_1.Role.TEACHER, name: `Prof Musique ${i}`, active: true } });
             createdTeachers.push(yield prisma.teacher.create({ data: { userId: user.id, name: 'Professeur', surname: `Musical ${i}`, sex: client_1.UserSex.FEMALE, birthday: new Date(), bloodType: 'B+', subjects: { connect: { id: subjectMap.get('MUSIQUE').id } } } }));
         }
-        const artUser = yield prisma.user.create({ data: { email: 'prof.art1@example.com', username: 'prof.art1', password: hashedPassword, role: client_1.Role.TEACHER, name: 'Prof Art 1', active: true } });
-        createdTeachers.push(yield prisma.teacher.create({ data: { userId: artUser.id, name: 'Professeur', surname: 'Artiste', sex: client_1.UserSex.FEMALE, birthday: new Date(), bloodType: 'AB+', subjects: { connect: { id: subjectMap.get('ART').id } } } }));
+        for (let i = 1; i <= 2; i++) {
+            const user = yield prisma.user.create({ data: { email: `prof.art${i}@example.com`, username: `prof.art${i}`, password: hashedPassword, role: client_1.Role.TEACHER, name: `Prof Art ${i}`, active: true } });
+            createdTeachers.push(yield prisma.teacher.create({ data: { userId: user.id, name: 'Professeur', surname: `Artiste ${i}`, sex: i % 2 === 0 ? client_1.UserSex.FEMALE : client_1.UserSex.MALE, birthday: new Date(), bloodType: 'AB+', subjects: { connect: { id: subjectMap.get('ART').id } } } }));
+        }
+        for (let i = 1; i <= 3; i++) {
+            const user = yield prisma.user.create({ data: { email: `prof.tech${i}@example.com`, username: `prof.tech${i}`, password: hashedPassword, role: client_1.Role.TEACHER, name: `Prof Technique ${i}`, active: true } });
+            createdTeachers.push(yield prisma.teacher.create({ data: { userId: user.id, name: 'Professeur', surname: `Technique ${i}`, sex: client_1.UserSex.MALE, birthday: new Date(), bloodType: 'O+', subjects: { connect: { id: subjectMap.get('TECHNIQUE').id } } } }));
+        }
         // Professeurs pour les autres matières
-        const coreSubjects = subjects.filter(s => !['EDUCATION SPORTIVE', 'MUSIQUE', 'ART'].includes(s.name));
+        const coreSubjects = subjects.filter(s => !['EDUCATION SPORTIVE', 'MUSIQUE', 'ART', 'TECHNIQUE'].includes(s.name));
         for (const subject of coreSubjects) {
             for (let i = 1; i <= 3; i++) {
                 const sanitizedSubjectName = subject.name.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -162,6 +202,7 @@ function main() {
                         userId: studentUser.id,
                         name: `EtudiantPrénom ${studentCounter + 1}`,
                         surname: `EtudiantNom ${studentCounter + 1}`,
+                        address: `${studentCounter + 1} Rue de l'Exemple`,
                         birthday: new Date('2010-01-01'),
                         sex: i % 2 === 0 ? client_1.UserSex.FEMALE : client_1.UserSex.MALE,
                         bloodType: 'O+',
@@ -195,11 +236,15 @@ function main() {
         console.log('--- Seeding réaliste terminé avec succès ---');
     });
 }
-main()
-    .catch((e) => {
-    console.error(e);
-    process.exit(1);
-})
-    .finally(() => __awaiter(void 0, void 0, void 0, function* () {
-    yield prisma.$disconnect();
-}));
+(() => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield main();
+    }
+    catch (e) {
+        console.error(e);
+        process.exit(1);
+    }
+    finally {
+        yield prisma.$disconnect();
+    }
+}))();

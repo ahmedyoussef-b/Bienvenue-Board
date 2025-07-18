@@ -1,6 +1,7 @@
 // src/lib/redux/slices/sessionSlice.ts
 import { createSlice } from '@reduxjs/toolkit';
-import { initialState, type ActiveSession } from './session/types';
+import { initialState, type ActiveSession, type SessionState } from './session/types';
+import type { RootState } from '../store'; // Import RootState
 
 // Thunks
 import { 
@@ -137,6 +138,10 @@ export const {
   sendGeneralMessage,
   clearChatMessages
 } = sessionSlice.actions;
+
+// New selector for the entire session state slice
+export const selectSessionState = (state: RootState): SessionState => state.session;
+
 
 export default sessionSlice.reducer;
 export * from './session/thunks';

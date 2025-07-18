@@ -8,20 +8,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Video, Users, Loader2 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/redux-hooks';
-import { fetchMeetingParticipants, startMeeting } from '@/lib/redux/slices/sessionSlice';
+import { fetchMeetingParticipants, startMeeting, selectSessionState } from '@/lib/redux/slices/sessionSlice';
 import { addNotification } from '@/lib/redux/slices/notificationSlice';
 import TeacherSelector from '@/components/chatroom/dashboard/admin/TeacherSelector';
+import { Role } from '@/types';
 import { selectCurrentUser } from '@/lib/redux/slices/authSlice';
-import { Role, type SafeUser } from '@/types';
-import type { SessionParticipant } from '@/lib/redux/slices/sessionSlice';
 
 export default function AdminMeetingDashboard() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const user = useAppSelector(selectCurrentUser) as SafeUser;
+  const [meetingTitle, setMeetingTitle] = useState('');
   
-  const { meetingCandidates, selectedTeachers, activeSession, loading } = useAppSelector(state => state.session);
-  const [meetingTitle, setMeetingTitle] = useState("Réunion d'équipe");
+  const { meetingCandidates, selectedTeachers, activeSession, loading } = useAppSelector(selectSessionState);
+  const user = useAppSelector(selectCurrentUser);
 
   useEffect(() => {
     if (!user || user.role !== Role.ADMIN) {

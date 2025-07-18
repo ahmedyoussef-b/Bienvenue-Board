@@ -3,6 +3,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { SafeUser, Role } from '@/types/index';
 import { authApi, type LoginResponse, type AuthResponse } from '../api/authApi';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import type { RootState } from '../store'; // Import RootState
 
 interface AuthState {
   user: SafeUser | null;
@@ -177,6 +178,9 @@ const authSlice = createSlice({
   }
 });
 
+export const selectAuthUser = (state: RootState) => state.auth.user;
+
 export const { manualLogout, loginStart, loginSuccess, updateCurrentUser } = authSlice.actions;
 export const { selectCurrentUser, selectIsAuthenticated, selectIsAuthLoading } = authSlice.selectors;
 export default authSlice.reducer;
+
