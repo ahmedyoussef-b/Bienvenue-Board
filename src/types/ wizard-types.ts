@@ -1,4 +1,4 @@
-import { ClassWithGrade, Subject, TeacherWithDetails, Classroom, Grade, Lesson, TeacherConstraint } from '@/types';
+import { ClassWithGrade, Subject, TeacherWithDetails, Classroom, Grade, Lesson, TeacherConstraint, TimePreference } from '@/types';
 
 export interface WizardData {
   school: {
@@ -28,7 +28,7 @@ export interface LessonRequirement {
 export interface SubjectRequirement {
   subjectId: number;
   requiredRoomId: number | null;
-  timePreference: 'ANY' | 'AM' | 'PM';
+  timePreference: TimePreference;
 }
 
 export interface TeacherAssignment {

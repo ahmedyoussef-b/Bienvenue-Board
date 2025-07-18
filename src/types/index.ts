@@ -26,6 +26,13 @@ export enum Day {
   SUNDAY = 'SUNDAY',
 }
 
+export enum TimePreference {
+    ANY = 'ANY',
+    AM = 'AM',
+    PM = 'PM',
+}
+
+
 // TYPE IMPORTS FROM PRISMA - these are stripped out at build time for the client
 // This is the key to preventing server code from leaking to the client.
 import type {
@@ -157,7 +164,7 @@ export interface TeacherConstraint {
 export interface SubjectRequirement {
     subjectId: number;
     requiredRoomId: number | null;
-    timePreference: 'ANY' | 'AM' | 'PM';
+    timePreference: TimePreference;
 }
 
 export interface TeacherAssignment {

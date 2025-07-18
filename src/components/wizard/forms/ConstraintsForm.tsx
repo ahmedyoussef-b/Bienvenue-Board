@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { addTeacherConstraint, removeTeacherConstraint } from '@/lib/redux/features/teacherConstraintsSlice';
 import { setSubjectRequirement, setSubjectTimePreference } from '@/lib/redux/features/subjectRequirementsSlice';
 import { dayLabels, labSubjectKeywords } from '@/lib/constants';
-import type { Day, TeacherConstraint } from '@/types';
+import type { Day, TeacherConstraint, TimePreference } from '@/types';
 import { WizardData } from '@/types/ wizard-types';
 
 interface ConstraintsFormProps {
@@ -68,7 +68,7 @@ const ConstraintsForm: React.FC<ConstraintsFormProps> = ({ wizardData }) => {
     dispatch(setSubjectRequirement({ subjectId, requiredRoomId: roomId }));
   };
 
-  const handleTimePreferenceChange = (subjectId: number, timePreference: 'ANY' | 'AM' | 'PM') => {
+  const handleTimePreferenceChange = (subjectId: number, timePreference: TimePreference) => {
     dispatch(setSubjectTimePreference({ subjectId, timePreference }));
   };
 
@@ -329,7 +329,7 @@ const ConstraintsForm: React.FC<ConstraintsFormProps> = ({ wizardData }) => {
                           
                           <Select 
                             value={selectedTimePref} 
-                            onValueChange={(value: 'ANY' | 'AM' | 'PM') => 
+                            onValueChange={(value: TimePreference) => 
                               handleTimePreferenceChange(subject.id, value)
                             }
                           >

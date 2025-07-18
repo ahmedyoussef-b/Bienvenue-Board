@@ -1,7 +1,7 @@
-
 // src/lib/redux/features/subjectRequirementsSlice.ts
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { SubjectRequirement } from '@/types';
+import { TimePreference } from '@/types';
 
 const initialState: { items: SubjectRequirement[] } = {
   items: [],
@@ -17,10 +17,10 @@ const subjectRequirementsSlice = createSlice({
         if (existingIndex > -1) {
             state.items[existingIndex].requiredRoomId = requiredRoomId;
         } else {
-            state.items.push({ subjectId, requiredRoomId, timePreference: 'ANY' });
+            state.items.push({ subjectId, requiredRoomId, timePreference: TimePreference.ANY });
         }
     },
-    setSubjectTimePreference: (state, action: PayloadAction<{ subjectId: number, timePreference: 'ANY' | 'AM' | 'PM' }>) => {
+    setSubjectTimePreference: (state, action: PayloadAction<{ subjectId: number, timePreference: TimePreference }>) => {
         const { subjectId, timePreference } = action.payload;
         const existingIndex = state.items.findIndex(r => r.subjectId === subjectId);
         if (existingIndex > -1) {
@@ -33,7 +33,7 @@ const subjectRequirementsSlice = createSlice({
         state.items = action.payload.map(item => ({
             ...item,
             requiredRoomId: item.requiredRoomId === undefined ? null : item.requiredRoomId,
-            timePreference: item.timePreference || 'ANY'
+            timePreference: item.timePreference || TimePreference.ANY
         }));
     }
   },
