@@ -14,12 +14,13 @@ import TeacherSelector from '@/components/chatroom/dashboard/admin/TeacherSelect
 import { Role } from '@/types';
 import { selectCurrentUser } from '@/lib/redux/slices/authSlice';
 
+
 export default function AdminMeetingDashboard() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [meetingTitle, setMeetingTitle] = useState('');
   
-  const { meetingCandidates, selectedTeachers, activeSession, loading } = useAppSelector(selectSessionState);
+  const { meetingCandidates, selectedTeachers, activeSession, loading } = useAppSelector(state => state.session);
   const user = useAppSelector(selectCurrentUser);
 
   useEffect(() => {
